@@ -1,0 +1,122 @@
+﻿@model WebApp.Models.ViewModel.DoctorViewModel
+@{
+    ViewData["Title"] = "System Kolejkowy";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+<br />
+
+<div class="backgroundWhite">
+    <div class="row">
+        <div class="col-6">
+            <h2 class="text-info">Kolejka</h2>
+        </div>
+    </div>
+    @*onsubmit="return false"*@
+    <form method="post" asp-action="Next">
+        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+        <div class="border-top border-dark">
+            <div class="row">
+                <div class="col-12 text-center">
+                    <a class="text-danger font-weight-bolder text-uppercase" id="serverMessage"></a>
+                </div>
+            </div>
+            <br />
+            <div class="row">
+                <div class="col-lg-2 col-sm-3 offset-1 text-nowrap">
+                    <label for="QueueNo">Obecny pacjent:</label>
+                    <a class="text-left text-dark font-weight-bold form-inline" style="font-size:25px;" id="QueueNo">@Html.DisplayFor(m => m.Queue.QueueNoMessage)</a>
+
+                </div>
+                <div class="col-lg-4 col-sm-5">
+                    <br />
+                    <a class="btn btn-dark text-light" id="PrevNo"><i class="fas fa-user-minus"></i></a>
+
+                    <a class="btn btn-dark text-light" id="NextNo"><i class="fas fa-user-plus"></i></a>
+
+                    <a class="btn btn-info text-light" id="Break">Przerwa</a>
+
+                    <a class="btn btn-info text-light" id="Special">Specjalny nr</a>
+
+                </div>
+
+                <div class="col-3">
+                    <br />
+                    <label asp-for="Queue.RoomNo" class="form-check-inline">Nr gabinetu</label>
+                    <select asp-for="Queue.RoomNo" class="custom-select col-lg-3 col-sm-5" id="RoomSelection">
+                        @foreach(var item in Model.AvailableRoomNo)
+                        {
+                            <option>@Html.DisplayFor(m => item)</option>
+                        }
+                        
+                    </select>
+                    <button type="submit" asp-action="NewRoomNo" class="btn btn-info text-light">Zmień</button>
+                    <span asp-validation-for="Queue.RoomNo" class="text-danger"></span>
+                </div>
+
+
+            </div>
+            <br />
+            <div class="row">
+                <div class="col-lg-2 col-sm-3 offset-1">
+                    <label for="NewQueueNoInputBox">Nadpisz numer:</label>
+                    <input type="number" class="text-dark text-left form-control" id="NewQueueNoInputBox" />
+
+                </div>
+                <div class="col-lg-1 col-sm-2">
+                    <br />
+                    <a class="btn btn-success text-light" style="margin: 5px;" id="NewQueueNoSubmit">New</a>
+                </div>
+            </div>
+            <br />
+            <br />
+
+            <div class="row">
+                <div class="form-group col-6 offset-1">
+                    <label for="additionalInfo">Dodatkowa informacja:</label>
+                    <textarea class="form-control" id="additionalInfo" rows="3" oninput="textAreaChanged()">@Model.Queue.AdditionalMessage</textarea>
+
+                </div>
+                <div class="row">
+                    <div class="col-1">
+                        <br />
+                        <a class="btn btn-dark text-light" style="margin: 5px;" id="SendAdditionalMessage">Wyślij</a>
+
+                        <a class="btn btn-info text-light" style="margin: 5px;" id="ClearAdditionalMessage">Wyczyść</a>
+                    </div>
+                </div>
+
+
+            </div>
+        </div>
+    </form>
+
+
+</div>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+
+<script type="text/javascript">
+    var roomNo = parseInt('@Model.Queue.RoomNo');
+    var queueNo = parseInt('@Model.Queue.QueueNo');
+    var id = '@Model.Queue.UserId';
+    console.log(id);
+
+    //if enter was clicked while focus in input box call submit button clicked event
+    $("#NewQueueNoInputBox").keyup(function (event) {
+        if (event.keyCode === 13) {
+            //function definition in queueServiceMaster.js
+            ForceNewQueueNo(document.getElementById("NewQueueNoInputBox").value);
+        }
+    });
+
+    document.getElementById("RoomSelection").value = roomNo;
+
+    function textAreaChanged() {
+        var elementClassList = document.getElementById("SendAdditionalMessage").classList;
+        elementClassList.replace("btn-success", "btn-dark");
+    }
+
+</script>
+
+<script src="~/lib/signalr/dist/browser/signalr.js"></script>
+<script src="~/js/queueServiceMaster.js"></script>

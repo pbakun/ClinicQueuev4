@@ -1,0 +1,224 @@
+﻿@model IEnumerable<WebApp.Models.ViewModel.RoomsViewModel>
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<br />
+<div class=" backgroundWhite">
+    <div class="row">
+        <div class="col-6">
+            <h2 class="text-info">Lista gabinetów</h2>
+        </div>
+        <div class="col-6 text-right">
+            <button type="submit" class="btn btn-info anchorCreate" data-toggle="model"><i class="fas fa-plus"></i> &nbsp; Dodaj gabinet</button>
+        </div>
+    </div>
+    <br />
+    <div>
+        @if (Model.Count() > 0)
+        {
+            <table class="table table-striped border">
+                <tr class="table-secondary">
+                    <th>
+                        Gabinet
+                    </th>
+                    <th>
+                        Ilość użytkowników
+                    </th>
+                    <th>
+                        Aktywny
+                    </th>
+                    <th>
+                        Użytkownik
+                    </th>
+                    <th>
+                        Nr kolejki
+                    </th>
+                    <th></th>
+
+                </tr>
+                @foreach (var item in Model)
+                {
+                    if (item.Queue != null && item.UserName.Length > 0)
+                    {
+                        <tr>
+                            <td class="align-middle">
+                                @Html.DisplayFor(m => item.RoomNo)
+                            </td>
+                            <td width="20%">
+                                @Html.DisplayFor(m => item.QuantityOfAssignedUsers)
+                            </td>
+                            <td class="align-middle">
+                                @if (item.Queue.IsActive)
+                                {
+                                    <i class="fas fa-check" style="color: #00FF00;"></i>
+                                }
+                            </td>
+                            <td class="align-middle">
+                                @Html.DisplayFor(m => item.UserName)
+                            </td>
+                            <td class="align-middle">
+                                @Html.DisplayFor(m => item.Queue.QueueNoMessage)
+                            </td>
+                            <td class="btn-group d-flex justify-content-end">
+                                <a class="btn btn-success p-1" asp-action="Details" asp-route-roomNo="@item.RoomNo">
+                                    <i class="fas fa-info-circle"></i>
+                                </a>
+                                <a class="btn btn-danger p-1 anchorDelete" data="@item.RoomNo" data-toggle="model">
+                                    <i class="far fa-trash-alt text-light"></i>
+                                </a>
+                            </td>
+
+                        </tr>
+                    }
+                    else
+                    {
+                        <tr>
+                            <td class="align-middle">
+                                @Html.DisplayFor(m => item.RoomNo)
+                            </td>
+                            <td class="align-middle" colspan="4">
+                                Brak lekarza przypisanego do gabinetu
+                            </td>
+                            <td class="d-flex btn-group">
+                                @*asp-action="Delete" asp-route-roomNo="@item.RoomNo"*@
+                                <button class="btn btn-danger p-1 anchorDelete" onclick="AssignRoomNo(this)" data-room="@item.RoomNo" data-toggle="model">
+                                    <i class="far fa-trash-alt"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    }
+
+                }
+            </table>
+        }
+        else
+        {
+            <p>Brak gabinetów</p>
+        }
+    </div>
+</div>
+
+<div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog-centered modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-info justify-content-center">
+                <h5 class="modal-title text-light">Dodaj Pokój</h5>
+                <button class="btn text-light align-content-center" id="myModalClose">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body justify-content-center" id="myModalContent">
+                <form method="post" asp-area="Admin" asp-controller="Rooms" asp-action="Create">
+                    <div class="container row">
+                        <div class="col-4">
+                            <label class="col-form-label">Nowy pokój:</label>
+                        </div>
+                        <div class="col-4">
+                            <input class="form-control" type="number" name="roomNo" />
+                        </div>
+                        <div class="col-2">
+                            <button type="submit" class="btn btn-success">Dodaj!</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="myDeleteModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog-centered modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-danger justify-content-center">
+                <h5 class="modal-title text-light">Uwaga!</h5>
+            </div>
+            <div class="modal-body justify-content-center">
+                    <div class="container">
+                        <div class="row">
+                            <div class="col-12 text-center">
+                                <label class="">Czy na pewno chcesz usunąć gabinet?</label>
+                            </div>
+                        </div>
+                        <div class="row justify-content-center">
+                            <div class="col-2">
+                                <button class="btn btn-outline-danger deleteConfirmed">Usuń</button>
+                            </div>
+                            <div class="col-2">
+                                <button class="btn btn-outline-info" id="deleteClose">Cofnij</button>
+                            </div>
+                        </div>
+                        
+                    </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+@section scripts {
+    <script>
+        var PostBackURL = '/Admin/Rooms/Create';
+        var PostDeleteURL = '/Admin/Rooms/Delete';
+        var roomToDelete;
+        $(function () {
+            $(".anchorCreate").click(function () {
+
+                $.ajax({
+                    type: "GET",
+                    url: PostBackURL,
+                    contentType: "application/json; charset=utf-8",
+                    cache: false,
+                    datatype: "json",
+                    success: function () {
+                        $('#myModal').modal('show');
+                    },
+                    error: function () {
+                        alert("Dynamic content load failed");
+                    }
+                });
+            });
+
+            $("#myModalClose").click(function () {
+                $('#myModal').modal('hide');
+            });
+
+            $(".anchorDelete").click(function () {
+                $('#myDeleteModal').modal('show');
+                
+            });
+
+            $("#deleteClose").click(function () {
+                $('#myDeleteModal').modal('hide');
+            });
+
+            $(".deleteConfirmed").click(function () {
+
+                $.ajax({
+                    type: "GET",
+                    url: PostDeleteURL,
+                    cache: false,
+                    contentType: "application/json",
+                    data: { "roomNo": roomToDelete },
+                    success: function () {
+                        location.reload();
+                    },
+                    error: function () {
+                        console.log("POST DELETE FAILED");
+                    }
+                        
+
+                });
+
+            });
+                
+        });
+
+        function AssignRoomNo(element) {
+            var roomNo = $(element).data('room');
+
+            roomToDelete = roomNo;
+            console.log(roomToDelete);
+        }
+    </script>
+}

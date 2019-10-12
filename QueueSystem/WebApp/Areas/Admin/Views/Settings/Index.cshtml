@@ -1,0 +1,48 @@
+﻿@model WebApp.Models.ApplicationSettings
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<br />
+<div class="backgroundWhite">
+    <div class="row border-bottom">
+        <div class="col-6">
+            <h2 class="text-info">Ustawienia systemu</h2>
+        </div>
+    </div>
+    <div class="container">
+        <br />
+        <form method="post">
+            <div class="row">
+                <div class="col-4">
+                    <label asp-for="@Model.PatientViewNotificationAfterDoctorDisconnectedDelay" class="form-check-inline text-nowrap">
+                    Czas do odłączenia użytkownika od kolejki (min):
+                    </label>
+                    <input type="number" asp-for="@Model.PatientViewNotificationAfterDoctorDisconnectedDelay" class=" form-control" value="@Model.PatientViewNotificationAfterDoctorDisconnectedDelay"/>
+                </div>
+                <span asp-validation-for="@Model.PatientViewNotificationAfterDoctorDisconnectedDelay"></span>
+            </div>
+            <br />
+            <div class="row">
+                <div class="col-4">
+                    <label class="form-check-inline text-nowrap" asp-for="@Model.MessageWhenNoDoctorActiveInQueue">
+                        Tekst wyświetlany, gdy brak lekarzy podłączonych do kolejki:
+                    </label>
+                    <input type="text" class="form-control" asp-for="@Model.MessageWhenNoDoctorActiveInQueue" value="@Model.MessageWhenNoDoctorActiveInQueue" />
+                </div>
+                <span asp-validation-for="@Model.MessageWhenNoDoctorActiveInQueue"></span>
+            </div>
+            <div class="row">
+                <div class="col-3">
+                </div>
+                <div class="col-2">
+                    <br />
+                    <button type="submit" class="btn btn-primary" asp-action="Submit">Zapisz</button>
+                </div>
+                
+            </div>
+        </form>
+        
+    </div>
+
+</div>
