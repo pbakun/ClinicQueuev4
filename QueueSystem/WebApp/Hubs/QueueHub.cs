@@ -149,6 +149,11 @@ namespace WebApp.Hubs
                 await Clients.Group(roomNo.ToString()).SendAsync("ReceiveAdditionalInfo", userId, outputQueue.AdditionalMessage);
             }
         }
+
+        public async Task LiveBit()
+        {
+            await Clients.Caller.SendAsync("ReceiveLiveBit");
+        }
     }
 
     public class HubUser
