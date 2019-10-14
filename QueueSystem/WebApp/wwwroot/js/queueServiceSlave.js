@@ -29,16 +29,56 @@ connection.on("ReceiveDoctorFullName", function (user, message) {
     console.log(message);
     document.getElementById("DoctorFullName").textContent = message;
 });
+connectionStart();
 
-connection.start().then(function () {
-    // todo
-    connection.invoke("RegisterPatientView", roomNo).catch(function (err) {
-        return console.error(err.toString());
-    });
-}).catch(function (err) {
-    return console.error(err.toString());
+
+connection.onclose(function () {
+    console.log("Hub Connection Closed");
+    console.log(connection.connection.connectionState);
+    reconnect();
 });
 
+async function reconnect() {
+    try {
+        let started = connectionStart();
+        console.log("Client restarted");
+        return started;
+    } catch (e) {
+        //console.log("error catched");
+        //await new Promise(setTimeout(reconnect(), 5000)).then(function () {
+        //    console.log("check status after reconnecting try");
+        //    console.log(connection.connection.connectionState);
+        //    if (connection.connection.connectionState !== 1)
+        //        reconnect();
+        //});
+    }
+}
+
+function connectionStart() {
+    connection.start().then(function () {
+        // todo
+        console.log(connection.connection.connectionState);
+        connection.invoke("RegisterPatientView", roomNo).catch(function (err) {
+            console.log("Register error");
+            return console.error(err.toString());
+        });
+    }).catch(function (err) {
+        console.log("Hub Start error");
+        console.error(err.toString());
+        //new Promise(setTimeout(reconnect(), 5000)).then(function () {
+        //    console.log("check status after reconnecting try");
+        //    console.log(connection.connection.connectionState);
+        //    if (connection.connection.connectionState !== 1)
+        //        reconnect();
+        //});
+        setTimeout(reconnect(), 5000).then(function () {
+            console.log("check status after reconnecting try");
+            console.log(connection.connection.connectionState);
+            if (connection.connection.connectionState !== 1)
+                reconnect();
+        });
+    });
+}
 
 function DistributeQueueMessage(message) {
     var mainField = document.getElementById("QueueNo");

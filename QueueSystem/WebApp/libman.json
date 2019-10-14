@@ -9,6 +9,27 @@
         "dist/browser/signalr.js",
         "dist/browser/signalr.min.js"
       ]
+    },
+    {
+      "library": "@microsoft/signalr@latest",
+      "destination": "wwwroot/lib/js/signalr",
+      "files": [
+        "dist/browser/signalr.js",
+        "dist/browser/signalr.js.map",
+        "dist/browser/signalr.min.js",
+        "dist/browser/signalr.min.js.map"
+      ]
+    },
+    {
+      "library": "signalr@2.4.1",
+      "destination": "wwwroot/lib/signalr/",
+      "files": [
+        "jquery.signalR.min.js",
+        "jquery.signalR.js",
+        "LICENSE.md",
+        "package.json",
+        "README.md"
+      ]
     }
   ]
 }

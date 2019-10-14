@@ -25,12 +25,11 @@ namespace SystemMonitor.Hub
         private async Task _hub_Closed(Exception arg)
         {
             await Task.Delay(new Random().Next(0, 5) * 1000);
-            //await _hub.StartAsync();
+            Console.WriteLine("Hub closed");
+            await _hub.StartAsync();
         }
 
-
-
-        public async void Connect()
+        public void Connect()
         {
             _hub.On<string, string>("ReceiveQueueNo", (userId, queueMessage) =>
             {
@@ -46,7 +45,7 @@ namespace SystemMonitor.Hub
 
             try
             {
-                await _hub.StartAsync();
+                _hub.StartAsync();
                 Console.WriteLine("Connection Started");
             }
             catch(Exception ex)
