@@ -20,20 +20,49 @@ connection.on("ReceiveAdditionalInfo", function (id, message) {
         elementClassList.replace("btn-success", "btn-dark");
     }
     
-    
 });
 
 connection.on("NotifyQueueOccupied", function (message) {
     document.getElementById("serverMessage").innerHTML = message;
 });
 
-connection.start().then(function(){
-    connection.invoke("RegisterDoctor", id, roomNo).catch(function (err) {
-        return console.error(err.toString());
-    });
-}).catch(function (err) {
-    return console.error(err.toString());
+//connection.start().then(function(){
+//    connection.invoke("RegisterDoctor", id, roomNo).catch(function (err) {
+//        return console.error(err.toString());
+//    });
+//}).catch(function (err) {
+//    return console.error(err.toString());
+//});
+
+connectionStart();
+
+connection.onclose(function () {
+    console.log("Hub Connection Closed");
+    reconnect();
 });
+
+function reconnect() {
+    try {
+        let started = connectionStart();
+        console.log("Client restarted");
+        return started;
+    } catch (e) {
+        console.error("Error reconnect");
+        console.error(e.toString());
+    }
+}
+
+function connectionStart() {
+    connection.start().then(function () {
+        connection.invoke("RegisterDoctor", id, roomNo).catch(function (err) {
+            return console.error(err.toString());
+        });
+    }).catch(function (err) {
+        console.log("Hub Start error");
+        console.error(err.toString());
+        setTimeout(reconnect(), 5000);
+    });
+}
 
 document.getElementById("PrevNo").addEventListener("click", function (event) {
 
