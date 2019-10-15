@@ -14,8 +14,8 @@ namespace WebApp.Hubs
 {
     public class QueueHub : Hub
     {
-        private static List<HubUser> _connectedUsers = new List<HubUser>();
-        private static List<HubUser> _waitingUsers = new List<HubUser>();
+        public static List<HubUser> _connectedUsers = new List<HubUser>();
+        public static List<HubUser> _waitingUsers = new List<HubUser>();
 
         private readonly IRepositoryWrapper _repo;
         private readonly IQueueService _queueService;
@@ -40,7 +40,7 @@ namespace WebApp.Hubs
             };
 
             var userInControl = _connectedUsers.Where(m => m.Id != null && m.GroupName == newUser.GroupName).FirstOrDefault();
-            if(userInControl == null)
+            if(userInControl == null || userInControl.Id == newUser.Id)
             {
                 await Groups.AddToGroupAsync(newUser.ConnectionId, newUser.GroupName);
 
@@ -101,7 +101,7 @@ namespace WebApp.Hubs
             //if group member changed roomNo reload patient view
             if (groupMember.Id != null && !_queueService.CheckRoomSubordination(groupMember.Id, memberRoomNo))
             {
-                _queueService.SetQueueInActive(groupMember.Id);
+                _queueService.SetQueueInactive(groupMember.Id);
                 Clients.Group(groupMember.GroupName).SendAsync("Refresh", groupMember.GroupName);
             }
             else if (groupMember.Id != null)
@@ -122,7 +122,7 @@ namespace WebApp.Hubs
             var groupMember = sender as HubUser;
             if (_connectedUsers.Where(i => i.Id == groupMember.Id).FirstOrDefault() == null)
             {
-                _queueService.SetQueueInActive(groupMember.Id);
+                _queueService.SetQueueInactive(groupMember.Id);
                 _hubContext.Clients.Group(groupMember.GroupName).SendAsync("Refresh", groupMember.GroupName);
             }
             _timer.Dispose();
