@@ -15,10 +15,10 @@ connection.on("ReceiveAdditionalInfo", function (id, message) {
     document.getElementById("additionalInfo").innerHTML = message;
 });
 
-connection.on("ResetQueue", function (message) {
-    document.getElementById("QueueNo").textContent = message;
-    console.log(message);
-});
+//connection.on("ResetQueue", function (message) {
+//    document.getElementById("QueueNo").textContent = message;
+//    console.log(message);
+//});
 
 connection.on("Refresh", function (roomNo) {
     console.log("refresh");
@@ -56,7 +56,7 @@ function connectionStart() {
             return console.error(err.toString());
         });
     }).catch(function (err) {
-        console.log("Hub Start error");
+        console.log("Hub Start error");Reset
         console.error(err.toString());
         setTimeout(reconnect(), 5000);
     });
