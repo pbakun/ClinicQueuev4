@@ -42,7 +42,8 @@ namespace WebApp.BackgroundServices.Tasks
                     queue.QueueNo = 1;
                     repo.Queue.Update(queue);
                     var outputQueue = _mapper.Map<Queue>(queue);
-                    _hubContext.Clients.Groups(queue.RoomNo.ToString()).SendAsync("ResetQueue", outputQueue.QueueNoMessage);
+                    if(outputQueue.IsActive)
+                        _hubContext.Clients.Groups(queue.RoomNo.ToString()).SendAsync("ResetQueue", outputQueue.QueueNoMessage);
                 }
                 //repo.Queue.UpdateList(queues);
                 repo.Save();
