@@ -25,7 +25,6 @@ namespace XUnitTests
             var config = new MapperConfiguration(cfg =>
             {
                 cfg.AddProfile(new MappingProfile());
-                cfg.CreateMap<Entities.Models.Queue, IQueryable<Entities.Models.Queue>>();
             });
             _mapper = config.CreateMapper();
         }
@@ -53,7 +52,7 @@ namespace XUnitTests
             mockRepoWrapper.Setup(q => q.Queue.Update(It.IsAny<Entities.Models.Queue>()));
             mockRepoWrapper.Setup(r => r.Save());
             mockHubContext.Setup(h => h.Clients.Group(It.IsAny<string>())
-            .SendCoreAsync(It.IsAny<string>(), It.Is<object[]>(o => o != null && o.Length == 1),default(CancellationToken)));
+            .SendCoreAsync(It.IsAny<string>(), It.Is<object[]>(o => o != null && o.Length == 1), default));
             
             var resetQueue = new ResetQueue(mockScopeFactory.Object, mockHubContext.Object, _mapper);
             resetQueue.ProcessInScope(null);
