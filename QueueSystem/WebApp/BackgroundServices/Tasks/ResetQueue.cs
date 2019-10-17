@@ -45,7 +45,6 @@ namespace WebApp.BackgroundServices.Tasks
                     if(outputQueue.IsActive)
                         _hubContext.Clients.Groups(queue.RoomNo.ToString()).SendAsync("ResetQueue", outputQueue.QueueNoMessage);
                 }
-                //repo.Queue.UpdateList(queues);
                 repo.Save();
                 Console.WriteLine("Queues reseted to 1");
             }
