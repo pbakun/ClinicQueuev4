@@ -8,10 +8,11 @@
 
 @if (showBanner)
 {
-    <div id="cookieConsent" class="alert alert-info alert-dismissible fade show" role="alert">
-        Use this space to summarize your privacy and cookie use policy. <a asp-area="" asp-controller="Home" asp-action="Privacy">Learn More</a>.
+    <div id="cookieConsent" class="alert alert-info alert-dismissible fade show" role="alert" style="padding-right: 6rem;">
+        Do prawidłowego działania strony wymagane jest korzystanie z plików cookie (ciasteczek). Dalsze korzystanie ze strony oznacza zgodę na ich użycie.
+        Szczegóły nt. wykorzystania ciasteczek znajdziesz w <a asp-area="Patient" asp-controller="Home" asp-action="Privacy">polityce prywatności</a>.
         <button type="button" class="accept-policy close" data-dismiss="alert" aria-label="Close" data-cookie-string="@cookieString">
-            <span aria-hidden="true">Accept</span>
+            <span aria-hidden="true">Akceptuje</span>
         </button>
     </div>
     <script>
