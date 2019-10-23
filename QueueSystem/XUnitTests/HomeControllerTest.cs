@@ -7,7 +7,7 @@ using Xunit;
 namespace XUnitTests
 {
 
-    public class HomeControllerTest : IntegrationTest
+    public class HomeControllerTest : HubIntegrationTest
     {
         [Fact]
         public async Task GetHomePage()

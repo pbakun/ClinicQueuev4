@@ -1,6 +1,5 @@
 ﻿using AutoMapper;
 using Entities;
-using Microsoft.AspNet.SignalR.Hubs;
 using Microsoft.AspNetCore.SignalR;
 using Moq;
 using Repository.Interfaces;
