@@ -45,6 +45,7 @@ namespace WebApp
 
             });
 
+            //add db context
             SetUpDatabase(services);
 
             services.AddIdentity<IdentityUser, IdentityRole>(config =>

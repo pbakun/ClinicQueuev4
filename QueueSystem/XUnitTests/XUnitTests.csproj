@@ -25,6 +25,10 @@
     <ProjectReference Include="..\WebApp\WebApp.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Workers\" />
+  </ItemGroup>
+
  
 
 </Project>

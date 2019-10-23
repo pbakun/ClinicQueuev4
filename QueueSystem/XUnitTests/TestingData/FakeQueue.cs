@@ -4,7 +4,7 @@ using System.Text;
 
 namespace XUnitTests.TestingData
 {
-    public class QueueData
+    public class FakeQueue
     {
         public Entities.Models.Queue Queue { get; set; }
 
@@ -15,8 +15,9 @@ namespace XUnitTests.TestingData
         private bool _isActive;
         private string _ownerInitials;
         private int _roomNo;
+        private string _userId;
 
-        public QueueData()
+        public FakeQueue()
         {
             Queue = new Entities.Models.Queue();
             SetDefaults();
@@ -29,39 +30,45 @@ namespace XUnitTests.TestingData
             Queue.OwnerInitials = "PB";
         }
 
-        public QueueData WithQueueNo(int queueNo)
+        public FakeQueue WithQueueNo(int queueNo)
         {
             _queueNo = queueNo;
             return this;
         }
 
-        public QueueData WithMessage(string message)
+        public FakeQueue WithMessage(string message)
         {
             _additionalMessage = message;
             return this;
         }
 
-        public QueueData WithRoomNo(int roomNo)
+        public FakeQueue WithRoomNo(int roomNo)
         {
             _roomNo = roomNo;
             return this;
         }
 
-        public QueueData WithBreak(bool isBreak)
+        public FakeQueue WithBreak(bool isBreak)
         {
             _isBreak = isBreak;
             return this;
         }
 
-        public QueueData WithSpecial(bool special)
+        public FakeQueue WithSpecial(bool special)
         {
             _isSpecial = special;
             return this;
         }
 
-        public QueueData WithOwnerInitials(string initials)
+        public FakeQueue WithOwnerInitials(string initials)
         {
             _ownerInitials = initials;
+            return this;
+        }
+
+        public FakeQueue WithUserId(string userId)
+        {
+            _userId = userId;
             return this;
         }
 
@@ -73,6 +80,7 @@ namespace XUnitTests.TestingData
             Queue.IsSpecial = _isSpecial;
             Queue.IsActive = _isActive;
             Queue.RoomNo = _roomNo;
+            Queue.UserId = _userId;
 
             return Queue;
         }

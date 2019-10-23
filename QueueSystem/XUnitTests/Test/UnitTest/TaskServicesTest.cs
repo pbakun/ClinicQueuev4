@@ -34,9 +34,9 @@ namespace XUnitTests
         {
             //System.Diagnostics.Debugger.Launch();
             //test data
-            List<Entities.Models.Queue> queues = new QueueData().WithQueueNo(10).WithRoomNo(10).BuildAsList();
-            queues.Add(new QueueData().WithQueueNo(17).WithRoomNo(15).Build());
-            queues.Add(new QueueData().WithQueueNo(251).WithRoomNo(3).Build());
+            List<Entities.Models.Queue> queues = new FakeQueue().WithQueueNo(10).WithRoomNo(10).BuildAsList();
+            queues.Add(new FakeQueue().WithQueueNo(17).WithRoomNo(15).Build());
+            queues.Add(new FakeQueue().WithQueueNo(251).WithRoomNo(3).Build());
             var querableQueues = queues.AsQueryable();
             
             //mock

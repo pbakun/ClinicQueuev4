@@ -67,7 +67,7 @@ namespace XUnitTests
             }
 
 
-            var prepareQueue = new QueueData().WithQueueNo(12).WithRoomNo(roomNo).Build();
+            var prepareQueue = new FakeQueue().WithQueueNo(12).WithRoomNo(roomNo).Build();
             var queue = _mapper.Map<Queue>(prepareQueue);
 
             var prepareUser = new UserData().WithRoomNo(roomNo).BuildAsList();
@@ -194,7 +194,7 @@ namespace XUnitTests
             var mockClients = new Mock<IHubCallerClients>();
             var mockGroupManager = new Mock<IGroupManager>();
 
-            var prepareQueue = new QueueData().WithRoomNo(roomNo).WithQueueNo(15).WithOwnerInitials("PB").Build();
+            var prepareQueue = new FakeQueue().WithRoomNo(roomNo).WithQueueNo(15).WithOwnerInitials("PB").Build();
             var preparedQueue = _mapper.Map<Queue>(prepareQueue);
 
             QueueHub._connectedUsers.Add(PrepareHubUser(id, roomNo.ToString()));
@@ -227,7 +227,7 @@ namespace XUnitTests
             var mockClients = new Mock<IHubCallerClients>();
             var mockGroupManager = new Mock<IGroupManager>();
 
-            var prepareQueue = new QueueData().WithRoomNo(roomNo).WithMessage(message).WithOwnerInitials("PB").Build();
+            var prepareQueue = new FakeQueue().WithRoomNo(roomNo).WithMessage(message).WithOwnerInitials("PB").Build();
             var preparedQueue = _mapper.Map<Queue>(prepareQueue);
 
             QueueHub._connectedUsers.Add(PrepareHubUser(id, roomNo.ToString()));

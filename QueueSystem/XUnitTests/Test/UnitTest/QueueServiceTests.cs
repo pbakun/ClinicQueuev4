@@ -81,7 +81,7 @@ namespace XUnitTests
         private WebApp.Models.Queue CallChangeUserRoomNo(int newRoomNo, int oldRoomNo) 
         {
             _mockRepo.Setup(x => x.Queue.FindByCondition(It.IsAny<Expression<Func<Entities.Models.Queue, bool>>>()))
-                .Returns(new QueueData().WithRoomNo(oldRoomNo).BuildAsList());
+                .Returns(new FakeQueue().WithRoomNo(oldRoomNo).BuildAsList());
 
             _mockRepo.Setup(x => x.User.FindByCondition(It.IsAny<Expression<Func<Entities.Models.User, bool>>>()))
                 .Returns(new UserData().WithRoomNo(oldRoomNo).BuildAsList());
@@ -108,7 +108,7 @@ namespace XUnitTests
         {
             //System.Diagnostics.Debugger.Launch();
 
-            var data = new QueueData().WithBreak(isBreak).WithSpecial(isSpecial);
+            var data = new FakeQueue().WithBreak(isBreak).WithSpecial(isSpecial);
             var preparedData = data.WithQueueNo(queueNo).Build();
 
             var result = await CallNewQueueNo(queueNo, data.WithQueueNo(15).BuildAsList());
@@ -127,7 +127,7 @@ namespace XUnitTests
         [InlineData(-126)]
         public async void CheckNewQueueNo_MinusValues(int queueNo)
         {
-            var data = new QueueData().WithQueueNo(15);
+            var data = new FakeQueue().WithQueueNo(15);
             var preparedData = data.Build();
 
             var result = await CallNewQueueNo(queueNo, data.BuildAsList());
@@ -141,7 +141,7 @@ namespace XUnitTests
         [Fact]
         public async void CheckNewQueueNo_IsBreakOff()
         {
-            var data = new QueueData().WithQueueNo(15);
+            var data = new FakeQueue().WithQueueNo(15);
 
             var result = await CallNewQueueNo(-1, data.BuildAsList());
 
@@ -154,7 +154,7 @@ namespace XUnitTests
         [Fact]
         public async void CheckNewQueueNo_IsBreakOn()
         {
-            var data = new QueueData().WithQueueNo(15).WithBreak(true);
+            var data = new FakeQueue().WithQueueNo(15).WithBreak(true);
 
             var result = await CallNewQueueNo(-1, data.BuildAsList());
 
@@ -167,7 +167,7 @@ namespace XUnitTests
         [Fact]
         public async void CheckNewQueueNo_IsSpecialOn()
         {
-            var data = new QueueData().WithQueueNo(15);
+            var data = new FakeQueue().WithQueueNo(15);
             var preparedData = data.Build();
 
             var result = await CallNewQueueNo(-2, data.BuildAsList());
@@ -181,7 +181,7 @@ namespace XUnitTests
         [Fact]
         public async void CheckNewQueueNo_IsSpecialOff()
         {
-            var data = new QueueData().WithQueueNo(15).WithSpecial(true);
+            var data = new FakeQueue().WithQueueNo(15).WithSpecial(true);
             var preparedData = data.Build();
 
             var result = await CallNewQueueNo(-2, data.BuildAsList());
@@ -208,7 +208,7 @@ namespace XUnitTests
         [InlineData("Lorem Ipsum jest tekstem stosowanym jako przyk³adowy wype³niacz w przemyœle poligraficznym. Zosta³ po raz pierwszy u¿yty w XV w. przez nieznanego drukarza do wype³nienia tekstem próbnej ksi¹¿ki. Piêæ wieków póŸniej zacz¹³ byæ u¿ywany przemyœle elektronicznym, pozostaj¹c praktycznie niezmienionym. Spopularyzowa³ siê w latach 60. XX w. wraz z publikacj¹ arkuszy Letrasetu, zawieraj¹cych fragmenty Lorem Ipsum, a ostatnio z zawieraj¹cym ró¿ne wersje Lorem Ipsum oprogramowaniem przeznaczonym do realizacji druków na komputerach osobistych, jak Aldus PageMaker")]
         public async void CheckNewAdditionalInfo(string message)
         {
-            var data = new QueueData().WithMessage("blablabla");
+            var data = new FakeQueue().WithMessage("blablabla");
             var preparedData = data.Build();
             var result = await CallNewAdditioanlInfo(message, data.BuildAsList());
 
@@ -228,7 +228,7 @@ namespace XUnitTests
         [InlineData(13, 13)]
         public void ChangeUserRoomNo_Test(int newRoomNo, int oldRoomNo)
         {
-            var data = new QueueData();
+            var data = new FakeQueue();
 
             var result = CallChangeUserRoomNo(newRoomNo, oldRoomNo);
 
