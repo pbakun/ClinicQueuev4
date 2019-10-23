@@ -45,9 +45,7 @@ namespace WebApp
 
             });
 
-            //adding SQLite to app
-            services.ConfigureSqliteContext();
-            services.ConfigureRepositoryWrapper();
+            SetUpDatabase(services);
 
             services.AddIdentity<IdentityUser, IdentityRole>(config =>
             {
@@ -93,11 +91,8 @@ namespace WebApp
             }
 
             //create DB on startup
-            //using (var db = new RepositoryContext())
-            //{
-            //    db.Database.EnsureCreated();
-                
-            //}
+            EnsureDbCreated();
+
             dbInitializer.Initialize();
             SettingsHandler.Settings.ReadSettings();
             //app.UseHttpsRedirection();
@@ -117,9 +112,15 @@ namespace WebApp
             });
         }
 
-        //public virtual void SetUpDatabase(IServiceCollection services)
-        //{
-        //    services.AddDbContext<RepositoryContext>();
-        //}
+        protected virtual void SetUpDatabase(IServiceCollection services)
+        {
+            services.ConfigureSqliteContext();
+            services.ConfigureRepositoryWrapper();
+        }
+
+        protected virtual void EnsureDbCreated()
+        {
+            ServiceExtensions.EnsureDbCreated();
+        }
     }
 }

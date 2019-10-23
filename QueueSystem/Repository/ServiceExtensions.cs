@@ -12,12 +12,24 @@ namespace Repository
 {
     public static class ServiceExtensions
     {
+        private const string connectionString = "Filename=AppData/AppData.db3";
+
         public static void ConfigureSqliteContext(this IServiceCollection services)
         {
             services.AddEntityFrameworkSqlite().AddDbContext<RepositoryContext>(options =>
             {
-                options.UseSqlite("Filename=AppData/AppData.db3");
+                options.UseSqlite(connectionString);
             });
+        }
+
+        public static void EnsureDbCreated()
+        {
+            DbContextOptions<RepositoryContext> options = new DbContextOptionsBuilder<RepositoryContext>()
+                .UseSqlite(connectionString).Options;
+            using(var db = new RepositoryContext(options))
+            {
+                db.Database.EnsureCreated();
+            }
         }
 
         public static void ConfigureRepositoryWrapper(this IServiceCollection services)

@@ -9,13 +9,6 @@ namespace Entities
 {
     public class RepositoryContext : IdentityDbContext
     {
-        //private readonly IConfiguration _configuration;
-
-        //protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-        //{
-        //    optionsBuilder.UseSqlite("Filename=AppData/AppData.db3");
-        //    //optionsBuilder.UseSqlite(_configuration.GetConnectionString("DefaultConnection"));
-        //}
         public RepositoryContext(DbContextOptions<RepositoryContext> options) : base(options)
         {
 
