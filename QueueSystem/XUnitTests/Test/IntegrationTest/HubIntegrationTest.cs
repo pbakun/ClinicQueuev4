@@ -9,6 +9,9 @@ using Repository.Interfaces;
 using System.Linq;
 using XUnitTests.TestingData;
 using WebApp.Utility;
+using WebApp.Helpers;
+using AutoMapper;
+using WebApp.Mappings;
 
 namespace XUnitTests
 {
@@ -16,9 +19,16 @@ namespace XUnitTests
     {
         private readonly TestServer _server;
         private readonly IRepositoryWrapper _context;
+        private readonly IMapper _mapper;
 
         public HubIntegrationTest()
         {
+            var config = new MapperConfiguration(cfg =>
+            {
+                cfg.AddProfile(new MappingProfile());
+            });
+            _mapper = config.CreateMapper();
+
             var webHostBuilder = new WebHostBuilder()
                 .UseStartup<TStartup>();
             _server = new TestServer(webHostBuilder);
@@ -50,30 +60,46 @@ namespace XUnitTests
         }
 
         
-
         [Fact]
-        public async Task CheckRegisterNew()
+        public async Task CheckRegisterNewDoctor()
         {
             //System.Diagnostics.Debugger.Launch();
-            _context.Queue.Add(new FakeQueue().WithRoomNo(12).WithUserId("123").Build());
-            _context.User.Add(new UserData().Build("123", "Piotr", "Bakson", 12));
-            _context.Save();
-
-            var test = _context.Queue.FindAll();
+            var repo = new FakeRepo(_context);
+            var fakeUser = repo.FakeSingleUser();
+            var fakeQueue = repo.FakeSingleQueue();
+            var expectedQueue = _mapper.Map<WebApp.Models.Queue>(fakeQueue);
 
             var connection = MakeHubConnection();
 
             string doctorFullName = string.Empty;
+            string receivedId = string.Empty;
             connection.On<string, string>("ReceiveDoctorFullName", (id, msg) =>
             {
+                receivedId = id;
                 doctorFullName = msg;
             });
 
-            await connection.StartAsync();
-            await connection.InvokeAsync("RegisterDoctor", "123", 12);
+            string receivedQueueNo = string.Empty;
+            connection.On<string, string>("ReceiveQueueNo", (id, msg) =>
+            {
+                receivedQueueNo = msg;
+            });
 
-            string expected = StaticDetails.DoctorNamePrefix + "Piotr Bakson";
+            string receivedAdditionalInfo = string.Empty;
+            connection.On<string, string>("ReceiveAdditionalInfo", (id, msg) =>
+            {
+                receivedAdditionalInfo = msg;
+            });
+
+            await connection.StartAsync();
+            await connection.InvokeAsync("RegisterDoctor", fakeUser.Id, fakeUser.RoomNo);
+
+            string expected = QueueHelper.GetDoctorFullName(fakeUser);
             Assert.Equal(expected, doctorFullName);
+            Assert.Equal(fakeUser.Id, receivedId);
+
+            Assert.Equal(expectedQueue.QueueNoMessage, receivedQueueNo);
+            Assert.Equal(expectedQueue.AdditionalMessage, receivedAdditionalInfo);
         }
     }
 }
