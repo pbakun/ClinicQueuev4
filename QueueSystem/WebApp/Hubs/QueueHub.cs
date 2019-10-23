@@ -51,7 +51,6 @@ namespace WebApp.Hubs
                 await Clients.Group(roomNo.ToString()).SendAsync("ReceiveDoctorFullName", userId, doctorFullName);
 
                 var queue = _queueService.FindByUserId(userId);
-
                 _queueService.SetQueueActive(queue);
 
                 await Clients.Group(roomNo.ToString()).SendAsync("ReceiveQueueNo", userId, queue.QueueNoMessage);

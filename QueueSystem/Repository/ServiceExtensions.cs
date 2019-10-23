@@ -1,5 +1,6 @@
 ﻿using Entities;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Repository.Interfaces;
@@ -13,7 +14,10 @@ namespace Repository
     {
         public static void ConfigureSqliteContext(this IServiceCollection services)
         {
-            services.AddEntityFrameworkSqlite().AddDbContext<RepositoryContext>();
+            services.AddEntityFrameworkSqlite().AddDbContext<RepositoryContext>(options =>
+            {
+                options.UseSqlite("Filename=AppData/AppData.db3");
+            });
         }
 
         public static void ConfigureRepositoryWrapper(this IServiceCollection services)

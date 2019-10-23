@@ -93,11 +93,11 @@ namespace WebApp
             }
 
             //create DB on startup
-            using (var db = new RepositoryContext())
-            {
-                db.Database.EnsureCreated();
+            //using (var db = new RepositoryContext())
+            //{
+            //    db.Database.EnsureCreated();
                 
-            }
+            //}
             dbInitializer.Initialize();
             SettingsHandler.Settings.ReadSettings();
             //app.UseHttpsRedirection();
@@ -116,5 +116,10 @@ namespace WebApp
                     template: "{area=Patient}/{controller=Home}/{action=Index}/{id?}");
             });
         }
+
+        //public virtual void SetUpDatabase(IServiceCollection services)
+        //{
+        //    services.AddDbContext<RepositoryContext>();
+        //}
     }
 }

@@ -11,7 +11,6 @@ namespace XUnitTests
     public class HubIntegrationTest
     {
         private readonly TestServer _server;
-        private readonly HubConnection _connection;
 
         public HubIntegrationTest()
         {
@@ -19,26 +18,50 @@ namespace XUnitTests
                 .UseStartup<Startup>();
 
             _server = new TestServer(webHostBuilder);
+        }
 
-            _connection = new HubConnectionBuilder()
+        private HubConnection MakeHubConnection()
+        {
+            var connection = new HubConnectionBuilder()
                 .WithUrl("https://localhost:5001/queuehub",
                 o => o.HttpMessageHandlerFactory = _ => _server.CreateHandler())
                 .Build();
+            return connection;
         }
 
         [Fact]
         public async Task CheckLiveBitReceive()
         {
+            var connection = MakeHubConnection();
             bool liveBitReceived = false;
-            _connection.On("ReceiveLiveBit", () =>
+            connection.On("ReceiveLiveBit", () =>
             {
                 liveBitReceived = true;
             });
 
-            await _connection.StartAsync();
-            await _connection.InvokeAsync("LiveBit");
+            await connection.StartAsync();
+            await connection.InvokeAsync("LiveBit");
 
             Assert.True(liveBitReceived);
+        }
+
+        
+
+        [Fact]
+        public async Task CheckNewQueueNo()
+        {
+            var connection = MakeHubConnection();
+
+            string doctorFullName = string.Empty;
+            connection.On<string, string>("ReceiveDoctorFullName", (id, msg) =>
+            {
+                doctorFullName = msg;
+            });
+
+            await connection.StartAsync();
+            await connection.InvokeAsync("RegisterDoctor", "1", 12);
+
+
         }
     }
 }

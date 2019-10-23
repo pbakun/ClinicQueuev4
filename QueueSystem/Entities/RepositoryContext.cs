@@ -11,12 +11,15 @@ namespace Entities
     {
         //private readonly IConfiguration _configuration;
 
-        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+        //protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+        //{
+        //    optionsBuilder.UseSqlite("Filename=AppData/AppData.db3");
+        //    //optionsBuilder.UseSqlite(_configuration.GetConnectionString("DefaultConnection"));
+        //}
+        public RepositoryContext(DbContextOptions<RepositoryContext> options) : base(options)
         {
-            optionsBuilder.UseSqlite("Filename=AppData/AppData.db3");
-            //optionsBuilder.UseSqlite(_configuration.GetConnectionString("DefaultConnection"));
-        }
 
+        }
 
         public DbSet<Models.Queue> Queue { get; set; }
         public DbSet<User> User { get; set; }
