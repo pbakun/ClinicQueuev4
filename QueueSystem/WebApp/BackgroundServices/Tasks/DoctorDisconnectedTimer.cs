@@ -9,21 +9,21 @@ namespace WebApp.Hubs
 {
     public class DoctorDisconnectedTimer : IDisposable
     {
-        public System.Timers.Timer _timer;
+        public System.Timers.Timer Timer;
         public event EventHandler TimerFinished;
         private HubUser _groupMember;
         
         public DoctorDisconnectedTimer(HubUser groupMember, int delay)
         {
             _groupMember = groupMember;
-            _timer = new System.Timers.Timer(delay);
-            _timer.Start();
-            _timer.Elapsed += _timer_Elapsed;
+            Timer = new System.Timers.Timer(delay);
+            Timer.Start();
+            Timer.Elapsed += _timer_Elapsed;
         }
 
         private void _timer_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
         {
-            _timer.Stop();
+            Timer.Stop();
             OnTimerFinish();
         }
 
@@ -37,7 +37,8 @@ namespace WebApp.Hubs
 
         public void Dispose()
         {
-            _timer?.Dispose();
+            Timer.Elapsed -= _timer_Elapsed;
+            Timer?.Dispose();
         }
 
     }
