@@ -43,6 +43,7 @@ namespace XUnitTests
                 .Build();
         }
 
+
         [Fact]
         public async Task CheckLiveBitReceive()
         {
@@ -57,6 +58,8 @@ namespace XUnitTests
             await connection.InvokeAsync("LiveBit");
 
             Assert.True(liveBitReceived);
+
+            await connection.DisposeAsync();
         }
 
         
@@ -100,6 +103,14 @@ namespace XUnitTests
 
             Assert.Equal(expectedQueue.QueueNoMessage, receivedQueueNo);
             Assert.Equal(expectedQueue.AdditionalMessage, receivedAdditionalInfo);
+
+            await connection.DisposeAsync();
+        }
+
+        [Fact]
+        public async void CheckHeavyLoad()
+        {
+
         }
     }
 }
