@@ -6,6 +6,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using WebApp.BackgroundServices.Tasks;
 using WebApp.Helpers;
+using WebApp.Hubs.HubUser;
 using WebApp.Models;
 using WebApp.ServiceLogic;
 using WebApp.Utility;
@@ -19,17 +20,22 @@ namespace WebApp.Hubs
 
         private readonly IRepositoryWrapper _repo;
         private readonly IQueueService _queueService;
+        private readonly IManageHubUser _hubUser;
 
         //hubContext for sending messages to clients from long-running processes (like Timer)
         private readonly IHubContext<QueueHub> _hubContext;
 
         private DoctorDisconnectedTimer _timer;
 
-        public QueueHub(IRepositoryWrapper repo, IQueueService queueService, IHubContext<QueueHub> hubContext)
+        public QueueHub(IRepositoryWrapper repo,
+            IQueueService queueService,
+            IHubContext<QueueHub> hubContext,
+            IManageHubUser hubUser)
         {
             _repo = repo;
             _queueService = queueService;
             _hubContext = hubContext;
+            _hubUser = hubUser;
         }
         public async Task RegisterDoctor(string userId, int roomNo)
         {
@@ -78,9 +84,8 @@ namespace WebApp.Hubs
 
             await Groups.AddToGroupAsync(newUser.ConnectionId, newUser.GroupName);
 
-            if(!_connectedUsers.Contains(newUser))
+            if (!_connectedUsers.Contains(newUser))
                 _connectedUsers.Add(newUser);
-
         }
 
         public override Task OnDisconnectedAsync(Exception exception)
@@ -153,13 +158,5 @@ namespace WebApp.Hubs
         {
             await Clients.Caller.SendAsync("ReceiveLiveBit");
         }
-    }
-
-    public class HubUser
-    {
-        public string Id { get; set; }
-        public string ConnectionId { get; set; }
-        public IClientProxy Client { get; set; }
-        public string GroupName { get; set; }
     }
 }

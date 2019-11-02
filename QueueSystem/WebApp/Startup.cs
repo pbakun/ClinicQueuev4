@@ -18,6 +18,7 @@ using Repository;
 using Repository.Initialization;
 using WebApp.BackgroundServices.Tasks;
 using WebApp.Hubs;
+using WebApp.Hubs.HubUser;
 using WebApp.Mappings;
 using WebApp.ServiceLogic;
 
@@ -66,12 +67,19 @@ namespace WebApp
             //all queues somehow needs to be set to inactive on app startup
             services.AddScoped<IQueueService, QueueService>();
 
-            services.AddSingleton <Microsoft.Extensions.Hosting.IHostedService, StartupSetUp>();
+            services.AddSingleton<Microsoft.Extensions.Hosting.IHostedService, StartupSetUp>();
 
             services.AddSingleton<SettingsHandler>();
 
-            services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
+            services.AddDbContext<HubUserContext>(options =>
+            {
+                options.UseInMemoryDatabase("HubUsers");
+            });
 
+            services.AddScoped<IManageHubUser, ManageHubUser>();
+
+            services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
+            
             services.AddSignalR();
 
             services.AddSingleton<Microsoft.Extensions.Hosting.IHostedService, ResetQueue>();
