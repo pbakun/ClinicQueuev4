@@ -17,22 +17,38 @@ namespace WebApp.Hubs
             _hubUser = hubUser;
         }
 
-        public bool AddUser(HubUser user)
+        public void AddUser(HubUser user)
         {
-            if (!_hubUser.ConnectedUsers.Contains(user))
+            if (_hubUser.ConnectedUsers.Where(u => u.GroupName == user.GroupName && !String.IsNullOrEmpty(u.UserId)).SingleOrDefault() == null)
             {
                 _hubUser.ConnectedUsers.Add(user);
-                return true;
             }
-            else if(_hubUser.ConnectedUsers.Where(u => u.Id == user.Id).Single() != null) {
+            else if(_hubUser.ConnectedUsers.Where(u => u.UserId == user.UserId && u.GroupName == user.GroupName).SingleOrDefault() != null)
+            {
                 _hubUser.ConnectedUsers.Add(user);
-                return true;
             }
             else
             {
                 _hubUser.WaitingUsers.Add(user);
-                return false;
             }
+            _hubUser.SaveChanges();
+        }
+
+        public async Task AddUserAsync(HubUser user)
+        {
+            if (!_hubUser.ConnectedUsers.Contains(user))
+            {
+                await _hubUser.ConnectedUsers.AddAsync(user);
+            }
+            else if(_hubUser.ConnectedUsers.Where(u => u.UserId == user.UserId).Single() != null) {
+                await _hubUser.ConnectedUsers.AddAsync(user);
+            }
+            else
+            {
+                await _hubUser.WaitingUsers.AddAsync(user);
+            }
+            await _hubUser.SaveChangesAsync();
+            
         }
 
         public IEnumerable<HubUser> GetConnectedUsers()
@@ -45,7 +61,7 @@ namespace WebApp.Hubs
             if (roomNo == null)
                 return null;
 
-            return _hubUser.ConnectedUsers.Where(u => u.GroupName == roomNo.ToString() && u.Id != null).SingleOrDefault();
+            return _hubUser.ConnectedUsers.Where(u => u.GroupName == roomNo.ToString() && u.UserId != null).SingleOrDefault();
         }
 
         public HubUser GetUserByConnectionId(string connectionId)
@@ -66,10 +82,10 @@ namespace WebApp.Hubs
             if (id == null)
                 return null;
 
-            var user = _hubUser.ConnectedUsers.Where(u => u.Id == id).SingleOrDefault();
+            var user = _hubUser.ConnectedUsers.Where(u => u.UserId == id).SingleOrDefault();
 
             if (user == null)
-                user = _hubUser.WaitingUsers.Where(u => u.Id == id).SingleOrDefault();
+                user = _hubUser.WaitingUsers.Where(u => u.UserId == id).SingleOrDefault();
 
             return user;
         }
@@ -81,9 +97,23 @@ namespace WebApp.Hubs
 
         public void RemoveUser(HubUser user)
         {
+            Remove(user);
+            _hubUser.SaveChanges();
+        }
+
+        public async Task RemoveUserAsync(HubUser user)
+        {
+            Remove(user);
+            await _hubUser.SaveChangesAsync();
+        }
+
+        private void Remove(HubUser user)
+        {
             _hubUser.ConnectedUsers.Remove(user);
             _hubUser.WaitingUsers.Remove(user);
+            _hubUser.SaveChanges();
         }
+
     }
 
 }

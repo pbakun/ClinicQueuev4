@@ -6,9 +6,11 @@ using System.Threading.Tasks;
 
 namespace WebApp.Hubs
 {
-    interface IManageHubUser
+    public interface IManageHubUser
     {
-        bool AddUser(HubUser user);
+        Task AddUserAsync(HubUser user);
+        void AddUser(HubUser user);
+        Task RemoveUserAsync(HubUser user);
         void RemoveUser(HubUser user);
         IEnumerable<HubUser> GetConnectedUsers();
         IEnumerable<HubUser> GetWaitingUsers();

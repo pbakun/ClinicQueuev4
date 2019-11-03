@@ -30,5 +30,13 @@ namespace XUnitTests
         {
             
         }
+
+        protected override void SetUpHubUserDatabase(IServiceCollection services)
+        {
+            services.AddDbContext<HubUserContext>(options =>
+            {
+                options.UseInMemoryDatabase("HubUserTestDb");
+            });
+        }
     }
 }

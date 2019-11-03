@@ -18,7 +18,6 @@ using Repository;
 using Repository.Initialization;
 using WebApp.BackgroundServices.Tasks;
 using WebApp.Hubs;
-using WebApp.Hubs.HubUser;
 using WebApp.Mappings;
 using WebApp.ServiceLogic;
 
@@ -29,8 +28,6 @@ namespace WebApp
         public Startup(IConfiguration configuration)
         {
             Configuration = configuration;
-
-            
         }
 
         public IConfiguration Configuration { get; }
@@ -43,7 +40,6 @@ namespace WebApp
                 // This lambda determines whether user consent for non-essential cookies is needed for a given request.
                 options.CheckConsentNeeded = context => true;
                 options.MinimumSameSitePolicy = SameSiteMode.None;
-
             });
 
             //add db context
@@ -71,10 +67,7 @@ namespace WebApp
 
             services.AddSingleton<SettingsHandler>();
 
-            services.AddDbContext<HubUserContext>(options =>
-            {
-                options.UseInMemoryDatabase("HubUsers");
-            });
+            SetUpHubUserDatabase(services);
 
             services.AddScoped<IManageHubUser, ManageHubUser>();
 
@@ -130,6 +123,14 @@ namespace WebApp
         protected virtual void EnsureDbCreated()
         {
             ServiceExtensions.EnsureDbCreated();
+        }
+
+        protected virtual void SetUpHubUserDatabase(IServiceCollection services)
+        {
+            services.AddDbContext<HubUserContext>(options =>
+            {
+                options.UseInMemoryDatabase("HubUsers");
+            });
         }
     }
 }
