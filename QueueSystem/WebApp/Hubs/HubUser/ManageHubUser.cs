@@ -1,6 +1,8 @@
-﻿using Entities;
+﻿using AutoMapper;
+using Entities;
 using Entities.Models;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,49 +13,58 @@ namespace WebApp.Hubs
     public class ManageHubUser : IManageHubUser
     {
         private readonly HubUserContext _hubUser;
+        private readonly IMapper _mapper;
 
-        public ManageHubUser(HubUserContext hubUser)
+        public ManageHubUser(HubUserContext hubUser, IMapper mapper)
         {
             _hubUser = hubUser;
+            _mapper = mapper;
         }
 
         public void AddUser(HubUser user)
         {
+            var userToSave = _mapper.Map<ConnectedHubUser>(user);
             if (_hubUser.ConnectedUsers.Where(u => u.GroupName == user.GroupName && !String.IsNullOrEmpty(u.UserId)).SingleOrDefault() == null)
             {
-                _hubUser.ConnectedUsers.Add(user);
+                _hubUser.ConnectedUsers.Add(userToSave);
             }
-            else if(_hubUser.ConnectedUsers.Where(u => u.UserId == user.UserId && u.GroupName == user.GroupName).SingleOrDefault() != null)
+            else if (_hubUser.ConnectedUsers.Where(u => u.UserId == user.UserId && u.GroupName == user.GroupName).SingleOrDefault() != null)
             {
-                _hubUser.ConnectedUsers.Add(user);
+                _hubUser.ConnectedUsers.Add(userToSave);
             }
             else
             {
-                _hubUser.WaitingUsers.Add(user);
+                var waitingUserToSave = _mapper.Map<WaitingHubUser>(user);
+                _hubUser.WaitingUsers.Add(waitingUserToSave);
             }
             _hubUser.SaveChanges();
         }
 
         public async Task AddUserAsync(HubUser user)
         {
+            var userToSave = _mapper.Map<ConnectedHubUser>(user);
             if (!_hubUser.ConnectedUsers.Contains(user))
             {
-                await _hubUser.ConnectedUsers.AddAsync(user);
+                await _hubUser.ConnectedUsers.AddAsync(userToSave);
             }
-            else if(_hubUser.ConnectedUsers.Where(u => u.UserId == user.UserId).Single() != null) {
-                await _hubUser.ConnectedUsers.AddAsync(user);
+            else if (_hubUser.ConnectedUsers.Where(u => u.UserId == user.UserId).Single() != null)
+            {
+                await _hubUser.ConnectedUsers.AddAsync(userToSave);
             }
             else
             {
-                await _hubUser.WaitingUsers.AddAsync(user);
+                var waitingUserToSave = _mapper.Map<WaitingHubUser>(user);
+                await _hubUser.WaitingUsers.AddAsync(waitingUserToSave);
             }
             await _hubUser.SaveChangesAsync();
-            
+
         }
 
         public IEnumerable<HubUser> GetConnectedUsers()
         {
-            return _hubUser.ConnectedUsers.ToList();
+            //var list =_hubUser.ConnectedUsers.ToList();
+            //return _mapper.Map<IEnumerable<HubUser>>(list);
+            return _hubUser.ConnectedUsers.AsNoTracking().ToList();
         }
 
         public HubUser GetRoomOwner(int? roomNo)
@@ -61,7 +72,7 @@ namespace WebApp.Hubs
             if (roomNo == null)
                 return null;
 
-            return _hubUser.ConnectedUsers.Where(u => u.GroupName == roomNo.ToString() && u.UserId != null).SingleOrDefault();
+            return _hubUser.ConnectedUsers.Where(u => u.GroupName == roomNo.ToString() && u.UserId != null).AsNoTracking().SingleOrDefault();
         }
 
         public HubUser GetUserByConnectionId(string connectionId)
@@ -69,12 +80,13 @@ namespace WebApp.Hubs
             if (connectionId == null)
                 return null;
 
-            var user = _hubUser.ConnectedUsers.Where(u => u.ConnectionId == connectionId).SingleOrDefault();
+            var user = _hubUser.ConnectedUsers.Where(u => u.ConnectionId == connectionId).AsNoTracking().SingleOrDefault();
 
-            if (user == null)
-                user = _hubUser.WaitingUsers.Where(u => u.ConnectionId == connectionId).SingleOrDefault();
+            if (user != null)
+                return user;
 
-            return user;
+            var waitingUser = _hubUser.WaitingUsers.Where(u => u.ConnectionId == connectionId).AsNoTracking().SingleOrDefault();
+            return _mapper.Map<HubUser>(waitingUser);
         }
 
         public HubUser GetUserById(string id)
@@ -82,38 +94,55 @@ namespace WebApp.Hubs
             if (id == null)
                 return null;
 
-            var user = _hubUser.ConnectedUsers.Where(u => u.UserId == id).SingleOrDefault();
+            var user = _hubUser.ConnectedUsers.Where(u => u.UserId == id).AsNoTracking().SingleOrDefault();
 
-            if (user == null)
-                user = _hubUser.WaitingUsers.Where(u => u.UserId == id).SingleOrDefault();
+            if (user != null)
+                return user;
 
-            return user;
+            var waitingUser = _hubUser.WaitingUsers.Where(u => u.UserId == id).AsNoTracking().SingleOrDefault();
+            return _mapper.Map<HubUser>(waitingUser);
         }
 
         public IEnumerable<HubUser> GetWaitingUsers()
         {
-            return _hubUser.WaitingUsers.ToList();
+            var list = _hubUser.WaitingUsers.AsNoTracking().ToList();
+            return _mapper.Map<IEnumerable<HubUser>>(list);
         }
 
         public void RemoveUser(HubUser user)
         {
-            Remove(user);
+            ChooseTypeToRemove(user);
             _hubUser.SaveChanges();
         }
 
         public async Task RemoveUserAsync(HubUser user)
         {
-            Remove(user);
+            ChooseTypeToRemove(user);
             await _hubUser.SaveChangesAsync();
         }
 
-        private void Remove(HubUser user)
+        private void ChooseTypeToRemove(HubUser user)
         {
-            _hubUser.ConnectedUsers.Remove(user);
-            _hubUser.WaitingUsers.Remove(user);
-            _hubUser.SaveChanges();
+            var userAsConnected = _mapper.Map<ConnectedHubUser>(user);
+            var userAsWaiting = _mapper.Map<WaitingHubUser>(user);
+            if (_hubUser.ConnectedUsers.Contains(user))
+            {
+                Remove(userAsConnected);
+            }
+            else if (_hubUser.WaitingUsers.Contains(userAsWaiting))
+            {
+                Remove(userAsWaiting);
+            }
         }
-
+        private void Remove(ConnectedHubUser user)
+        {
+            _hubUser.Entry(user).State = EntityState.Detached;
+            _hubUser.ConnectedUsers.Remove(user);
+        }
+        private void Remove(WaitingHubUser user)
+        {
+            _hubUser.WaitingUsers.Remove(user);
+        }
     }
 
 }

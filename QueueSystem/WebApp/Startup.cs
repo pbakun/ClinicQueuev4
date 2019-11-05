@@ -59,7 +59,7 @@ namespace WebApp
                 .AddEntityFrameworkStores<RepositoryContext>(); //would be best to add this in ServiceExtensions class in Repository library
 
             services.AddScoped<IDBInitializer, DBInitializer>();
-            services.AddAutoMapper(typeof(MappingProfile));
+            services.AddAutoMapper(typeof(MappingProfile), typeof(HubUserMappingProfile));
             //all queues somehow needs to be set to inactive on app startup
             services.AddScoped<IQueueService, QueueService>();
 

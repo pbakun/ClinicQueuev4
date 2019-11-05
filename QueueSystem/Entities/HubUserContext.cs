@@ -9,8 +9,8 @@ namespace Entities
         {
 
         }
-
-        public DbSet<HubUser> ConnectedUsers { get; set; }
-        public DbSet<HubUser> WaitingUsers { get; set; }
+        //Enitites cannot have same type. Not supported by ef core
+        public DbSet<ConnectedHubUser> ConnectedUsers { get; set; }
+        public DbSet<WaitingHubUser> WaitingUsers { get; set; }
     }
 }
