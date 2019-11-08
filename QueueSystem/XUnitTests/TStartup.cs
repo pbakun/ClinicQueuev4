@@ -22,6 +22,7 @@ namespace XUnitTests
             services.AddDbContext<RepositoryContext>(options =>
             {
                 options.UseInMemoryDatabase("HubTestDb");
+                options.EnableSensitiveDataLogging();
             });
             services.ConfigureRepositoryWrapper();
         }

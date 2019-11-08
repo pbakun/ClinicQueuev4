@@ -81,7 +81,6 @@ namespace WebApp.Hubs
                 return null;
 
             var user = _hubUser.ConnectedUsers.Where(u => u.ConnectionId == connectionId).AsNoTracking().SingleOrDefault();
-
             if (user != null)
                 return user;
 
@@ -95,7 +94,6 @@ namespace WebApp.Hubs
                 return null;
 
             var user = _hubUser.ConnectedUsers.Where(u => u.UserId == id).AsNoTracking().SingleOrDefault();
-
             if (user != null)
                 return user;
 
@@ -123,9 +121,13 @@ namespace WebApp.Hubs
 
         private void ChooseTypeToRemove(HubUser user)
         {
-            var userAsConnected = _mapper.Map<ConnectedHubUser>(user);
-            var userAsWaiting = _mapper.Map<WaitingHubUser>(user);
-            if (_hubUser.ConnectedUsers.Contains(user))
+            //var userAsConnected = _mapper.Map<ConnectedHubUser>(user);
+            //var userAsWaiting = _mapper.Map<WaitingHubUser>(user);
+            ConnectedHubUser userAsConnected = new ConnectedHubUser();
+            _hubUser.Entry(user).CurrentValues.SetValues(userAsConnected);
+            WaitingHubUser userAsWaiting = new WaitingHubUser();
+            _hubUser.Entry(user).CurrentValues.SetValues(userAsWaiting);
+            if (_hubUser.ConnectedUsers.Contains(userAsConnected))
             {
                 Remove(userAsConnected);
             }
@@ -136,7 +138,6 @@ namespace WebApp.Hubs
         }
         private void Remove(ConnectedHubUser user)
         {
-            _hubUser.Entry(user).State = EntityState.Detached;
             _hubUser.ConnectedUsers.Remove(user);
         }
         private void Remove(WaitingHubUser user)
