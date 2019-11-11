@@ -88,7 +88,7 @@ namespace WebApp.Hubs
                 _connectedUsers.Add(newUser);
         }
 
-        public override Task OnDisconnectedAsync(Exception exception)
+        public async override Task OnDisconnectedAsync(Exception exception)
         {
             string connectionString = Context.ConnectionId;
             var groupMember = _connectedUsers.Where(c => c.ConnectionId == Context.ConnectionId).FirstOrDefault();
@@ -97,7 +97,7 @@ namespace WebApp.Hubs
             {
                 var member = _waitingUsers.Where(c => c.ConnectionId == Context.ConnectionId).FirstOrDefault();
                 _waitingUsers.Remove(member);
-                return base.OnDisconnectedAsync(exception);
+                await base.OnDisconnectedAsync(exception);
             }
 
             int memberRoomNo = Convert.ToInt32(groupMember.GroupName);
@@ -106,7 +106,7 @@ namespace WebApp.Hubs
             if (groupMember.UserId != null && !_queueService.CheckRoomSubordination(groupMember.UserId, memberRoomNo))
             {
                 _queueService.SetQueueInactive(groupMember.UserId);
-                Clients.Group(groupMember.GroupName).SendAsync("Refresh", groupMember.GroupName);
+                await Clients.Group(groupMember.GroupName).SendAsync("Refresh", groupMember.GroupName);
             }
             else if (groupMember.UserId != null)
             {
@@ -116,18 +116,18 @@ namespace WebApp.Hubs
             }
             
             _connectedUsers.Remove(groupMember);
-            Groups.RemoveFromGroupAsync(connectionString, groupMember.GroupName);
+            await Groups.RemoveFromGroupAsync(connectionString, groupMember.GroupName);
 
-            return base.OnDisconnectedAsync(exception);
+            await base.OnDisconnectedAsync(exception);
         }
 
-        public void Timer_TimerFinished(object sender, EventArgs e)
+        public async void Timer_TimerFinished(object sender, EventArgs e)
         {
             var groupMember = sender as HubUser;
             if (_connectedUsers.Where(i => i.UserId == groupMember.UserId).FirstOrDefault() == null)
             {
                 _queueService.SetQueueInactive(groupMember.UserId);
-                _hubContext.Clients.Group(groupMember.GroupName).SendAsync("Refresh", groupMember.GroupName);
+                await _hubContext.Clients.Group(groupMember.GroupName).SendAsync("Refresh", groupMember.GroupName);
             }
             _timer.Dispose();
         }
@@ -154,9 +154,5 @@ namespace WebApp.Hubs
             }
         }
 
-        public async Task LiveBit()
-        {
-            await Clients.Caller.SendAsync("ReceiveLiveBit");
-        }
     }
 }

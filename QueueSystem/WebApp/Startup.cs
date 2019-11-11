@@ -73,7 +73,10 @@ namespace WebApp
 
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
             
-            services.AddSignalR();
+            services.AddSignalR(options =>
+            {
+                options.KeepAliveInterval = TimeSpan.FromSeconds(15);
+            });
 
             services.AddSingleton<Microsoft.Extensions.Hosting.IHostedService, ResetQueue>();
         }

@@ -190,11 +190,13 @@ namespace XUnitTests.Test.IntegrationTest
         {
             var hubUsers = AddPreparedUsers();
             
-            var user = _manageHubUser.GetUserById(hubUsers[index].UserId);
+            var users = _manageHubUser.GetUserByUserId(hubUsers[index].UserId);
 
-            Assert.Equal(hubUsers[index].ConnectionId, user.ConnectionId);
-            Assert.Equal(hubUsers[index].UserId, user.UserId);
-            Assert.Equal(hubUsers[index].GroupName, user.GroupName);
+            foreach(var user in users)
+            {
+                Assert.Equal(hubUsers[index].UserId, user.UserId);
+                Assert.Equal(hubUsers[index].GroupName, user.GroupName);
+            }
         }
 
         [Theory]
@@ -213,6 +215,20 @@ namespace XUnitTests.Test.IntegrationTest
         }
 
         #endregion
+
+        [Fact]
+        public void TestGetGroupOwner()
+        {
+            AddPreparedUsers();
+
+            var users = _manageHubUser.GetGroupMaster("12");
+
+            var userCount = users.Count();
+
+            Assert.Equal(2, userCount);
+            Assert.Equal(users.First().UserId, "1");
+        }
+
 
         #region Helpers
 
