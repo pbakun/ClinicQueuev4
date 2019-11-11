@@ -226,9 +226,12 @@ namespace XUnitTests.Test.IntegrationTest
             var userCount = users.Count();
 
             Assert.Equal(2, userCount);
-            Assert.Equal(users.First().UserId, "1");
+            foreach(var user in users)
+            {
+                Assert.Equal("1", user.UserId);
+                Assert.Equal("12", user.GroupName);
+            }
         }
-
 
         #region Helpers
 
