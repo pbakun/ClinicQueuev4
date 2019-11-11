@@ -13,7 +13,7 @@ using WebApp.Helpers;
 using AutoMapper;
 using WebApp.Mappings;
 
-namespace XUnitTests
+namespace XUnitTests.Test.IntegrationTest
 {
     public class HubIntegrationTest
     {
@@ -44,25 +44,6 @@ namespace XUnitTests
         }
 
 
-        [Fact]
-        public async Task CheckLiveBitReceive()
-        {
-            var connection = MakeHubConnection();
-            bool liveBitReceived = false;
-            connection.On("ReceiveLiveBit", () =>
-            {
-                liveBitReceived = true;
-            });
-
-            await connection.StartAsync();
-            await connection.InvokeAsync("LiveBit");
-
-            Assert.True(liveBitReceived);
-
-            await connection.DisposeAsync();
-        }
-
-        
         [Fact]
         public async Task CheckRegisterNewDoctor()
         {

@@ -45,8 +45,8 @@ namespace WebApp.Hubs
                 GroupName = roomNo.ToString()
             };
 
-            var userInControl = _connectedUsers.Where(m => m.UserId != null && m.GroupName == newUser.GroupName).FirstOrDefault();
-            if(userInControl == null || userInControl.UserId == newUser.UserId)
+            var userInControl = _hubUser.GetGroupMaster(newUser.GroupName);
+            if(userInControl == null || userInControl.FirstOrDefault().UserId == newUser.UserId)
             {
                 await Groups.AddToGroupAsync(newUser.ConnectionId, newUser.GroupName);
 
@@ -61,17 +61,12 @@ namespace WebApp.Hubs
 
                 await Clients.Group(roomNo.ToString()).SendAsync("ReceiveQueueNo", userId, queue.QueueNoMessage);
                 await Clients.Group(roomNo.ToString()).SendAsync("ReceiveAdditionalInfo", userId, queue.AdditionalMessage);
-
-                if (!_connectedUsers.Contains(newUser))
-                    _connectedUsers.Add(newUser);
             }
             else
             {
-                if (!_waitingUsers.Contains(newUser))
-                    _waitingUsers.Add(newUser);
-
                 await Clients.Caller.SendAsync("NotifyQueueOccupied", StaticDetails.QueueOccupiedMessage);
             }
+            await _hubUser.AddUserAsync(newUser);
         }
 
         public async Task RegisterPatientView(int roomNo)
@@ -84,22 +79,14 @@ namespace WebApp.Hubs
 
             await Groups.AddToGroupAsync(newUser.ConnectionId, newUser.GroupName);
 
-            if (!_connectedUsers.Contains(newUser))
-                _connectedUsers.Add(newUser);
+            await _hubUser.AddUserAsync(newUser);
         }
 
         public async override Task OnDisconnectedAsync(Exception exception)
         {
             string connectionString = Context.ConnectionId;
-            var groupMember = _connectedUsers.Where(c => c.ConnectionId == Context.ConnectionId).FirstOrDefault();
-            //if disconnecting user was not connected to any hub group (group was occupied when user was connecting)
-            if(groupMember == null)
-            {
-                var member = _waitingUsers.Where(c => c.ConnectionId == Context.ConnectionId).FirstOrDefault();
-                _waitingUsers.Remove(member);
-                await base.OnDisconnectedAsync(exception);
-            }
-
+            var groupMember = _hubUser.GetUserByConnectionId(connectionString);
+            
             int memberRoomNo = Convert.ToInt32(groupMember.GroupName);
 
             //if group member changed roomNo reload patient view
@@ -114,8 +101,8 @@ namespace WebApp.Hubs
                 _timer = new DoctorDisconnectedTimer(groupMember, SettingsHandler.ApplicationSettings.PatientViewNotificationAfterDoctorDisconnectedDelay);
                 _timer.TimerFinished += Timer_TimerFinished;
             }
-            
-            _connectedUsers.Remove(groupMember);
+
+            await _hubUser.RemoveUserAsync(groupMember);
             await Groups.RemoveFromGroupAsync(connectionString, groupMember.GroupName);
 
             await base.OnDisconnectedAsync(exception);
@@ -134,7 +121,7 @@ namespace WebApp.Hubs
 
         public async Task NewQueueNo(string userId, int queueNo, int roomNo)
         {
-            var hubUser = _connectedUsers.Where(u => u.UserId == userId).FirstOrDefault();
+            var hubUser = _hubUser.GetConnectedUsers().Where(u => u.UserId == userId).FirstOrDefault();
             if (hubUser != null)
             {
                 WebApp.Models.Queue outputQueue = await _queueService.NewQueueNo(userId, queueNo);
@@ -145,7 +132,7 @@ namespace WebApp.Hubs
 
         public async Task NewAdditionalInfo(string userId, int roomNo, string message)
         {
-            var hubUser = _connectedUsers.Where(u => u.UserId == userId).FirstOrDefault();
+            var hubUser = _hubUser.GetConnectedUsers().Where(u => u.UserId == userId).FirstOrDefault();
             if (hubUser != null)
             {
                 WebApp.Models.Queue outputQueue = await _queueService.NewAdditionalInfo(userId, message);

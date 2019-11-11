@@ -47,11 +47,15 @@ namespace WebApp.Hubs
         public async Task AddUserAsync(HubUser user)
         {
             var userToSave = _mapper.Map<ConnectedHubUser>(user);
-            if (!_hubUser.ConnectedUsers.Contains(user))
+            if (_hubUser.ConnectedUsers.Where(u => u.GroupName == user.GroupName && !String.IsNullOrEmpty(u.UserId)).FirstOrDefault() == null)
             {
                 await _hubUser.ConnectedUsers.AddAsync(userToSave);
             }
-            else if (_hubUser.ConnectedUsers.Where(u => u.UserId == user.UserId).Single() != null)
+            else if (_hubUser.ConnectedUsers.Where(u => u.UserId == user.UserId && u.GroupName == user.GroupName).FirstOrDefault() != null)
+            {
+                await _hubUser.ConnectedUsers.AddAsync(userToSave);
+            }
+            else if (String.IsNullOrEmpty(user.UserId) && !String.IsNullOrEmpty(user.GroupName))
             {
                 await _hubUser.ConnectedUsers.AddAsync(userToSave);
             }
@@ -74,7 +78,12 @@ namespace WebApp.Hubs
             if (groupName == null)
                 return null;
 
-            return _hubUser.ConnectedUsers.Where(u => u.UserId.Length > 0 && u.GroupName == groupName).AsEnumerable();
+            var output = _hubUser.ConnectedUsers.Where(u => u.UserId.Length > 0 && u.GroupName == groupName).ToList();
+
+            if (output.Count > 0)
+                return output;
+
+            return null;
         }
 
         public HubUser GetRoomOwner(int? roomNo)

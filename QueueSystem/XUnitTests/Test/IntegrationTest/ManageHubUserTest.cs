@@ -92,6 +92,57 @@ namespace XUnitTests.Test.IntegrationTest
             Assert.Equal(hubUser.GroupName, userInDb.GroupName);
         }
 
+        [Theory]
+        [InlineData("1", "123", "12")]
+        [InlineData("3", "423", "13")]
+        public async void TestAddingSingleUserAsync(string userId, string connectionId, string groupName)
+        {
+            var hubUser = new FakeHubUser(userId, connectionId, groupName).Build();
+            await _manageHubUser.AddUserAsync(hubUser);
+
+            var userInDb = _hubUserContext.ConnectedUsers.Where(u => u.ConnectionId == hubUser.ConnectionId).Single();
+            var connectedUsersCount = _hubUserContext.ConnectedUsers.ToList().Count();
+            var waitingUsersCount = _hubUserContext.WaitingUsers.ToList().Count();
+
+            Assert.Equal(userInDb.UserId, hubUser.UserId);
+            Assert.Equal(userInDb.ConnectionId, hubUser.ConnectionId);
+            Assert.Equal(userInDb.GroupName, hubUser.GroupName);
+            Assert.Equal(1, connectedUsersCount);
+            Assert.Equal(0, waitingUsersCount);
+        }
+
+        [Fact]
+        public async void TestAddingTwoUsersToSameGroupAsync()
+        {
+            var hubUser1 = new FakeHubUser("1", "123", "12").Build();
+            var hubUser2 = new FakeHubUser("2", "234", "12").Build();
+
+            await _manageHubUser.AddUserAsync(hubUser1);
+            await _manageHubUser.AddUserAsync(hubUser2);
+
+            var userInConnectedList = _hubUserContext.ConnectedUsers.Where(u => u.UserId == hubUser1.UserId).Single();
+            var userInWaitingList = _hubUserContext.WaitingUsers.Where(u => u.UserId == hubUser2.UserId).Single();
+            var connectedUsersCount = _hubUserContext.ConnectedUsers.ToList().Count();
+            var waitingUsersCount = _hubUserContext.WaitingUsers.ToList().Count();
+
+            Assert.Equal(hubUser1.ConnectionId, userInConnectedList.ConnectionId);
+            Assert.Equal(hubUser2.ConnectionId, userInWaitingList.ConnectionId);
+            Assert.Equal(1, connectedUsersCount);
+            Assert.Equal(1, waitingUsersCount);
+        }
+
+        [Fact]
+        public async void TestAddingUserWithoutUserIdAsync()
+        {
+            var hubUser = new FakeHubUser(string.Empty, "123", "12").Build();
+
+            await _manageHubUser.AddUserAsync(hubUser);
+
+            var userInDb = _hubUserContext.ConnectedUsers.Where(u => u.ConnectionId == hubUser.ConnectionId).SingleOrDefault();
+
+            Assert.Equal(hubUser.ConnectionId, userInDb.ConnectionId);
+            Assert.Equal(hubUser.GroupName, userInDb.GroupName);
+        }
         #endregion
 
         #region Remove User
@@ -141,6 +192,56 @@ namespace XUnitTests.Test.IntegrationTest
             var userInDb = _hubUserContext.ConnectedUsers.Where(u => u.ConnectionId == userToRemove.ConnectionId).SingleOrDefault();
             var userCount = _hubUserContext.ConnectedUsers.ToList().Count;
             
+            Assert.Equal(null, userInDb);
+            Assert.Equal(0, userCount);
+
+        }
+
+        [Fact]
+        public async void TestRemovingSingleConnectedUserAsync()
+        {
+            var hubUser = new FakeHubUser("1", "123", "12").Build();
+            _hubUserContext.ConnectedUsers.Add(_mapper.Map<ConnectedHubUser>(hubUser));
+            _hubUserContext.SaveChanges();
+            var userFromDb = _hubUserContext.ConnectedUsers.Where(u => u.ConnectionId == u.ConnectionId).SingleOrDefault();
+
+            await _manageHubUser.RemoveUserAsync(_mapper.Map<HubUser>(userFromDb));
+
+            var userInDb = _hubUserContext.ConnectedUsers.Where(u => u.ConnectionId == userFromDb.ConnectionId).SingleOrDefault();
+            var userCount = _hubUserContext.ConnectedUsers.ToList().Count;
+
+            Assert.Equal(null, userInDb);
+            Assert.Equal(0, userCount);
+        }
+
+        [Fact]
+        public async void TestRemovingSingleWaitingUserAsync()
+        {
+            var hubUser = new FakeHubUser("1", "123", "12").Build();
+            _hubUserContext.WaitingUsers.Add(_mapper.Map<WaitingHubUser>(hubUser));
+            _hubUserContext.SaveChanges();
+            var userFromDb = _hubUserContext.WaitingUsers.Where(u => u.ConnectionId == u.ConnectionId).SingleOrDefault();
+
+            await _manageHubUser.RemoveUserAsync(_mapper.Map<HubUser>(userFromDb));
+
+            var userInDb = _hubUserContext.WaitingUsers.Where(u => u.ConnectionId == userFromDb.ConnectionId).SingleOrDefault();
+            var waitingUserCount = _hubUserContext.WaitingUsers.ToList().Count;
+
+            Assert.Equal(null, userInDb);
+            Assert.Equal(0, waitingUserCount);
+        }
+        [Fact]
+        public async void TestAddingAndRemovingUserAsync()
+        {
+            var hubUser = new FakeHubUser("1", "123", "12").Build();
+
+            await _manageHubUser.AddUserAsync(hubUser);
+            var userToRemove = _manageHubUser.GetUserByConnectionId(hubUser.ConnectionId);
+            await _manageHubUser.RemoveUserAsync(userToRemove);
+
+            var userInDb = _hubUserContext.ConnectedUsers.Where(u => u.ConnectionId == userToRemove.ConnectionId).SingleOrDefault();
+            var userCount = _hubUserContext.ConnectedUsers.ToList().Count;
+
             Assert.Equal(null, userInDb);
             Assert.Equal(0, userCount);
 
