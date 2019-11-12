@@ -17,6 +17,5 @@ namespace WebApp.Hubs
         IEnumerable<HubUser> GetUserByUserId(string userId);
         IEnumerable<HubUser> GetGroupMaster(string groupName);
         HubUser GetUserByConnectionId(string connectionId);
-        HubUser GetRoomOwner(int? roomNo);
     }
 }

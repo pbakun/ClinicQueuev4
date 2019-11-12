@@ -159,8 +159,12 @@ namespace XUnitTests.Test.IntegrationTest
 
             var userInDb = _hubUserContext.ConnectedUsers.Where(u => u.ConnectionId == userFromDb.ConnectionId).SingleOrDefault();
             var userCount = _hubUserContext.ConnectedUsers.ToList().Count;
+            bool result = false;
 
-            Assert.Equal(null, userInDb);
+            if (userInDb == null)
+                result = true;
+
+            Assert.True(result);
             Assert.Equal(0, userCount);
         }
 
@@ -176,8 +180,12 @@ namespace XUnitTests.Test.IntegrationTest
 
             var userInDb = _hubUserContext.WaitingUsers.Where(u => u.ConnectionId == userFromDb.ConnectionId).SingleOrDefault();
             var waitingUserCount = _hubUserContext.WaitingUsers.ToList().Count;
+            bool result = false;
 
-            Assert.Equal(null, userInDb);
+            if (userInDb == null)
+                result = true;
+
+            Assert.True(result);
             Assert.Equal(0, waitingUserCount);
         }
         [Fact]
@@ -191,8 +199,12 @@ namespace XUnitTests.Test.IntegrationTest
 
             var userInDb = _hubUserContext.ConnectedUsers.Where(u => u.ConnectionId == userToRemove.ConnectionId).SingleOrDefault();
             var userCount = _hubUserContext.ConnectedUsers.ToList().Count;
-            
-            Assert.Equal(null, userInDb);
+            bool result = false;
+
+            if (userInDb == null)
+                result = true;
+
+            Assert.True(result);
             Assert.Equal(0, userCount);
 
         }
@@ -209,8 +221,12 @@ namespace XUnitTests.Test.IntegrationTest
 
             var userInDb = _hubUserContext.ConnectedUsers.Where(u => u.ConnectionId == userFromDb.ConnectionId).SingleOrDefault();
             var userCount = _hubUserContext.ConnectedUsers.ToList().Count;
+            bool result = false;
 
-            Assert.Equal(null, userInDb);
+            if (userInDb == null)
+                result = true;
+
+            Assert.True(result);
             Assert.Equal(0, userCount);
         }
 
@@ -226,8 +242,12 @@ namespace XUnitTests.Test.IntegrationTest
 
             var userInDb = _hubUserContext.WaitingUsers.Where(u => u.ConnectionId == userFromDb.ConnectionId).SingleOrDefault();
             var waitingUserCount = _hubUserContext.WaitingUsers.ToList().Count;
+            bool result = false;
 
-            Assert.Equal(null, userInDb);
+            if (userInDb == null)
+                result = true;
+
+            Assert.True(result);
             Assert.Equal(0, waitingUserCount);
         }
         [Fact]
@@ -241,8 +261,12 @@ namespace XUnitTests.Test.IntegrationTest
 
             var userInDb = _hubUserContext.ConnectedUsers.Where(u => u.ConnectionId == userToRemove.ConnectionId).SingleOrDefault();
             var userCount = _hubUserContext.ConnectedUsers.ToList().Count;
+            bool result = false;
 
-            Assert.Equal(null, userInDb);
+            if (userInDb == null)
+                result = true;
+
+            Assert.True(result);
             Assert.Equal(0, userCount);
 
         }
@@ -313,6 +337,45 @@ namespace XUnitTests.Test.IntegrationTest
             Assert.Equal(hubUsers[index].ConnectionId, user.ConnectionId);
             Assert.Equal(hubUsers[index].UserId, user.UserId);
             Assert.Equal(hubUsers[index].GroupName, user.GroupName);
+        }
+
+        #endregion
+
+        #region Test Null Return
+        [Fact]
+        public void TestEmptyGetUserByUserId()
+        {
+            bool result = false;
+            var assertion = _manageHubUser.GetUserByUserId("1");
+
+            if (assertion == null)
+                result = true;
+
+            Assert.True(result);
+        }
+
+        [Fact]
+        public void TestEmptyGetUserByConnectionId()
+        {
+            bool result = false;
+            var assertion = _manageHubUser.GetUserByConnectionId("1");
+
+            if (assertion == null)
+                result = true;
+
+            Assert.True(result);
+        }
+
+        [Fact]
+        public void TestEmptyGetGroupMaster()
+        {
+            bool result = false;
+            var assertion = _manageHubUser.GetGroupMaster("1");
+
+            if (assertion == null)
+                result = true;
+
+            Assert.True(result);
         }
 
         #endregion

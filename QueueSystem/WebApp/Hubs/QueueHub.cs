@@ -15,9 +15,6 @@ namespace WebApp.Hubs
 {
     public class QueueHub : Hub
     {
-        public static List<HubUser> _connectedUsers = new List<HubUser>();
-        public static List<HubUser> _waitingUsers = new List<HubUser>();
-
         private readonly IRepositoryWrapper _repo;
         private readonly IQueueService _queueService;
         private readonly IManageHubUser _hubUser;
@@ -111,7 +108,7 @@ namespace WebApp.Hubs
         public async void Timer_TimerFinished(object sender, EventArgs e)
         {
             var groupMember = sender as HubUser;
-            if (_connectedUsers.Where(i => i.UserId == groupMember.UserId).FirstOrDefault() == null)
+            if (_hubUser.GetUserByUserId(groupMember.UserId).FirstOrDefault() == null)
             {
                 _queueService.SetQueueInactive(groupMember.UserId);
                 await _hubContext.Clients.Group(groupMember.GroupName).SendAsync("Refresh", groupMember.GroupName);

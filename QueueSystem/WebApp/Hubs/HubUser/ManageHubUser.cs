@@ -85,15 +85,7 @@ namespace WebApp.Hubs
 
             return null;
         }
-
-        public HubUser GetRoomOwner(int? roomNo)
-        {
-            if (roomNo == null)
-                return null;
-
-            return _hubUser.ConnectedUsers.Where(u => u.GroupName == roomNo.ToString() && u.UserId != null).AsNoTracking().SingleOrDefault();
-        }
-
+        
         public HubUser GetUserByConnectionId(string connectionId)
         {
             if (String.IsNullOrEmpty(connectionId))
@@ -114,11 +106,13 @@ namespace WebApp.Hubs
                 return null;
 
             var user = _hubUser.ConnectedUsers.Where(u => u.UserId == userId).AsNoTracking().AsEnumerable();
-            if (user != null)
+            if (user.Count()>0)
                 return user;
 
             var waitingUser = _hubUser.WaitingUsers.Where(u => u.UserId == userId).AsNoTracking().AsEnumerable();
-            return waitingUser;
+            if (waitingUser.Count() > 0)
+                return waitingUser;
+            else return null;
         }
 
         public IEnumerable<HubUser> GetWaitingUsers()
