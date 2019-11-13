@@ -68,6 +68,18 @@ namespace WebApp.Hubs
 
         }
 
+        public IEnumerable<HubUser> GetConnectedUserById(string userId)
+        {
+            if (String.IsNullOrEmpty(userId))
+                return null;
+
+            var user = _hubUser.ConnectedUsers.Where(u => u.UserId == userId).AsNoTracking().AsEnumerable();
+            if (user.Count() > 0)
+                return user;
+
+            return null;
+        }
+
         public IEnumerable<HubUser> GetConnectedUsers()
         {
             return _hubUser.ConnectedUsers.AsNoTracking().ToList();
@@ -78,7 +90,7 @@ namespace WebApp.Hubs
             if (groupName == null)
                 return null;
 
-            var output = _hubUser.ConnectedUsers.Where(u => u.UserId.Length > 0 && u.GroupName == groupName).ToList();
+            var output = _hubUser.ConnectedUsers.Where(u => u.UserId != null && u.GroupName == groupName).ToList();
 
             if (output.Count > 0)
                 return output;

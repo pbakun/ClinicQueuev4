@@ -339,6 +339,19 @@ namespace XUnitTests.Test.IntegrationTest
             Assert.Equal(hubUsers[index].GroupName, user.GroupName);
         }
 
+        [Theory]
+        [InlineData(0)]
+        [InlineData(2)]
+        public void TestGetConnectedUserByUserid(int index)
+        {
+            var hubUsers = AddPreparedUsers();
+
+            var user = _manageHubUser.GetConnectedUserById(hubUsers[index].UserId).FirstOrDefault();
+
+            Assert.Equal(hubUsers[index].UserId, user.UserId);
+            Assert.Equal(hubUsers[index].GroupName, user.GroupName);
+        }
+
         #endregion
 
         #region Test Null Return
@@ -371,6 +384,18 @@ namespace XUnitTests.Test.IntegrationTest
         {
             bool result = false;
             var assertion = _manageHubUser.GetGroupMaster("1");
+
+            if (assertion == null)
+                result = true;
+
+            Assert.True(result);
+        }
+
+        [Fact]
+        public void TestEmptyGetConnectedUserByUserId()
+        {
+            bool result = false;
+            var assertion = _manageHubUser.GetConnectedUserById("1");
 
             if (assertion == null)
                 result = true;

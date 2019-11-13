@@ -50,7 +50,6 @@ namespace WebApp.Hubs
                 var user = _repo.User.FindByCondition(u => u.Id == userId).FirstOrDefault();
 
                 string doctorFullName = QueueHelper.GetDoctorFullName(user);
-
                 await Clients.Group(roomNo.ToString()).SendAsync("ReceiveDoctorFullName", userId, doctorFullName);
 
                 var queue = _queueService.FindByUserId(userId);
@@ -86,22 +85,27 @@ namespace WebApp.Hubs
             
             int memberRoomNo = Convert.ToInt32(groupMember.GroupName);
 
-            //if group member changed roomNo reload patient view
+            await _hubUser.RemoveUserAsync(groupMember);
+            await Groups.RemoveFromGroupAsync(connectionString, groupMember.GroupName);
+
+            //if group member changed roomNo exit patient view
             if (groupMember.UserId != null && !_queueService.CheckRoomSubordination(groupMember.UserId, memberRoomNo))
             {
                 _queueService.SetQueueInactive(groupMember.UserId);
-                await Clients.Group(groupMember.GroupName).SendAsync("Refresh", groupMember.GroupName);
+                InitGroupScreen(groupMember);
             }
             else if (groupMember.UserId != null)
             {
                 //if Doctor disconnected start timer and send necessery info to Patient View after
-                _timer = new DoctorDisconnectedTimer(groupMember, SettingsHandler.ApplicationSettings.PatientViewNotificationAfterDoctorDisconnectedDelay);
-                _timer.TimerFinished += Timer_TimerFinished;
+                //_timer = new DoctorDisconnectedTimer(groupMember, SettingsHandler.ApplicationSettings.PatientViewNotificationAfterDoctorDisconnectedDelay);
+                //_timer.TimerFinished += Timer_TimerFinished;
+                await Task.Delay(5000);
+                if (_hubUser.GetConnectedUserById(groupMember.UserId) == null)
+                {
+                    _queueService.SetQueueInactive(groupMember.UserId);
+                    InitGroupScreen(groupMember);
+                }
             }
-
-            await _hubUser.RemoveUserAsync(groupMember);
-            await Groups.RemoveFromGroupAsync(connectionString, groupMember.GroupName);
-
             await base.OnDisconnectedAsync(exception);
         }
 
@@ -136,6 +140,13 @@ namespace WebApp.Hubs
 
                 await Clients.Group(roomNo.ToString()).SendAsync("ReceiveAdditionalInfo", userId, outputQueue.AdditionalMessage);
             }
+        }
+
+        private async void InitGroupScreen(HubUser hubUser)
+        {
+            await Clients.Group(hubUser.GroupName).SendAsync("ReceiveDoctorFullName", hubUser.UserId, string.Empty);
+            await Clients.Group(hubUser.GroupName).SendAsync("ReceiveQueueNo", hubUser.UserId, SettingsHandler.ApplicationSettings.MessageWhenNoDoctorActiveInQueue);
+            await Clients.Group(hubUser.GroupName).SendAsync("ReceiveAdditionalInfo", hubUser.UserId, string.Empty);
         }
 
     }
