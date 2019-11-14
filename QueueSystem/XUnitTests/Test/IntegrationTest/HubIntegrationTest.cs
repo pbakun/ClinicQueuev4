@@ -21,6 +21,12 @@ namespace XUnitTests.Test.IntegrationTest
         private readonly IRepositoryWrapper _context;
         private readonly IMapper _mapper;
 
+        public string ReceiveQueueNo { get; set; }
+        public string ReceiveAdditionalMessage { get; set; }
+        public string ReceiveDoctorFullName { get; set; }
+        public string ReceiveUserId { get; set; }
+
+
         public HubIntegrationTest()
         {
             var config = new MapperConfiguration(cfg =>
@@ -55,35 +61,19 @@ namespace XUnitTests.Test.IntegrationTest
 
             var connection = MakeHubConnection();
 
-            string doctorFullName = string.Empty;
-            string receivedId = string.Empty;
-            connection.On<string, string>("ReceiveDoctorFullName", (id, msg) =>
-            {
-                receivedId = id;
-                doctorFullName = msg;
-            });
-
-            string receivedQueueNo = string.Empty;
-            connection.On<string, string>("ReceiveQueueNo", (id, msg) =>
-            {
-                receivedQueueNo = msg;
-            });
-
-            string receivedAdditionalInfo = string.Empty;
-            connection.On<string, string>("ReceiveAdditionalInfo", (id, msg) =>
-            {
-                receivedAdditionalInfo = msg;
-            });
+            MakeDoctorFullNameReceive(connection);
+            MakeQueueNoReceive(connection);
+            MakeQueueAdditionalMessageReceive(connection);
 
             await connection.StartAsync();
             await connection.InvokeAsync("RegisterDoctor", fakeUser.Id, fakeUser.RoomNo);
 
             string expected = QueueHelper.GetDoctorFullName(fakeUser);
-            Assert.Equal(expected, doctorFullName);
-            Assert.Equal(fakeUser.Id, receivedId);
+            Assert.Equal(expected, ReceiveDoctorFullName);
+            Assert.Equal(fakeUser.Id, ReceiveUserId);
 
-            Assert.Equal(expectedQueue.QueueNoMessage, receivedQueueNo);
-            Assert.Equal(expectedQueue.AdditionalMessage, receivedAdditionalInfo);
+            Assert.Equal(expectedQueue.QueueNoMessage, ReceiveQueueNo);
+            Assert.Equal(expectedQueue.AdditionalMessage, ReceiveAdditionalMessage);
 
             await connection.DisposeAsync();
         }
@@ -93,5 +83,35 @@ namespace XUnitTests.Test.IntegrationTest
         {
 
         }
+
+        #region Helpers
+
+        private async void MakeQueueNoReceive(HubConnection connection)
+        {
+            await Task.Run(() => connection.On<string, string>("ReceiveQueueNo", (id, msg) =>
+            {
+                //try to use delegate
+                ReceiveQueueNo = msg;
+            }));
+        }
+
+        private async void MakeQueueAdditionalMessageReceive(HubConnection connection)
+        {
+            await Task.Run(() => connection.On<string, string>("ReceiveAdditionalInfo", (id, msg) =>
+            {
+                ReceiveAdditionalMessage = msg;
+            }));
+        }
+
+        private async void MakeDoctorFullNameReceive(HubConnection connection)
+        {
+            await Task.Run(() => connection.On<string, string>("ReceiveDoctorFullName", (id, msg) =>
+            {
+                ReceiveUserId = id;
+                ReceiveDoctorFullName = msg;
+            }));
+        }
+
+        #endregion
     }
 }
