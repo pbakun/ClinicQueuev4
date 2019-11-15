@@ -12,6 +12,7 @@ using WebApp.Utility;
 using WebApp.Helpers;
 using AutoMapper;
 using WebApp.Mappings;
+using WebApp.Hubs;
 
 namespace XUnitTests.Test.IntegrationTest
 {
@@ -20,11 +21,13 @@ namespace XUnitTests.Test.IntegrationTest
         private readonly TestServer _server;
         private readonly IRepositoryWrapper _context;
         private readonly IMapper _mapper;
+        private readonly IManageHubUser _hubUser;
 
         public string ReceiveQueueNo { get; set; }
         public string ReceiveAdditionalMessage { get; set; }
         public string ReceiveDoctorFullName { get; set; }
         public string ReceiveUserId { get; set; }
+        public string ReceiveQueueOccupied { get; set; }
 
 
         public HubIntegrationTest()
@@ -39,6 +42,7 @@ namespace XUnitTests.Test.IntegrationTest
                 .UseStartup<TStartup>();
             _server = new TestServer(webHostBuilder);
             _context = _server.Host.Services.GetService(typeof(IRepositoryWrapper)) as IRepositoryWrapper;
+            _hubUser = _server.Host.Services.GetService(typeof(IManageHubUser)) as IManageHubUser;
         }
 
         private HubConnection MakeHubConnection()
@@ -79,10 +83,29 @@ namespace XUnitTests.Test.IntegrationTest
         }
 
         [Fact]
-        public async void CheckHeavyLoad()
+        public async void CheckQueueOccupied()
         {
+            var repo = new FakeRepo(_context);
+            var fakeUser = repo.FakeSingleUser();
+            var fakeQueue = repo.FakeSingleQueue();
+            var expectedQueue = _mapper.Map<WebApp.Models.Queue>(fakeQueue);
 
+            //put user in empty groud -> will go to ConnectedUsers list
+            _hubUser.AddUser(new FakeHubUser("234", "12345", "12").Build());
+
+            var connection = MakeHubConnection();
+
+            MakeNotifyQueueOccupied(connection);
+
+            await connection.StartAsync();
+            await connection.InvokeAsync("RegisterDoctor", fakeUser.Id, fakeUser.RoomNo);
+
+            var expectedMessage = StaticDetails.QueueOccupiedMessage;
+
+            Assert.Equal(expectedMessage, ReceiveQueueOccupied);
         }
+
+
 
         #region Helpers
 
@@ -90,7 +113,6 @@ namespace XUnitTests.Test.IntegrationTest
         {
             await Task.Run(() => connection.On<string, string>("ReceiveQueueNo", (id, msg) =>
             {
-                //try to use delegate
                 ReceiveQueueNo = msg;
             }));
         }
@@ -109,6 +131,14 @@ namespace XUnitTests.Test.IntegrationTest
             {
                 ReceiveUserId = id;
                 ReceiveDoctorFullName = msg;
+            }));
+        }
+
+        private async void MakeNotifyQueueOccupied(HubConnection connection)
+        {
+            await Task.Run(() => connection.On<string>("NotifyQueueOccupied", msg =>
+            {
+                ReceiveQueueOccupied = msg;
             }));
         }
 

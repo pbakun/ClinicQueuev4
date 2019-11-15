@@ -64,6 +64,9 @@
                                 <a class="btn btn-success p-1" asp-action="Details" asp-route-roomNo="@item.RoomNo">
                                     <i class="fas fa-info-circle"></i>
                                 </a>
+                                <a class="btn btn-primary p-1" asp-action="ManageHubUser" asp-route-roomNo="@item.RoomNo">
+                                    <i class="fas fa-users"></i>
+                                </a>
                                 <a class="btn btn-danger p-1 anchorDelete" data="@item.RoomNo" data-toggle="model">
                                     <i class="far fa-trash-alt text-light"></i>
                                 </a>

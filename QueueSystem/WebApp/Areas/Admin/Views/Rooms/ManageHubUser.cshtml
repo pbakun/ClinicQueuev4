@@ -1,0 +1,21 @@
+﻿@model List<WebApp.Models.ViewModel.ManageHubUserViewModel>
+@{
+    ViewData["Title"] = "ManageHubUser";
+}
+
+<br />
+<div class=" backgroundWhite">
+    <div class="row">
+        <div class="col-6">
+            <h2 class="text-info">Gabinet @Html.Raw(Model.FirstOrDefault().GroupName)</h2>
+        </div>
+        <div class="col-6 text-right">
+            <a asp-action="Details" asp-route-roomNo="@Model.FirstOrDefault().GroupName" class="btn btn-success">Info&nbsp;< class="fas fa-info-circle"></i></a>
+            <a asp-action="Index" class="btn btn-info">Powrót</a>
+        </div>
+    </div>
+    <br />
+
+
+</div>
+

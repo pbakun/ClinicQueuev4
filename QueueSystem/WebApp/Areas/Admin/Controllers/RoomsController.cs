@@ -23,6 +23,9 @@ namespace WebApp.Areas.Admin.Controllers
         [BindProperty]
         public List<RoomsViewModel> RoomsVM { get; set; }
 
+        [BindProperty]
+        public List<ManageHubUserViewModel> ManageHubUserVM { get; set; }
+
         public RoomsController(IQueueService queueService, IRepositoryWrapper repo)
         {
             _queueService = queueService;
@@ -110,6 +113,12 @@ namespace WebApp.Areas.Admin.Controllers
             SettingsHandler.Settings.WriteAllSettings(_appSettings);
 
             return RedirectToAction(nameof(Index));
+        }
+
+        public async Task<IActionResult> ManageHubUser(string roomNo)
+        {
+
+            return View(ManageHubUserVM);
         }
     }
 }
