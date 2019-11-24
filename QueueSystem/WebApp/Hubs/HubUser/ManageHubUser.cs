@@ -90,7 +90,7 @@ namespace WebApp.Hubs
             if (groupName == null)
                 return null;
 
-            var output = _hubUser.ConnectedUsers.Where(u => u.UserId != null && u.GroupName == groupName).ToList();
+            var output = _hubUser.ConnectedUsers.Where(u => !String.IsNullOrEmpty(u.UserId) && u.GroupName == groupName).ToList();
 
             if (output.Count > 0)
                 return output;

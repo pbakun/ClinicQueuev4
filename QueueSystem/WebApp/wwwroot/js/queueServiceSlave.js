@@ -8,17 +8,12 @@ var roomNo = pathElements[pathElements.length - 1];
 
 connection.on("ReceiveQueueNo", function (user, message) {
     DistributeQueueMessage(message);
-    //document.getElementById("QueueNo").textContent = message;
 });
 
 connection.on("ReceiveAdditionalInfo", function (id, message) {
     document.getElementById("additionalInfo").innerHTML = message;
+    FooterVisibility(message)
 });
-
-//connection.on("ResetQueue", function (message) {
-//    document.getElementById("QueueNo").textContent = message;
-//    console.log(message);
-//});
 
 connection.on("Refresh", function (roomNo) {
     console.log("refresh");
@@ -56,7 +51,7 @@ function connectionStart() {
             return console.error(err.toString());
         });
     }).catch(function (err) {
-        console.log("Hub Start error");Reset
+        console.log("Hub Start error");
         console.error(err.toString());
         setTimeout(reconnect(), 5000);
     });
@@ -67,9 +62,9 @@ function DistributeQueueMessage(message) {
     var secondField = document.getElementById("QueueMessageExtension");
     var headerField = document.getElementById("DoctorFullName");
     if (message.search("NZMR") === 0) {
-        var firstPart = queueMessage.split(" ")[0];
+        var firstPart = message.split(" ")[0];
         mainField.textContent = firstPart;
-        secondField.textContent = queueMessage.substring(firstPart.length, queueMessage.length);
+        secondField.textContent = message.substring(firstPart.length, message.length);
         headerField.hidden = true;
         mainField.style.paddingTop = "0.4em";
     }
@@ -78,5 +73,14 @@ function DistributeQueueMessage(message) {
         secondField.textContent = "";
         headerField.hidden = false;
         mainField.style.paddingTop = "0";
+    }
+}
+
+function FooterVisibility(message) {
+    if (message.length > 0) {
+        $('footer').show();
+    }
+    else {
+        $('footer').hide();
     }
 }

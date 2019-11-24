@@ -13,6 +13,7 @@ using WebApp.Helpers;
 using AutoMapper;
 using WebApp.Mappings;
 using WebApp.Hubs;
+using Microsoft.AspNetCore.SignalR;
 
 namespace XUnitTests.Test.IntegrationTest
 {
@@ -72,7 +73,11 @@ namespace XUnitTests.Test.IntegrationTest
             await connection.StartAsync();
             await connection.InvokeAsync("RegisterDoctor", fakeUser.Id, fakeUser.RoomNo);
 
+            fakeQueue = _context.Queue.FindByCondition(q => q.UserId == fakeUser.Id).SingleOrDefault();
+
             string expected = QueueHelper.GetDoctorFullName(fakeUser);
+            Assert.True(fakeQueue.IsActive);
+
             Assert.Equal(expected, ReceiveDoctorFullName);
             Assert.Equal(fakeUser.Id, ReceiveUserId);
 
@@ -105,7 +110,31 @@ namespace XUnitTests.Test.IntegrationTest
             Assert.Equal(expectedMessage, ReceiveQueueOccupied);
         }
 
+        [Fact]
+        public async void CheckUserDisconnected()
+        {
+            var repo = new FakeRepo(_context);
+            var fakeUser = repo.FakeSingleUser();
+            var fakeQueue = repo.FakeSingleQueue();
 
+            var connection = MakeHubConnection();
+
+            await connection.StartAsync();
+            
+            await connection.InvokeAsync("RegisterDoctor", fakeUser.Id, fakeUser.RoomNo);
+
+            await connection.StopAsync();
+            await Task.Delay(5000);
+            fakeQueue = _context.Queue.FindByCondition(q => q.Id == fakeQueue.Id).SingleOrDefault();
+
+            bool result = false;
+            var connectedUsers = _hubUser.GetConnectedUserById(fakeUser.Id);
+            if (connectedUsers == null)
+                result = true;
+
+            Assert.True(!fakeQueue.IsActive);
+            Assert.True(result);
+        }
 
         #region Helpers
 

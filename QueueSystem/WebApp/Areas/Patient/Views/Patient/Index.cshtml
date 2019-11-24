@@ -5,44 +5,36 @@
 
 <div class="backgroundWhite">
 
-
     <br />
     <header>
-        @*<div>*@
-            <img id="nfzLogo" src="~/img/logo_NFZ.png" />
-            <img id="cancerTherapyImg" src="~/img/szybka_terapia_onkologiczna.png" />
-        @*</div>*@
+        <img id="nfzLogo" src="~/img/logo_NFZ.png" />
+        <img id="cancerTherapyImg" src="~/img/szybka_terapia_onkologiczna.png" />
 
         <p class="text-secondary text-center font-weight-bolder" id="DoctorFullName">@Model.DoctorFullName</p>
-
     </header>
 
     <div class="row">
-       
         <div class="container">
             <p class="text-dark text-center font-weight-light" id="QueueNo">@Model.QueueNoMessage</p>
             <p class="text-dark text-center" id="QueueMessageExtension"></p>
         </div>
-
     </div>
 
-    
-
     <footer>
-            <marquee id="additionalInfoMarquee" behavior="scroll" direction="left">
-                <p id="additionalInfo">
-                    @Model.QueueAdditionalInfo</p>
-            </marquee>
+        <marquee id="additionalInfoMarquee" behavior="scroll" direction="left">
+            <p id="additionalInfo">
+                @Model.QueueAdditionalInfo
+            </p>
+        </marquee>
     </footer>
 </div>
 
 <script src="~/lib/signalr/dist/browser/signalr.js"></script>
 <script src="~/js/queueServiceSlave.js"></script>
-
 <script type="text/javascript">
     var queueMessage = '@Model.QueueNoMessage';
 
-    //function declared in queueServiceSlave.js
+    //functions declared in queueServiceSlave.js
     DistributeQueueMessage(queueMessage);
-    
+    FooterVisibility('@Model.QueueAdditionalInfo');
 </script>
