@@ -63,7 +63,6 @@ namespace WebApp.ServiceLogic
                 _repo.Save();
                 output = _mapper.Map<Queue>(queue);
             }
-
             return output;
         }
 
@@ -160,7 +159,6 @@ namespace WebApp.ServiceLogic
                 repo.Queue.Update(queue);
                 repo.Save();
             }
-
         }
 
         public void SetQueueInactive(string userId)

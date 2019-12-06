@@ -19,11 +19,6 @@ namespace WebApp.Hubs
         private readonly IQueueService _queueService;
         private readonly IManageHubUser _hubUser;
 
-        //hubContext for sending messages to clients from long-running processes (like Timer)
-        private readonly IHubContext<QueueHub> _hubContext;
-
-        private DoctorDisconnectedTimer _timer;
-
         public QueueHub(IRepositoryWrapper repo,
             IQueueService queueService,
             IHubContext<QueueHub> hubContext,
@@ -96,10 +91,7 @@ namespace WebApp.Hubs
             }
             else if (groupMember.UserId != null)
             {
-                //if Doctor disconnected start timer and send necessery info to Patient View after
-                //_timer = new DoctorDisconnectedTimer(groupMember, SettingsHandler.ApplicationSettings.PatientViewNotificationAfterDoctorDisconnectedDelay);
-                //_timer.TimerFinished += Timer_TimerFinished;
-                await Task.Delay(5000);
+                await Task.Delay(SettingsHandler.ApplicationSettings.PatientViewNotificationAfterDoctorDisconnectedDelay);
                 if (_hubUser.GetConnectedUserById(groupMember.UserId) == null)
                 {
                     _queueService.SetQueueInactive(groupMember.UserId);
@@ -107,17 +99,6 @@ namespace WebApp.Hubs
                 }
             }
             await base.OnDisconnectedAsync(exception);
-        }
-
-        public async void Timer_TimerFinished(object sender, EventArgs e)
-        {
-            var groupMember = sender as HubUser;
-            if (_hubUser.GetUserByUserId(groupMember.UserId).FirstOrDefault() == null)
-            {
-                _queueService.SetQueueInactive(groupMember.UserId);
-                await _hubContext.Clients.Group(groupMember.GroupName).SendAsync("Refresh", groupMember.GroupName);
-            }
-            _timer.Dispose();
         }
 
         public async Task QueueNoUp(string userId, string roomNo)
