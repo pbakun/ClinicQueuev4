@@ -4,7 +4,6 @@
 
 var connection = new signalR.HubConnectionBuilder().withUrl("/queueHub").build();
 
-
 //Set new QueueNoMessage if new one arrives. 
 connection.on("ReceiveQueueNo", function (user, message) {
     document.getElementById("QueueNo").innerHTML = message;
@@ -19,20 +18,11 @@ connection.on("ReceiveAdditionalInfo", function (id, message) {
     else {
         elementClassList.replace("btn-success", "btn-dark");
     }
-    
 });
 
 connection.on("NotifyQueueOccupied", function (message) {
     document.getElementById("serverMessage").innerHTML = message;
 });
-
-//connection.start().then(function(){
-//    connection.invoke("RegisterDoctor", id, roomNo).catch(function (err) {
-//        return console.error(err.toString());
-//    });
-//}).catch(function (err) {
-//    return console.error(err.toString());
-//});
 
 connectionStart();
 
@@ -65,10 +55,9 @@ function connectionStart() {
 }
 
 document.getElementById("PrevNo").addEventListener("click", function (event) {
-
     if (queueNo > 0) {
         queueNo--;
-        connection.invoke("NewQueueNo", id, queueNo, roomNo).catch(function (err) {
+        connection.invoke("QueueNoDown", id, roomNo).catch(function (err) {
             return console.error(err.toString());
         }); 
     }
@@ -77,7 +66,7 @@ document.getElementById("PrevNo").addEventListener("click", function (event) {
 
 document.getElementById("NextNo").addEventListener("click", function (event) {
     queueNo++;
-    connection.invoke("NewQueueNo", id, queueNo, roomNo).catch(function (err) {
+    connection.invoke("QueueNoUp", id, roomNo).catch(function (err) {
         return console.error(err.toString());
     });
     event.preventDefault();

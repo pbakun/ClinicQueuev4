@@ -186,6 +186,37 @@ namespace WebApp.ServiceLogic
             return output;
         }
 
+        public async Task<Queue> QueueNoUp(string userId)
+        {
+            var queue = _repo.Queue.FindByCondition(i => i.UserId == userId).FirstOrDefault();
+
+            queue.QueueNo++;
+
+            queue.Timestamp = DateTime.UtcNow;
+            _repo.Queue.Update(queue);
+            await _repo.SaveAsync();
+
+            Queue outputQueue = _mapper.Map<Queue>(queue);
+
+            return outputQueue;
+        }
+
+        public async Task<Queue> QueueNoDown(string userId)
+        {
+            var queue = _repo.Queue.FindByCondition(i => i.UserId == userId).FirstOrDefault();
+
+            if(queue.QueueNo>1)
+                queue.QueueNo--;
+
+            queue.Timestamp = DateTime.UtcNow;
+            _repo.Queue.Update(queue);
+            await _repo.SaveAsync();
+
+            Queue outputQueue = _mapper.Map<Queue>(queue);
+
+            return outputQueue;
+        }
+
 
         #endregion
 

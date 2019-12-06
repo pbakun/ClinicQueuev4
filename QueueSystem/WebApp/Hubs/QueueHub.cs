@@ -120,6 +120,28 @@ namespace WebApp.Hubs
             _timer.Dispose();
         }
 
+        public async Task QueueNoUp(string userId, string roomNo)
+        {
+            var hubUser = _hubUser.GetConnectedUsers().Where(u => u.UserId == userId).FirstOrDefault();
+            if (hubUser != null)
+            {
+                WebApp.Models.Queue outputQueue = await _queueService.QueueNoUp(userId);
+
+                await Clients.Group(roomNo).SendAsync("ReceiveQueueNo", userId, outputQueue.QueueNoMessage);
+            }
+        }
+
+        public async Task QueueNoDown(string userId, string roomNo)
+        {
+            var hubUser = _hubUser.GetConnectedUsers().Where(u => u.UserId == userId).FirstOrDefault();
+            if (hubUser != null)
+            {
+                WebApp.Models.Queue outputQueue = await _queueService.QueueNoDown(userId);
+
+                await Clients.Group(roomNo).SendAsync("ReceiveQueueNo", userId, outputQueue.QueueNoMessage);
+            }
+        }
+
         public async Task NewQueueNo(string userId, int queueNo, int roomNo)
         {
             var hubUser = _hubUser.GetConnectedUsers().Where(u => u.UserId == userId).FirstOrDefault();
