@@ -10,7 +10,7 @@ namespace WebApp.Models.ViewModel
     {
         public string GroupName { get; set; }
         public User GroupMaster { get; set; }
-        public IEnumerable<HubUser> ConnectedUsers { get; set; }
-        public IEnumerable<HubUser> WaitingUsers { get; set; }
+        public IEnumerable<HubUserVM> ConnectedUsers { get; set; }
+        public IEnumerable<HubUserVM> WaitingUsers { get; set; }
     }
 }

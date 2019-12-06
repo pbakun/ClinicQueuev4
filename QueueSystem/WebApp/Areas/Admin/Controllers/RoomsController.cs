@@ -45,7 +45,7 @@ namespace WebApp.Areas.Admin.Controllers
             var queues = _queueService.FindAll();
 
             var availableRooms = SettingsHandler.ApplicationSettings.AvailableRooms;
-            
+
             RoomsViewModel roomVMElement = new RoomsViewModel();
             foreach (var room in availableRooms)
             {
@@ -82,7 +82,7 @@ namespace WebApp.Areas.Admin.Controllers
         {
             if (!_appSettings.AvailableRooms.Contains(roomNo))
             {
-                if(roomNo > 0)
+                if (roomNo > 0)
                 {
                     _appSettings.AvailableRooms.Add(roomNo);
                     SettingsHandler.Settings.WriteAllSettings(_appSettings);
@@ -124,31 +124,53 @@ namespace WebApp.Areas.Admin.Controllers
 
         public async Task<IActionResult> ManageHubUser(string roomNo)
         {
-                var userMaster = new Entities.Models.User();
-                var groupMaster = _manageHubUser.GetGroupMaster(roomNo);
-                if(groupMaster != null)
-                {
-                    userMaster = _repo.User.FindByCondition(u => u.Id == groupMaster.First().UserId).FirstOrDefault();
-                }
+            var userMaster = new Entities.Models.User();
+            var groupMaster = _manageHubUser.GetGroupMaster(roomNo);
+            if (groupMaster != null)
+            {
+                userMaster = _repo.User.FindByCondition(u => u.Id == groupMaster.First().UserId).FirstOrDefault();
+            }
 
-                var connectedUsers = _manageHubUser.GetConnectedUsers(roomNo);
-                if (connectedUsers == null)
-                    connectedUsers = new List<HubUser>();
+            var connectedUsers = new List<HubUserVM>();
+            GenerateHubUserVM(connectedUsers, _manageHubUser.GetConnectedUsers(roomNo));
 
-                var waitingUsers = _manageHubUser.GetWaitingUsers(roomNo);
-                if (waitingUsers == null)
-                    waitingUsers = new List<HubUser>();
+            var waitingUsers = new List<HubUserVM>();
+            GenerateHubUserVM(waitingUsers, _manageHubUser.GetWaitingUsers(roomNo));
 
-
-                ManageHubUserVM = new ManageHubUserViewModel()
-                {
-                    GroupName = roomNo,
-                    ConnectedUsers = connectedUsers,
-                    WaitingUsers = waitingUsers,
-                    GroupMaster = _mapper.Map<WebApp.Models.User>(userMaster)
-                };
+            ManageHubUserVM = new ManageHubUserViewModel()
+            {
+                GroupName = roomNo,
+                ConnectedUsers = connectedUsers,
+                WaitingUsers = waitingUsers,
+                GroupMaster = _mapper.Map<WebApp.Models.User>(userMaster)
+            };
 
             return View(ManageHubUserVM);
+        }
+
+        private void GenerateHubUserVM(List<HubUserVM> hubUsersToVM, IEnumerable<HubUser> hubUsers)
+        {
+            if (hubUsers != null)
+            {
+                foreach (var hubUser in hubUsers)
+                {
+                    if (hubUser.UserId != null)
+                    {
+                        hubUsersToVM.Add(new HubUserVM()
+                        {
+                            HubUser = hubUser,
+                            User = _repo.User.FindByCondition(u => u.Id == hubUser.UserId).FirstOrDefault()
+                        });
+                    }
+                    else
+                    {
+                        hubUsersToVM.Add(new HubUserVM()
+                        {
+                            HubUser = hubUser
+                        });
+                    }
+                }
+            }
         }
     }
 }
