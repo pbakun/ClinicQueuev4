@@ -6,6 +6,7 @@ using AutoMapper;
 using Entities.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 using Repository.Interfaces;
 using WebApp.BackgroundServices.Tasks;
 using WebApp.Hubs;
@@ -25,18 +26,24 @@ namespace WebApp.Areas.Admin.Controllers
         private readonly ApplicationSettings _appSettings = SettingsHandler.ApplicationSettings;
         private readonly IManageHubUser _manageHubUser;
         private readonly IMapper _mapper;
+        private readonly IHubContext<QueueHub> _hubContext;
         [BindProperty]
         public List<RoomsViewModel> RoomsVM { get; set; }
 
         [BindProperty]
         public ManageHubUserViewModel ManageHubUserVM { get; set; }
 
-        public RoomsController(IQueueService queueService, IRepositoryWrapper repo, IManageHubUser manageHubUser, IMapper mapper)
+        public RoomsController(IQueueService queueService, 
+            IRepositoryWrapper repo, 
+            IManageHubUser manageHubUser, 
+            IMapper mapper, 
+            IHubContext<QueueHub> hubContext)
         {
             _queueService = queueService;
             _repo = repo;
             _manageHubUser = manageHubUser;
             _mapper = mapper;
+            _hubContext = hubContext;
             RoomsVM = new List<RoomsViewModel>();
         }
 

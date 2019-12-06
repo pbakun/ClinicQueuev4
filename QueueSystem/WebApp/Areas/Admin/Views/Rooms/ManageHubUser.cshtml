@@ -19,7 +19,7 @@
         @if (Model.ConnectedUsers.Count() > 0)
         {
             <table class="table table-reflow border">
-                <tr class="table-secondary">
+                <tr>
                     <th>
                         Id
                     </th>
@@ -29,42 +29,49 @@
                     <th>
                         Nazwisko
                     </th>
+                    <th></th>
                 </tr>
                 <tr>
-                    <td class="table-primary font-weight-bolder" colspan="3">
+                    <td class="table-success font-weight-bolder" colspan="4">
                         Użytkownicy podłączeni i klienci
                     </td>
                 </tr>
                 @foreach (var item in Model.ConnectedUsers)
                 {
-                    <tr @if (item.HubUser.UserId == Model.GroupMaster.Id) { @Html.Raw("style='background: tan'") }>
-                        <td class="align-middle">
-                            @Html.DisplayFor(m => item.HubUser.ConnectionId)
-                        </td>
-                        @if (item.User != null)
-                        {
-                            <td class="align-middle">
-                                Użytkownik
-                            </td>
-                            <td class="align-middle">
-                                @Html.Raw(item.User.FirstName + " " + item.User.LastName)
-                            </td>
-                        }
-                        else
-                        {
-                            <td class="align-middle">
-                                Klient
-                            </td>
-                            <td class="align-middle">
-                            </td>
-                        }
+            <tr @if (item.HubUser.UserId == Model.GroupMaster.Id) { @Html.Raw("class = 'table-primary'") }>
+                <td class="align-middle">
+                    @Html.DisplayFor(m => item.HubUser.ConnectionId)
+                </td>
+                @if (item.User != null)
+                {
+                    <td class="align-middle">
+                        Użytkownik
+                    </td>
+                    <td class="align-middle">
+                        @Html.Raw(item.User.FirstName + " " + item.User.LastName)
+                    </td>
+                    <td>
+                        <a class="btn btn-danger p-1 anchorDelete" data="@item.HubUser.ConnectionId" data-toggle="model">
+                            <i class="fas fa-random text-light"></i>
+                        </a>
+                    </td>
+                }
+                else
+                {
+                    <td class="align-middle">
+                        Klient
+                    </td>
+                    <td class="align-middle">
+                    </td>
+                    <td></td>
+                }
 
-                    </tr>
+            </tr>
                 }
                 @if (Model.WaitingUsers.Count() > 0)
                 {
                     <tr>
-                        <td class="table-primary font-weight-bolder" colspan="3">
+                        <td class="table-danger font-weight-bolder" colspan="4">
                             Użytkownicy oczekujący na podłączenie
                         </td>
                     </tr>
@@ -82,6 +89,11 @@
                                 {
                                     @Html.Raw(item.User.FirstName + " " + item.User.LastName)
                                 }
+                            </td>
+                            <td>
+                                <a class="btn btn-success p-1 anchorDelete" data="@item.HubUser.ConnectionId" data-toggle="model">
+                                    <i class="fas fa-random text-light"></i>
+                                </a>
                             </td>
                         </tr>
                     }
