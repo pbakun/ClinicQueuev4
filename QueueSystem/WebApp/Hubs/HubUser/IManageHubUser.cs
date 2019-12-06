@@ -14,9 +14,14 @@ namespace WebApp.Hubs
         void RemoveUser(HubUser user);
         IEnumerable<HubUser> GetConnectedUsers();
         IEnumerable<HubUser> GetWaitingUsers();
+        IEnumerable<HubUser> GetConnectedUsers(string groupName);
+        IEnumerable<HubUser> GetWaitingUsers(string groupName);
         IEnumerable<HubUser> GetUserByUserId(string userId);
         IEnumerable<HubUser> GetGroupMaster(string groupName);
         HubUser GetUserByConnectionId(string connectionId);
         IEnumerable<HubUser> GetConnectedUserById(string userId);
+        IEnumerable<HubUser> GetGroupUsers(string groupName);
+        int GetConnectedUsersCount(string groupName);
+        int GetWaitingUsersCount(string groupName);
     }
 }

@@ -85,6 +85,28 @@ namespace WebApp.Hubs
             return _hubUser.ConnectedUsers.AsNoTracking().ToList();
         }
 
+        public IEnumerable<HubUser> GetConnectedUsers(string groupName)
+        {
+            if (String.IsNullOrEmpty(groupName))
+                return null;
+
+            var user = _hubUser.ConnectedUsers.Where(u => u.GroupName == groupName).AsNoTracking().AsEnumerable();
+            if (user.Count() > 0)
+                return user;
+
+            return null;
+        }
+
+        public int GetConnectedUsersCount(string groupName)
+        {
+            var users = GetConnectedUsers(groupName);
+
+            if (users != null)
+                return users.Count();
+
+            return 0;
+        }
+
         public IEnumerable<HubUser> GetGroupMaster(string groupName)
         {
             if (groupName == null)
@@ -97,7 +119,32 @@ namespace WebApp.Hubs
 
             return null;
         }
-        
+
+        public IEnumerable<HubUser> GetGroupUsers(string groupName)
+        {
+            if (String.IsNullOrEmpty(groupName))
+                return null;
+
+            var users = new List<HubUser>();
+            var connectedUsers = GetConnectedUsers(groupName);
+            var waitingUsers = GetWaitingUsers(groupName);
+            if(connectedUsers.Count() > 0)
+            {
+                foreach (var user in connectedUsers)
+                    users.Add(user);
+            }
+            if (waitingUsers.Count() > 0)
+            {
+                foreach (var user in waitingUsers)
+                    users.Add(user);
+            }
+
+            if (users.Count() > 0)
+                return users.AsEnumerable();
+
+            return null;
+        }
+
         public HubUser GetUserByConnectionId(string connectionId)
         {
             if (String.IsNullOrEmpty(connectionId))
@@ -130,6 +177,28 @@ namespace WebApp.Hubs
         public IEnumerable<HubUser> GetWaitingUsers()
         {
             return _hubUser.WaitingUsers.AsNoTracking().ToList();
+        }
+
+        public IEnumerable<HubUser> GetWaitingUsers(string groupName)
+        {
+            if (String.IsNullOrEmpty(groupName))
+                return null;
+
+            var user = _hubUser.WaitingUsers.Where(u => u.GroupName == groupName).AsNoTracking().AsEnumerable();
+            if (user.Count() > 0)
+                return user;
+
+            return null;
+        }
+
+        public int GetWaitingUsersCount(string groupName)
+        {
+            var users = GetWaitingUsers(groupName);
+
+            if (users != null)
+                return users.Count();
+
+            return 0;
         }
 
         public void RemoveUser(HubUser user)

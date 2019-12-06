@@ -2,10 +2,13 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using AutoMapper;
+using Entities.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Repository.Interfaces;
 using WebApp.BackgroundServices.Tasks;
+using WebApp.Hubs;
 using WebApp.Models;
 using WebApp.Models.ViewModel;
 using WebApp.ServiceLogic;
@@ -20,16 +23,20 @@ namespace WebApp.Areas.Admin.Controllers
         private readonly IQueueService _queueService;
         private readonly IRepositoryWrapper _repo;
         private readonly ApplicationSettings _appSettings = SettingsHandler.ApplicationSettings;
+        private readonly IManageHubUser _manageHubUser;
+        private readonly IMapper _mapper;
         [BindProperty]
         public List<RoomsViewModel> RoomsVM { get; set; }
 
         [BindProperty]
-        public List<ManageHubUserViewModel> ManageHubUserVM { get; set; }
+        public ManageHubUserViewModel ManageHubUserVM { get; set; }
 
-        public RoomsController(IQueueService queueService, IRepositoryWrapper repo)
+        public RoomsController(IQueueService queueService, IRepositoryWrapper repo, IManageHubUser manageHubUser, IMapper mapper)
         {
             _queueService = queueService;
             _repo = repo;
+            _manageHubUser = manageHubUser;
+            _mapper = mapper;
             RoomsVM = new List<RoomsViewModel>();
         }
 
@@ -117,6 +124,29 @@ namespace WebApp.Areas.Admin.Controllers
 
         public async Task<IActionResult> ManageHubUser(string roomNo)
         {
+                var userMaster = new Entities.Models.User();
+                var groupMaster = _manageHubUser.GetGroupMaster(roomNo);
+                if(groupMaster != null)
+                {
+                    userMaster = _repo.User.FindByCondition(u => u.Id == groupMaster.First().UserId).FirstOrDefault();
+                }
+
+                var connectedUsers = _manageHubUser.GetConnectedUsers(roomNo);
+                if (connectedUsers == null)
+                    connectedUsers = new List<HubUser>();
+
+                var waitingUsers = _manageHubUser.GetWaitingUsers(roomNo);
+                if (waitingUsers == null)
+                    waitingUsers = new List<HubUser>();
+
+
+                ManageHubUserVM = new ManageHubUserViewModel()
+                {
+                    GroupName = roomNo,
+                    ConnectedUsers = connectedUsers,
+                    WaitingUsers = waitingUsers,
+                    GroupMaster = _mapper.Map<WebApp.Models.User>(userMaster)
+                };
 
             return View(ManageHubUserVM);
         }
