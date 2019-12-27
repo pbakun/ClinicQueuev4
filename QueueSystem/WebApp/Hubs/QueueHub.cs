@@ -21,7 +21,6 @@ namespace WebApp.Hubs
 
         public QueueHub(IRepositoryWrapper repo,
             IQueueService queueService,
-            IHubContext<QueueHub> hubContext,
             IManageHubUser hubUser)
         {
             _repo = repo;
