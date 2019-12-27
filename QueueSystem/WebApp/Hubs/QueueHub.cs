@@ -26,7 +26,6 @@ namespace WebApp.Hubs
         {
             _repo = repo;
             _queueService = queueService;
-            _hubContext = hubContext;
             _hubUser = hubUser;
         }
         public async Task RegisterDoctor(string userId, int roomNo)

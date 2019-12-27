@@ -12,7 +12,7 @@ connection.on("ReceiveQueueNo", function (user, message) {
 
 connection.on("ReceiveAdditionalInfo", function (id, message) {
     document.getElementById("additionalInfo").innerHTML = message;
-    FooterVisibility(message)
+    //FooterVisibility(message);
 });
 
 connection.on("Refresh", function (roomNo) {
