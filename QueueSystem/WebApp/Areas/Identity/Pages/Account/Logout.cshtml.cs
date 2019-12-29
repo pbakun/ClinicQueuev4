@@ -38,6 +38,7 @@ namespace WebApp.Areas.Identity.Pages.Account
 
         public void OnGet()
         {
+            LocalRedirect("/");
         }
 
         public async Task<IActionResult> OnPost(string returnUrl = null)
@@ -47,10 +48,10 @@ namespace WebApp.Areas.Identity.Pages.Account
 
             _queueService.SetQueueInactive(claim.Value);
 
-            var hubUser = _manageHubUser.GetConnectedUserById(claim.Value).FirstOrDefault();
-            if(hubUser != null)
+            var hubUser = _manageHubUser.GetConnectedUserById(claim.Value);
+            if(hubUser != null && hubUser.Count() == 1)
             {
-                _queueHub.InitGroupScreen(hubUser);
+                _queueHub.InitGroupScreen(hubUser.FirstOrDefault());
             }
 
             await _signInManager.SignOutAsync();
