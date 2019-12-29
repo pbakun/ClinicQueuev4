@@ -13,7 +13,7 @@ using WebApp.Utility;
 
 namespace WebApp.Hubs
 {
-    public class QueueHub : Hub, IQueueHub
+    public class QueueHub : Hub
     {
         private readonly IRepositoryWrapper _repo;
         private readonly IQueueService _queueService;

@@ -8,7 +8,7 @@ namespace WebApp.Hubs
 {
     public interface IQueueHub
     {
-        async void InitGroupScreen(HubUser hubUser);
+        void InitGroupScreen(HubUser hubUser);
 
     }
 }

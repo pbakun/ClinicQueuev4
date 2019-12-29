@@ -80,6 +80,7 @@ namespace WebApp
             });
 
             services.AddSingleton<Microsoft.Extensions.Hosting.IHostedService, ResetQueue>();
+            services.AddScoped<IQueueHub, HubHelper>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
