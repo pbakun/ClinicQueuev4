@@ -63,7 +63,6 @@ namespace WebApp.ServiceLogic
                 _repo.Save();
                 output = _mapper.Map<Queue>(queue);
             }
-
             return output;
         }
 
@@ -160,7 +159,6 @@ namespace WebApp.ServiceLogic
                 repo.Queue.Update(queue);
                 repo.Save();
             }
-
         }
 
         public void SetQueueInactive(string userId)
@@ -186,11 +184,50 @@ namespace WebApp.ServiceLogic
             return output;
         }
 
+        public async Task<Queue> QueueNoUp(string userId)
+        {
+            var queue = _repo.Queue.FindByCondition(i => i.UserId == userId).FirstOrDefault();
+
+            queue.QueueNo++;
+            TurnOffBreakAndSpecial(queue);
+
+            queue.Timestamp = DateTime.UtcNow;
+            _repo.Queue.Update(queue);
+            await _repo.SaveAsync();
+
+            Queue outputQueue = _mapper.Map<Queue>(queue);
+
+            return outputQueue;
+        }
+
+        public async Task<Queue> QueueNoDown(string userId)
+        {
+            var queue = _repo.Queue.FindByCondition(i => i.UserId == userId).FirstOrDefault();
+
+            if(queue.QueueNo>1)
+            {
+                queue.QueueNo--;
+                TurnOffBreakAndSpecial(queue);
+            }
+
+            queue.Timestamp = DateTime.UtcNow;
+            _repo.Queue.Update(queue);
+            await _repo.SaveAsync();
+
+            Queue outputQueue = _mapper.Map<Queue>(queue);
+
+            return outputQueue;
+        }
+
 
         #endregion
 
         #region Custom Private Methods
-
+        private void TurnOffBreakAndSpecial(Entities.Models.Queue queue)
+        {
+            queue.IsBreak = false;
+            queue.IsSpecial = false;
+        }
 
         #endregion
     }

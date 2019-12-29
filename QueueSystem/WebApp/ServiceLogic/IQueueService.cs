@@ -9,6 +9,8 @@ namespace WebApp.ServiceLogic
     public interface IQueueService
     {
         Task<Queue> NewQueueNo(string userId, int queueNo);
+        Task<Queue> QueueNoUp(string userId);
+        Task<Queue> QueueNoDown(string userId);
         Task<Queue> NewAdditionalInfo(string userId, string message);
         Queue ChangeUserRoomNo(string userId, int newRoomNo);
         Queue ResetQueues();

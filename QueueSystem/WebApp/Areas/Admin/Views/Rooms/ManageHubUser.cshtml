@@ -1,0 +1,110 @@
+﻿@model WebApp.Models.ViewModel.ManageHubUserViewModel
+@{
+    ViewData["Title"] = "ManageHubUser";
+}
+
+<br />
+<div class=" backgroundWhite">
+    <div class="row">
+        <div class="col-6">
+            <h2 class="text-info">Gabinet @Html.Raw(Model.GroupName)</h2>
+        </div>
+        <div class="col-6 text-right">
+            <a asp-action="Details" asp-route-roomNo="@Model.GroupName" class="btn btn-success">Info&nbsp;<i class="fas fa-info-circle"></i></a>
+            <a asp-action="Index" class="btn btn-info">Powrót</a>
+        </div>
+    </div>
+    <br />
+    <div>
+        @if (Model.ConnectedUsers.Count() > 0)
+        {
+            <table class="table table-reflow border">
+                <tr>
+                    <th>
+                        Id
+                    </th>
+                    <th>
+                        Rodzaj
+                    </th>
+                    <th>
+                        Nazwisko
+                    </th>
+                    <th></th>
+                </tr>
+                <tr>
+                    <td class="table-success font-weight-bolder" colspan="4">
+                        Użytkownicy podłączeni i klienci
+                    </td>
+                </tr>
+                @foreach (var item in Model.ConnectedUsers)
+                {
+            <tr @if (item.HubUser.UserId == Model.GroupMaster.Id) { @Html.Raw("class = 'table-primary'") }>
+                <td class="align-middle">
+                    @Html.DisplayFor(m => item.HubUser.ConnectionId)
+                </td>
+                @if (item.User != null)
+                {
+                    <td class="align-middle">
+                        Użytkownik
+                    </td>
+                    <td class="align-middle">
+                        @Html.Raw(item.User.FirstName + " " + item.User.LastName)
+                    </td>
+                    <td>
+                        <a class="btn btn-danger p-1 anchorDelete" data="@item.HubUser.ConnectionId" data-toggle="model">
+                            <i class="fas fa-random text-light"></i>
+                        </a>
+                    </td>
+                }
+                else
+                {
+                    <td class="align-middle">
+                        Klient
+                    </td>
+                    <td class="align-middle">
+                    </td>
+                    <td></td>
+                }
+
+            </tr>
+                }
+                @if (Model.WaitingUsers.Count() > 0)
+                {
+                    <tr>
+                        <td class="table-danger font-weight-bolder" colspan="4">
+                            Użytkownicy oczekujący na podłączenie
+                        </td>
+                    </tr>
+                    @foreach (var item in Model.WaitingUsers)
+                    {
+                        <tr>
+                            <td class="align-middle">
+                                @Html.DisplayFor(m => item.HubUser.ConnectionId)
+                            </td>
+                            <td class="align-middle">
+                                Oczekujący
+                            </td>
+                            <td class="align-middle">
+                                @if (item.User != null)
+                                {
+                                    @Html.Raw(item.User.FirstName + " " + item.User.LastName)
+                                }
+                            </td>
+                            <td>
+                                <a class="btn btn-success p-1 anchorDelete" data="@item.HubUser.ConnectionId" data-toggle="model">
+                                    <i class="fas fa-random text-light"></i>
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                }
+            </table>
+        }
+        else
+        {
+            <p>Brak użytkowników</p>
+        }
+    </div>
+
+</div>
+

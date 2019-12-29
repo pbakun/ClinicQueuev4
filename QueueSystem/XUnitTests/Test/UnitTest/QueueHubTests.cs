@@ -23,7 +23,6 @@ namespace XUnitTests
         private readonly IMapper _mapper;
         private readonly Mock<IHubCallerClients> _mockClients;
         private readonly Mock<Microsoft.AspNetCore.SignalR.IClientProxy> _mockClientProxy;
-        private readonly Mock<IHubContext<QueueHub>> _mockHubContext;
         private readonly Mock<IQueueService> _mockQueueService;
         private readonly Mock<IRepositoryWrapper> _mockRepo;
         private readonly Mock<IGroupManager> _mockGroupManager;
@@ -40,7 +39,6 @@ namespace XUnitTests
             _mockClientProxy = new Mock<Microsoft.AspNetCore.SignalR.IClientProxy>();
 
             _mockClients = new Mock<IHubCallerClients>();
-            _mockHubContext = new Mock<IHubContext<QueueHub>>();
             _mockQueueService = new Mock<IQueueService>();
             _mockRepo = new Mock<IRepositoryWrapper>();
             _mockGroupManager = new Mock<IGroupManager>();
@@ -65,18 +63,18 @@ namespace XUnitTests
             {
                 mockGroupManager = _mockGroupManager;
             }
-
+            var mockManageHubUser = new Mock<IManageHubUser>();
 
             var prepareQueue = new FakeQueue().WithQueueNo(12).WithRoomNo(roomNo).Build();
             var queue = _mapper.Map<Queue>(prepareQueue);
 
             var prepareUser = new UserData().WithRoomNo(roomNo).BuildAsList();
 
+            mockManageHubUser.Setup(h => h.GetGroupMaster(It.IsAny<string>())).Returns(new FakeHubUser(id, null, roomNo.ToString()).BuildAsList());
             _mockRepo.Setup(r => r.User.FindByCondition(It.IsAny<Expression<Func<Entities.Models.User, bool>>>()))
                 .Returns(prepareUser);
             _mockQueueService.Setup(q => q.FindByUserId(It.IsAny<string>())).Returns(queue);
             _mockQueueService.Setup(q => q.NewQueueNo(It.IsAny<string>(), It.IsAny<int>())).Returns(Task.FromResult(queue));
-
 
             _mockHubCallerContext.Setup(c => c.ConnectionId).Returns(It.IsAny<string>());
 
@@ -84,7 +82,7 @@ namespace XUnitTests
             //System.Diagnostics.Debugger.Launch();
 
 
-            var hub = new QueueHub(_mockRepo.Object, _mockQueueService.Object, _mockHubContext.Object)
+            var hub = new QueueHub(_mockRepo.Object, _mockQueueService.Object, mockManageHubUser.Object)
             {
                 Clients = mockClients.Object,
                 Context = _mockHubCallerContext.Object,
@@ -94,7 +92,6 @@ namespace XUnitTests
             await hub.RegisterDoctor(id, queue.RoomNo);
 
             return queue;
-
         }
 
 
@@ -125,10 +122,7 @@ namespace XUnitTests
                 default(CancellationToken)), Times.Once);
 
             mockGroupManager.Verify(g => g.AddToGroupAsync(null, roomNo.ToString(), default), Times.Once);
-
-            QueueHub._connectedUsers.Clear();
         }
-
 
         [Theory]
         [InlineData(12, 2)]
@@ -154,24 +148,21 @@ namespace XUnitTests
             mockClientProxy.Verify(p => p.SendCoreAsync("NotifyQueueOccupied",
                 It.Is<object[]>(o => o != null && o.Length == 1),
                 default(CancellationToken)), Times.Exactly(numberOfCalls - 1));
-
-
-            QueueHub._connectedUsers.Clear();
-            QueueHub._waitingUsers.Clear();
         }
 
         [Fact]
         public async Task RegisterPatientTest()
         {
             int fakeRoomNo = 12;
-
+            
             var mockClients = new Mock<IHubCallerClients>();
             var mockGroupManager = new Mock<IGroupManager>();
             var mockHubCallerContext = new Mock<Microsoft.AspNetCore.SignalR.HubCallerContext>();
+            var mockManageHubUsers = new Mock<IManageHubUser>();
 
             mockHubCallerContext.Setup(c => c.ConnectionId).Returns(It.IsAny<string>());
 
-            var hub = new QueueHub(_mockRepo.Object, _mockQueueService.Object, _mockHubContext.Object)
+            var hub = new QueueHub(_mockRepo.Object, _mockQueueService.Object, mockManageHubUsers.Object)
             {
                 Context = mockHubCallerContext.Object,
                 Groups = mockGroupManager.Object
@@ -180,9 +171,6 @@ namespace XUnitTests
             await hub.RegisterPatientView(fakeRoomNo);
 
             mockGroupManager.Verify(g => g.AddToGroupAsync(It.IsAny<string>(), fakeRoomNo.ToString(), default), Times.Once);
-
-            QueueHub._connectedUsers.Clear();
-
         }
 
         [Theory]
@@ -193,16 +181,16 @@ namespace XUnitTests
             var mockClientProxy = new Mock<Microsoft.AspNetCore.SignalR.IClientProxy>();
             var mockClients = new Mock<IHubCallerClients>();
             var mockGroupManager = new Mock<IGroupManager>();
+            var mockManageHubUser = new Mock<IManageHubUser>();
 
             var prepareQueue = new FakeQueue().WithRoomNo(roomNo).WithQueueNo(15).WithOwnerInitials("PB").Build();
             var preparedQueue = _mapper.Map<Queue>(prepareQueue);
 
-            QueueHub._connectedUsers.Add(PrepareHubUser(id, roomNo.ToString()));
-
             mockClients.Setup(c => c.Group(preparedQueue.RoomNo.ToString())).Returns(() => mockClientProxy.Object);
+            mockManageHubUser.Setup(h => h.GetConnectedUsers()).Returns(new FakeHubUser(id, null, roomNo.ToString()).BuildAsList());
             _mockQueueService.Setup(q => q.NewQueueNo(It.IsAny<string>(), It.IsAny<int>())).Returns(Task.FromResult(preparedQueue));
 
-            var hub = new QueueHub(_mockRepo.Object, _mockQueueService.Object, _mockHubContext.Object)
+            var hub = new QueueHub(_mockRepo.Object, _mockQueueService.Object, mockManageHubUser.Object)
             {
                 Clients = mockClients.Object,
                 Context = _mockHubCallerContext.Object,
@@ -214,8 +202,6 @@ namespace XUnitTests
             mockClientProxy.Verify(p => p.SendCoreAsync("ReceiveQueueNo",
                 It.Is<object[]>(o => o != null && o.Length == 2 && ((string)o[1]) == preparedQueue.QueueNoMessage),
                 default(CancellationToken)), Times.AtLeastOnce);
-
-            QueueHub._connectedUsers.Clear();
         }
 
         [Theory]
@@ -226,16 +212,16 @@ namespace XUnitTests
             var mockClientProxy = new Mock<Microsoft.AspNetCore.SignalR.IClientProxy>();
             var mockClients = new Mock<IHubCallerClients>();
             var mockGroupManager = new Mock<IGroupManager>();
+            var mockManageHubUser = new Mock<IManageHubUser>();
 
             var prepareQueue = new FakeQueue().WithRoomNo(roomNo).WithMessage(message).WithOwnerInitials("PB").Build();
             var preparedQueue = _mapper.Map<Queue>(prepareQueue);
 
-            QueueHub._connectedUsers.Add(PrepareHubUser(id, roomNo.ToString()));
-
             mockClients.Setup(c => c.Group(preparedQueue.RoomNo.ToString())).Returns(() => mockClientProxy.Object);
+            mockManageHubUser.Setup(h => h.GetConnectedUsers()).Returns(new FakeHubUser(id, null, roomNo.ToString()).BuildAsList());
             _mockQueueService.Setup(q => q.NewAdditionalInfo(It.IsAny<string>(), It.IsAny<string>())).Returns(Task.FromResult(preparedQueue));
 
-            var hub = new QueueHub(_mockRepo.Object, _mockQueueService.Object, _mockHubContext.Object)
+            var hub = new QueueHub(_mockRepo.Object, _mockQueueService.Object, mockManageHubUser.Object)
             {
                 Clients = mockClients.Object,
                 Context = _mockHubCallerContext.Object,
@@ -247,8 +233,6 @@ namespace XUnitTests
             mockClientProxy.Verify(p => p.SendCoreAsync("ReceiveAdditionalInfo",
                 It.Is<object[]>(o => o != null && o.Length == 2 && ((string)o[1]) == preparedQueue.AdditionalMessage),
                 default(CancellationToken)), Times.AtLeastOnce);
-
-            QueueHub._connectedUsers.Clear();
         }
 
 
@@ -264,17 +248,18 @@ namespace XUnitTests
             var mockGroupManager = new Mock<IGroupManager>();
             var mockHubCallerContext = new Mock<Microsoft.AspNetCore.SignalR.HubCallerContext>();
             var mockTimer = new Mock<DoctorDisconnectedTimer>();
+            var mockManageHubUser = new Mock<IManageHubUser>();
             //System.Diagnostics.Debugger.Launch();
 
-            QueueHub._connectedUsers.Add(PrepareHubUser(fakeId, fakeRoomNo, fakeConnectionId));
             mockHubCallerContext.Setup(c => c.ConnectionId).Returns(fakeConnectionId);
+            mockManageHubUser.Setup(h => h.GetUserByConnectionId(It.IsAny<string>())).Returns(new FakeHubUser(fakeId, fakeConnectionId, fakeRoomNo).Build());
 
             _mockQueueService.Setup(q => q.SetQueueInactive(fakeId));
             _mockQueueService.Setup(q => q.CheckRoomSubordination(It.IsAny<string>(), It.IsAny<int>())).Returns(false);
 
             mockClients.Setup(c => c.Group(fakeRoomNo)).Returns(() => mockClientProxy.Object);
 
-            var hub = new QueueHub(_mockRepo.Object, _mockQueueService.Object, _mockHubContext.Object)
+            var hub = new QueueHub(_mockRepo.Object, _mockQueueService.Object, mockManageHubUser.Object)
             {
                 Clients = mockClients.Object,
                 Context = mockHubCallerContext.Object,
@@ -285,17 +270,13 @@ namespace XUnitTests
 
             mockClients.Verify(c => c.Group(fakeRoomNo), Times.AtLeastOnce);
             mockGroupManager.Verify(g => g.RemoveFromGroupAsync(fakeConnectionId, fakeRoomNo, default), Times.AtLeastOnce);
-
-            QueueHub._connectedUsers.Clear();
         }
 
-
-
-        private HubUser PrepareHubUser(string id, string roomNo, string connectionID = null)
+        private Entities.Models.HubUser PrepareHubUser(string id, string roomNo, string connectionID = null)
         {
-            return new HubUser()
+            return new Entities.Models.HubUser()
             {
-                Id = id,
+                UserId = id,
                 GroupName = roomNo,
                 ConnectionId = connectionID
             };

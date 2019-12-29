@@ -28,8 +28,6 @@ namespace WebApp
         public Startup(IConfiguration configuration)
         {
             Configuration = configuration;
-
-            
         }
 
         public IConfiguration Configuration { get; }
@@ -42,7 +40,6 @@ namespace WebApp
                 // This lambda determines whether user consent for non-essential cookies is needed for a given request.
                 options.CheckConsentNeeded = context => true;
                 options.MinimumSameSitePolicy = SameSiteMode.None;
-
             });
 
             //add db context
@@ -55,6 +52,7 @@ namespace WebApp
                 config.Password.RequiredLength = 0;
                 config.Password.RequiredUniqueChars = 0;
                 config.Password.RequireUppercase = false;
+                config.Password.RequireLowercase = false;
             })
                 .AddRoleManager<RoleManager<IdentityRole>>()
                 .AddDefaultTokenProviders()
@@ -62,19 +60,27 @@ namespace WebApp
                 .AddEntityFrameworkStores<RepositoryContext>(); //would be best to add this in ServiceExtensions class in Repository library
 
             services.AddScoped<IDBInitializer, DBInitializer>();
-            services.AddAutoMapper(typeof(MappingProfile));
+            services.AddAutoMapper(typeof(MappingProfile), typeof(HubUserMappingProfile));
             //all queues somehow needs to be set to inactive on app startup
             services.AddScoped<IQueueService, QueueService>();
 
-            services.AddSingleton <Microsoft.Extensions.Hosting.IHostedService, StartupSetUp>();
+            services.AddSingleton<Microsoft.Extensions.Hosting.IHostedService, StartupSetUp>();
 
             services.AddSingleton<SettingsHandler>();
 
-            services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
+            SetUpHubUserDatabase(services);
 
-            services.AddSignalR();
+            services.AddScoped<IManageHubUser, ManageHubUser>();
+
+            services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
+            
+            services.AddSignalR(options =>
+            {
+                options.KeepAliveInterval = TimeSpan.FromSeconds(15);
+            });
 
             services.AddSingleton<Microsoft.Extensions.Hosting.IHostedService, ResetQueue>();
+            services.AddScoped<IQueueHub, HubHelper>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -122,6 +128,14 @@ namespace WebApp
         protected virtual void EnsureDbCreated()
         {
             ServiceExtensions.EnsureDbCreated();
+        }
+
+        protected virtual void SetUpHubUserDatabase(IServiceCollection services)
+        {
+            services.AddDbContext<HubUserContext>(options =>
+            {
+                options.UseInMemoryDatabase("HubUsers");
+            });
         }
     }
 }

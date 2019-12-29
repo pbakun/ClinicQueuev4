@@ -16,6 +16,7 @@ namespace WebApp.Mappings
             CreateMap<Entities.Models.User, User>();
 
             CreateMap<ApplicationSettings, ApplicationSettings>();
+
         }
     }
 }

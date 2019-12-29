@@ -2,10 +2,14 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using AutoMapper;
+using Entities.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 using Repository.Interfaces;
 using WebApp.BackgroundServices.Tasks;
+using WebApp.Hubs;
 using WebApp.Models;
 using WebApp.Models.ViewModel;
 using WebApp.ServiceLogic;
@@ -20,13 +24,26 @@ namespace WebApp.Areas.Admin.Controllers
         private readonly IQueueService _queueService;
         private readonly IRepositoryWrapper _repo;
         private readonly ApplicationSettings _appSettings = SettingsHandler.ApplicationSettings;
+        private readonly IManageHubUser _manageHubUser;
+        private readonly IMapper _mapper;
+        private readonly IHubContext<QueueHub> _hubContext;
         [BindProperty]
         public List<RoomsViewModel> RoomsVM { get; set; }
 
-        public RoomsController(IQueueService queueService, IRepositoryWrapper repo)
+        [BindProperty]
+        public ManageHubUserViewModel ManageHubUserVM { get; set; }
+
+        public RoomsController(IQueueService queueService, 
+            IRepositoryWrapper repo, 
+            IManageHubUser manageHubUser, 
+            IMapper mapper, 
+            IHubContext<QueueHub> hubContext)
         {
             _queueService = queueService;
             _repo = repo;
+            _manageHubUser = manageHubUser;
+            _mapper = mapper;
+            _hubContext = hubContext;
             RoomsVM = new List<RoomsViewModel>();
         }
 
@@ -35,7 +52,7 @@ namespace WebApp.Areas.Admin.Controllers
             var queues = _queueService.FindAll();
 
             var availableRooms = SettingsHandler.ApplicationSettings.AvailableRooms;
-            
+
             RoomsViewModel roomVMElement = new RoomsViewModel();
             foreach (var room in availableRooms)
             {
@@ -72,7 +89,7 @@ namespace WebApp.Areas.Admin.Controllers
         {
             if (!_appSettings.AvailableRooms.Contains(roomNo))
             {
-                if(roomNo > 0)
+                if (roomNo > 0)
                 {
                     _appSettings.AvailableRooms.Add(roomNo);
                     SettingsHandler.Settings.WriteAllSettings(_appSettings);
@@ -110,6 +127,57 @@ namespace WebApp.Areas.Admin.Controllers
             SettingsHandler.Settings.WriteAllSettings(_appSettings);
 
             return RedirectToAction(nameof(Index));
+        }
+
+        public async Task<IActionResult> ManageHubUser(string roomNo)
+        {
+            var userMaster = new Entities.Models.User();
+            var groupMaster = _manageHubUser.GetGroupMaster(roomNo);
+            if (groupMaster != null)
+            {
+                userMaster = _repo.User.FindByCondition(u => u.Id == groupMaster.First().UserId).FirstOrDefault();
+            }
+
+            var connectedUsers = new List<HubUserVM>();
+            GenerateHubUserVM(connectedUsers, _manageHubUser.GetConnectedUsers(roomNo));
+
+            var waitingUsers = new List<HubUserVM>();
+            GenerateHubUserVM(waitingUsers, _manageHubUser.GetWaitingUsers(roomNo));
+
+            ManageHubUserVM = new ManageHubUserViewModel()
+            {
+                GroupName = roomNo,
+                ConnectedUsers = connectedUsers,
+                WaitingUsers = waitingUsers,
+                GroupMaster = _mapper.Map<WebApp.Models.User>(userMaster)
+            };
+
+            return View(ManageHubUserVM);
+        }
+
+        private void GenerateHubUserVM(List<HubUserVM> hubUsersToVM, IEnumerable<HubUser> hubUsers)
+        {
+            if (hubUsers != null)
+            {
+                foreach (var hubUser in hubUsers)
+                {
+                    if (hubUser.UserId != null)
+                    {
+                        hubUsersToVM.Add(new HubUserVM()
+                        {
+                            HubUser = hubUser,
+                            User = _repo.User.FindByCondition(u => u.Id == hubUser.UserId).FirstOrDefault()
+                        });
+                    }
+                    else
+                    {
+                        hubUsersToVM.Add(new HubUserVM()
+                        {
+                            HubUser = hubUser
+                        });
+                    }
+                }
+            }
         }
     }
 }

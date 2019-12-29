@@ -10,6 +10,7 @@
             <h2 class="text-info">Gabinet @Html.Raw(Model.FirstOrDefault().RoomNo)</h2>
         </div>
         <div class="col-6 text-right">
+            <a asp-action="ManageHubUser" asp-route-roomNo="@Model.FirstOrDefault().RoomNo" class="btn btn-primary">Aktualni&nbsp;<i class="fas fa-users"></i></a>
             <a asp-action="Index" class="btn btn-info">Powrót</a>
         </div>
     </div>
