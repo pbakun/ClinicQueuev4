@@ -77,10 +77,13 @@ function DistributeQueueMessage(message) {
 }
 
 function FooterVisibility(message) {
+    var footer = document.querySelector('footer');
     if (message.length > 0) {
-        $('footer').show();
+        //$('footer').show();
+        footer.setAttribute('display', 'normal');
     }
     else {
-        $('footer').hide();
+        //$('footer').hide();
+        footer.setAttribute('display', 'none');
     }
 }

@@ -52,6 +52,7 @@ namespace WebApp
                 config.Password.RequiredLength = 0;
                 config.Password.RequiredUniqueChars = 0;
                 config.Password.RequireUppercase = false;
+                config.Password.RequireLowercase = false;
             })
                 .AddRoleManager<RoleManager<IdentityRole>>()
                 .AddDefaultTokenProviders()

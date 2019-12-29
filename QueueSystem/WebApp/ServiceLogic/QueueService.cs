@@ -189,6 +189,7 @@ namespace WebApp.ServiceLogic
             var queue = _repo.Queue.FindByCondition(i => i.UserId == userId).FirstOrDefault();
 
             queue.QueueNo++;
+            TurnOffBreakAndSpecial(queue);
 
             queue.Timestamp = DateTime.UtcNow;
             _repo.Queue.Update(queue);
@@ -204,7 +205,10 @@ namespace WebApp.ServiceLogic
             var queue = _repo.Queue.FindByCondition(i => i.UserId == userId).FirstOrDefault();
 
             if(queue.QueueNo>1)
+            {
                 queue.QueueNo--;
+                TurnOffBreakAndSpecial(queue);
+            }
 
             queue.Timestamp = DateTime.UtcNow;
             _repo.Queue.Update(queue);
@@ -219,7 +223,11 @@ namespace WebApp.ServiceLogic
         #endregion
 
         #region Custom Private Methods
-
+        private void TurnOffBreakAndSpecial(Entities.Models.Queue queue)
+        {
+            queue.IsBreak = false;
+            queue.IsSpecial = false;
+        }
 
         #endregion
     }

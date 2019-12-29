@@ -7,7 +7,9 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Logging;
+using WebApp.Hubs;
 using WebApp.ServiceLogic;
 
 namespace WebApp.Areas.Identity.Pages.Account
@@ -18,6 +20,7 @@ namespace WebApp.Areas.Identity.Pages.Account
         private readonly SignInManager<IdentityUser> _signInManager;
         private readonly ILogger<LogoutModel> _logger;
         private readonly IQueueService _queueService;
+        private readonly IHubContext<QueueHub> _queueHub;
 
         public LogoutModel(SignInManager<IdentityUser> signInManager, ILogger<LogoutModel> logger, IQueueService queueService)
         {

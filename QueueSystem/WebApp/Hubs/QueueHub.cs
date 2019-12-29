@@ -13,7 +13,7 @@ using WebApp.Utility;
 
 namespace WebApp.Hubs
 {
-    public class QueueHub : Hub
+    public class QueueHub : Hub, IQueueHub
     {
         private readonly IRepositoryWrapper _repo;
         private readonly IQueueService _queueService;
@@ -143,7 +143,7 @@ namespace WebApp.Hubs
             }
         }
 
-        private async void InitGroupScreen(HubUser hubUser)
+        public async void InitGroupScreen(HubUser hubUser)
         {
             await Clients.Group(hubUser.GroupName).SendAsync("ReceiveDoctorFullName", hubUser.UserId, string.Empty);
             await Clients.Group(hubUser.GroupName).SendAsync("ReceiveQueueNo", hubUser.UserId, SettingsHandler.ApplicationSettings.MessageWhenNoDoctorActiveInQueue);
