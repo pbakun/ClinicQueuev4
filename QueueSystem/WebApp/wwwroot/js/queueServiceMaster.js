@@ -2,8 +2,12 @@
 
 //roomNo, queueNo and id defined in Index.cshtml. Value taken from the model
 
-var connection = new signalR.HubConnectionBuilder().withUrl("/queueHub").build();
+var connection = new signalR.HubConnectionBuilder()
+    .withUrl("/queueHub")
+    .configureLogging(signalR.LogLevel.Trace)
+    .build();
 
+//connection.serverTimeoutInMilliseconds = 15000;
 //Set new QueueNoMessage if new one arrives. 
 connection.on("ReceiveQueueNo", function (user, message) {
     document.getElementById("QueueNo").innerHTML = message;

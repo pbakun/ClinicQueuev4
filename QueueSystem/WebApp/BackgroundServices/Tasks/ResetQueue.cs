@@ -40,6 +40,8 @@ namespace WebApp.BackgroundServices.Tasks
                 foreach (var queue in queues)
                 {
                     queue.QueueNo = 1;
+                    queue.IsBreak = false;
+                    queue.IsSpecial = false;
                     repo.Queue.Update(queue);
                     var outputQueue = _mapper.Map<Queue>(queue);
                     if(outputQueue.IsActive)

@@ -71,6 +71,12 @@ namespace WebApp.Hubs
             await _hubUser.AddUserAsync(newUser);
         }
 
+        public async override Task OnConnectedAsync()
+        {
+
+            await base.OnConnectedAsync();
+        }
+
         public async override Task OnDisconnectedAsync(Exception exception)
         {
             string connectionString = Context.ConnectionId;

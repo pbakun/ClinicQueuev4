@@ -30,6 +30,10 @@
         "package.json",
         "README.md"
       ]
+    },
+    {
+      "library": "signalr@2.4.1",
+      "destination": "wwwroot/lib/signalr/"
     }
   ]
 }

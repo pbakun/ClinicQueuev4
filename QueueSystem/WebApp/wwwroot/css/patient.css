@@ -21,7 +21,7 @@
 
 #DoctorFullName {
     font-size: 6vw;
-    padding-top: 13%;
+    padding-top: 16%;
     line-height: 1.0;
 }
 
@@ -31,7 +31,7 @@
 }
 
 #QueueMessageExtension{
-    font-size: 5em;
+    font-size: 7em;
     font-weight: 500;
 }
 

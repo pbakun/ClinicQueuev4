@@ -66,7 +66,7 @@ function DistributeQueueMessage(message) {
         mainField.textContent = firstPart;
         secondField.textContent = message.substring(firstPart.length, message.length);
         headerField.hidden = true;
-        mainField.style.paddingTop = "0.4em";
+        mainField.style.paddingTop = "0.6em";
     }
     else {
         mainField.textContent = message;
