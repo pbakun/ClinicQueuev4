@@ -9,6 +9,7 @@ namespace Repository.Interfaces
     {
         IQueueRepository Queue { get; }
         IUserRepository User { get; }
+        IFavoriteAdditionalMessageRepository FavoriteAdditionalMessage { get; }
         void Save();
         Task SaveAsync();
     }

@@ -13,6 +13,7 @@ namespace Repository
         private RepositoryContext _repoContext;
         private IQueueRepository _queue;
         private IUserRepository _user;
+        private IFavoriteAdditionalMessageRepository _favMessage;
 
         public RepositoryWrapper(RepositoryContext repositoryContext)
         {
@@ -37,6 +38,17 @@ namespace Repository
                     _user = new UserRepository(_repoContext);
 
                 return _user;
+            }
+        }
+
+        public IFavoriteAdditionalMessageRepository FavoriteAdditionalMessage
+        {
+            get
+            {
+                if (_favMessage == null)
+                    _favMessage = new FavoriteAdditionalMessageRepository(_repoContext);
+
+                return _favMessage;
             }
         }
 

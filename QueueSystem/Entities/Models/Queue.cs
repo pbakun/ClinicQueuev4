@@ -17,7 +17,10 @@ namespace Entities.Models
         public string OwnerInitials { get; set; }
         public int RoomNo { get; set; }
         public DateTime Timestamp { get; set; }
+        [Required]
         public string UserId { get; set; }
+        [ForeignKey("UserId")]
+        public virtual User User { get; set; }
         public bool IsSpecial { get; set; }
         public bool IsActive { get; set; }
 

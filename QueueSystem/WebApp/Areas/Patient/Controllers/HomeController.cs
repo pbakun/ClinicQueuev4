@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
+using Entities.Models;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.Mvc;
@@ -27,7 +28,6 @@ namespace WebApp.Areas.Patient.Controllers
         public IActionResult Index()
         {
             var availableRooms = SettingsHandler.ApplicationSettings.AvailableRooms;
-
 
             return View(availableRooms);
         }

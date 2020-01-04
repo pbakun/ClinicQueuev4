@@ -9,7 +9,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Entities.Migrations
 {
     [DbContext(typeof(RepositoryContext))]
-    [Migration("20200104004837_addFavoriteAdditionalMessage")]
+    [Migration("20200104005942_addFavoriteAdditionalMessage")]
     partial class addFavoriteAdditionalMessage
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -25,9 +25,12 @@ namespace Entities.Migrations
 
                     b.Property<string>("Message");
 
-                    b.Property<string>("userId");
+                    b.Property<string>("UserId")
+                        .IsRequired();
 
                     b.HasKey("Id");
+
+                    b.HasIndex("UserId");
 
                     b.ToTable("FavoriteAdditionalMessage");
                 });
@@ -233,6 +236,14 @@ namespace Entities.Migrations
                     b.Property<int>("RoomNo");
 
                     b.HasDiscriminator().HasValue("User");
+                });
+
+            modelBuilder.Entity("Entities.Models.FavoriteAdditionalMessage", b =>
+                {
+                    b.HasOne("Entities.Models.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade);
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
