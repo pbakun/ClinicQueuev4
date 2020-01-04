@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 namespace Entities.Migrations
 {
-    public partial class IsActiveVarAddedToDB : Migration
+    public partial class InitialMigration : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
@@ -48,27 +48,6 @@ namespace Entities.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_AspNetUsers", x => x.Id);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "Queue",
-                columns: table => new
-                {
-                    Id = table.Column<int>(nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    QueueNo = table.Column<int>(nullable: false),
-                    IsBreak = table.Column<bool>(nullable: false),
-                    AdditionalMessage = table.Column<string>(nullable: true),
-                    OwnerInitials = table.Column<string>(nullable: true),
-                    RoomNo = table.Column<int>(nullable: false),
-                    Timestamp = table.Column<DateTime>(nullable: false),
-                    UserId = table.Column<string>(nullable: true),
-                    IsSpecial = table.Column<bool>(nullable: false),
-                    IsActive = table.Column<bool>(nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Queue", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -177,6 +156,52 @@ namespace Entities.Migrations
                         onDelete: ReferentialAction.Cascade);
                 });
 
+            migrationBuilder.CreateTable(
+                name: "FavoriteAdditionalMessage",
+                columns: table => new
+                {
+                    Id = table.Column<string>(nullable: false),
+                    Message = table.Column<string>(nullable: true),
+                    UserId = table.Column<string>(nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_FavoriteAdditionalMessage", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_FavoriteAdditionalMessage_AspNetUsers_UserId",
+                        column: x => x.UserId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Queue",
+                columns: table => new
+                {
+                    Id = table.Column<int>(nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    QueueNo = table.Column<int>(nullable: false),
+                    IsBreak = table.Column<bool>(nullable: false),
+                    AdditionalMessage = table.Column<string>(nullable: true),
+                    OwnerInitials = table.Column<string>(nullable: true),
+                    RoomNo = table.Column<int>(nullable: false),
+                    Timestamp = table.Column<DateTime>(nullable: false),
+                    UserId = table.Column<string>(nullable: false),
+                    IsSpecial = table.Column<bool>(nullable: false),
+                    IsActive = table.Column<bool>(nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Queue", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Queue_AspNetUsers_UserId",
+                        column: x => x.UserId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
             migrationBuilder.CreateIndex(
                 name: "IX_AspNetRoleClaims_RoleId",
                 table: "AspNetRoleClaims",
@@ -213,6 +238,16 @@ namespace Entities.Migrations
                 table: "AspNetUsers",
                 column: "NormalizedUserName",
                 unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_FavoriteAdditionalMessage_UserId",
+                table: "FavoriteAdditionalMessage",
+                column: "UserId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Queue_UserId",
+                table: "Queue",
+                column: "UserId");
         }
 
         protected override void Down(MigrationBuilder migrationBuilder)
@@ -231,6 +266,9 @@ namespace Entities.Migrations
 
             migrationBuilder.DropTable(
                 name: "AspNetUserTokens");
+
+            migrationBuilder.DropTable(
+                name: "FavoriteAdditionalMessage");
 
             migrationBuilder.DropTable(
                 name: "Queue");

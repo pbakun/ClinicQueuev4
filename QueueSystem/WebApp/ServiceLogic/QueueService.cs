@@ -219,6 +219,27 @@ namespace WebApp.ServiceLogic
             return outputQueue;
         }
 
+        public bool UpdateOwnerInitials(Entities.Models.User user)
+        {
+            if (user == null)
+                return false;
+
+            var queue = _repo.Queue.FindByCondition(q => q.UserId == user.Id).ToList().FirstOrDefault();
+            if (queue == null)
+                return false;
+
+            using (var scope = _scopeFactory.CreateScope())
+            {
+                var repo = scope.ServiceProvider.GetRequiredService<IRepositoryWrapper>();
+
+                queue.OwnerInitials = String.Concat(user.FirstName.First(), user.LastName.First()); ;
+
+                repo.Queue.Update(queue);
+                repo.Save();
+            }
+
+           return true;
+        }
 
         #endregion
 
@@ -229,6 +250,7 @@ namespace WebApp.ServiceLogic
             queue.IsSpecial = false;
         }
 
+        
         #endregion
     }
 }

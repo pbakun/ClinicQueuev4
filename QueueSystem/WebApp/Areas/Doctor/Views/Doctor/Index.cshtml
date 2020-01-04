@@ -65,15 +65,22 @@
             <div class="row">
                 <div class="form-group col-6 offset-1">
                     <label for="additionalInfo">Dodatkowa informacja:</label>
-                    <textarea class="form-control" id="additionalInfo" rows="3" oninput="textAreaChanged()">@Model.Queue.AdditionalMessage</textarea>
+                    <textarea class="form-control" id="additionalInfo" rows="3"
+                              oninput="textAreaChanged()" asp-for="Queue.AdditionalMessage">
+                    @Model.Queue.AdditionalMessage
+                    </textarea>
 
                 </div>
                 <div class="row">
                     <div class="col-1">
                         <br />
                         <a class="btn btn-dark text-light" style="margin: 5px;" id="SendAdditionalMessage">Wyślij</a>
-
                         <a class="btn btn-info text-light" style="margin: 5px;" id="ClearAdditionalMessage">Wyczyść</a>
+
+                        <button class="btn btn-info text-light" style="margin: 5px;" type="submit" 
+                                asp-action="AddFavoriteMessage" asp-route-message="@Model.Queue.AdditionalMessage">Zapisz</button>
+                        <span asp-validation-for="Queue.AdditionalMessage" class="text-danger"></span>
+
                     </div>
                 </div>
             </div>
@@ -87,7 +94,6 @@
     var roomNo = parseInt('@Model.Queue.RoomNo');
     var queueNo = parseInt('@Model.Queue.QueueNo');
     var id = '@Model.Queue.UserId';
-    console.log(id);
 
     //if enter was clicked while focus in input box call submit button clicked event
     $("#NewQueueNoInputBox").keyup(function (event) {

@@ -8,23 +8,27 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Repository.Interfaces;
 
 namespace WebApp.Areas.Identity.Pages.Account.Manage
 {
     public partial class IndexModel : PageModel
     {
-        private readonly UserManager<IdentityUser> _userManager;
+        private readonly CustomUserManager _userManager;
         private readonly SignInManager<IdentityUser> _signInManager;
         private readonly IEmailSender _emailSender;
+        private readonly IRepositoryWrapper _repo;
 
         public IndexModel(
-            UserManager<IdentityUser> userManager,
+            CustomUserManager userManager,
             SignInManager<IdentityUser> signInManager,
-            IEmailSender emailSender)
+            IEmailSender emailSender,
+            IRepositoryWrapper repo)
         {
             _userManager = userManager;
             _signInManager = signInManager;
             _emailSender = emailSender;
+            _repo = repo;
         }
 
         public string Username { get; set; }
@@ -43,9 +47,13 @@ namespace WebApp.Areas.Identity.Pages.Account.Manage
             [EmailAddress]
             public string Email { get; set; }
 
-            [Phone]
-            [Display(Name = "Phone number")]
-            public string PhoneNumber { get; set; }
+            [Required]
+            [Display(Name = "First Name")]
+            public string FirstName { get; set; }
+
+            [Required]
+            [Display(Name = "Last Name")]
+            public string LastName { get; set; }
         }
 
         public async Task<IActionResult> OnGetAsync()
@@ -58,16 +66,18 @@ namespace WebApp.Areas.Identity.Pages.Account.Manage
 
             var userName = await _userManager.GetUserNameAsync(user);
             var email = await _userManager.GetEmailAsync(user);
-            var phoneNumber = await _userManager.GetPhoneNumberAsync(user);
 
-            Username = userName;
+            var userFromDb = _repo.User.FindByCondition(u => u.Id == user.Id).FirstOrDefault();
+            if (userFromDb == null)
+                return NotFound();
 
-            Input = new InputModel
-            {
-                Email = email,
-                PhoneNumber = phoneNumber
-            };
-
+                Input = new InputModel
+                {
+                    Email = email,
+                    FirstName = userFromDb.FirstName,
+                    LastName = userFromDb.LastName
+                };
+            
             IsEmailConfirmed = await _userManager.IsEmailConfirmedAsync(user);
 
             return Page();
@@ -80,7 +90,7 @@ namespace WebApp.Areas.Identity.Pages.Account.Manage
                 return Page();
             }
 
-            var user = await _userManager.GetUserAsync(User);
+            var user = await _userManager.GetUserAsync(User) as Entities.Models.User;
             if (user == null)
             {
                 return NotFound($"Unable to load user with ID '{_userManager.GetUserId(User)}'.");
@@ -97,19 +107,29 @@ namespace WebApp.Areas.Identity.Pages.Account.Manage
                 }
             }
 
-            var phoneNumber = await _userManager.GetPhoneNumberAsync(user);
-            if (Input.PhoneNumber != phoneNumber)
+            if (Input.FirstName != user.FirstName)
             {
-                var setPhoneResult = await _userManager.SetPhoneNumberAsync(user, Input.PhoneNumber);
-                if (!setPhoneResult.Succeeded)
+                    var setFirstNameSuccedded = await _userManager.SetFirstNameAsync(user, Input.FirstName);
+                    if(!setFirstNameSuccedded)
+                    {
+
+                        var userId = await _userManager.GetUserIdAsync(user);
+                        throw new InvalidOperationException($"Unexpected error occurred setting first name for user with ID '{userId}'.");
+                    }
+            }
+
+            if (Input.LastName != user.LastName)
+            {
+                var setLastNameSuccedded = await _userManager.SetLastNameAsync(user, Input.LastName);
+                if (!setLastNameSuccedded)
                 {
                     var userId = await _userManager.GetUserIdAsync(user);
-                    throw new InvalidOperationException($"Unexpected error occurred setting phone number for user with ID '{userId}'.");
+                    throw new InvalidOperationException($"Unexpected error occurred setting last name for user with ID '{userId}'.");
                 }
             }
 
             await _signInManager.RefreshSignInAsync(user);
-            StatusMessage = "Your profile has been updated";
+            StatusMessage = "Profil został zaktualizowany";
             return RedirectToPage();
         }
 

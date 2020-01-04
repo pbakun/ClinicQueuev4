@@ -9,8 +9,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Entities.Migrations
 {
     [DbContext(typeof(RepositoryContext))]
-    [Migration("20200104005942_addFavoriteAdditionalMessage")]
-    partial class addFavoriteAdditionalMessage
+    [Migration("20200104091046_InitialMigration")]
+    partial class InitialMigration
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
@@ -56,9 +56,12 @@ namespace Entities.Migrations
 
                     b.Property<DateTime>("Timestamp");
 
-                    b.Property<string>("UserId");
+                    b.Property<string>("UserId")
+                        .IsRequired();
 
                     b.HasKey("Id");
+
+                    b.HasIndex("UserId");
 
                     b.ToTable("Queue");
                 });
@@ -239,6 +242,14 @@ namespace Entities.Migrations
                 });
 
             modelBuilder.Entity("Entities.Models.FavoriteAdditionalMessage", b =>
+                {
+                    b.HasOne("Entities.Models.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade);
+                });
+
+            modelBuilder.Entity("Entities.Models.Queue", b =>
                 {
                     b.HasOne("Entities.Models.User", "User")
                         .WithMany()

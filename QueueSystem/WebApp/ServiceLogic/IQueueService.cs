@@ -21,5 +21,6 @@ namespace WebApp.ServiceLogic
         bool CheckRoomSubordination(string userId, int roomNo);
         void SetQueueActive(Entities.Models.Queue queueId);
         void SetQueueInactive(string userId);
+        bool UpdateOwnerInitials(Entities.Models.User user);
     }
 }

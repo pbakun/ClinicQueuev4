@@ -91,5 +91,24 @@ namespace WebApp.Areas.Doctor.Controllers
 
             return View("Index", DoctorVM);
         }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> AddFavoriteMessage(string message)
+        {
+            var claimsIdentity = (ClaimsIdentity)this.User.Identity;
+            var claim = claimsIdentity.FindFirst(ClaimTypes.NameIdentifier);
+
+            var favMsg = new Entities.Models.FavoriteAdditionalMessage
+            {
+                Message = message,
+                UserId = claim.Value
+            };
+
+            await _repo.FavoriteAdditionalMessage.AddAsync(favMsg);
+            await _repo.SaveAsync();
+
+            return LocalRedirect("/Doctor/Doctor");
+        }
     }
 }
