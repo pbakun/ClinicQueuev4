@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.Linq;
 using System.Security.Claims;
 using System.Text.Encodings.Web;
 using System.Threading.Tasks;
@@ -48,6 +49,8 @@ namespace WebApp.Areas.Identity.Pages.Account
 
         [BindProperty]
         public InputModel Input { get; set; }
+        [TempData]
+        public string StatusMessage { get; set; }
 
         public string ReturnUrl { get; set; }
 
@@ -117,7 +120,6 @@ namespace WebApp.Areas.Identity.Pages.Account
             returnUrl = returnUrl ?? Url.Content("~/");
             if (ModelState.IsValid)
             {
-                //var user = new IdentityUser { UserName = Input.Email, Email = Input.Email };
                 var user = new User
                 {
                     Email = Input.Email,
@@ -127,6 +129,12 @@ namespace WebApp.Areas.Identity.Pages.Account
                     RoomNo = Input.RoomNo
                 };
                 var result = await _userManager.CreateAsync(user, Input.Password);
+                var userExists = await _userManager.FindByNameAsync(user.UserName);
+                if(userExists != null)
+                {
+                    StatusMessage = "Login zajęty.";
+                    return RedirectToPage();
+                }
 
                 if (result.Succeeded)
                 {
@@ -182,7 +190,7 @@ namespace WebApp.Areas.Identity.Pages.Account
             }
 
             // If we got this far, something failed, redisplay form
-            return Page();
+            return RedirectToPage();
         }
     }
 }

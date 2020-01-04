@@ -1,13 +1,14 @@
 ﻿@page
 @model RegisterModel
 @using WebApp.Utility;
+@using Areas.Identity.Pages.Account.Manage;
 @{
     ViewData["Title"] = "Rejestruj użytkownika";
 }
 
 <h1>@ViewData["Title"]</h1>
 
-
+<partial name="_StatusMessage" for="StatusMessage" />
 <form asp-route-returnUrl="@Model.ReturnUrl" method="post">
     <div>
         <h4>Stwórz nowe konto.</h4>

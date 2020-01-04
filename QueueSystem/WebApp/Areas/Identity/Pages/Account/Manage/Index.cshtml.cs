@@ -58,26 +58,21 @@ namespace WebApp.Areas.Identity.Pages.Account.Manage
 
         public async Task<IActionResult> OnGetAsync()
         {
-            var user = await _userManager.GetUserAsync(User);
+            var user = await _userManager.GetUserAsync(User) as Entities.Models.User;
             if (user == null)
             {
                 return NotFound($"Unable to load user with ID '{_userManager.GetUserId(User)}'.");
             }
 
-            var userName = await _userManager.GetUserNameAsync(user);
-            var email = await _userManager.GetEmailAsync(user);
+            Input = new InputModel
+            {
+                Email = user.Email,
+                FirstName = user.FirstName,
+                LastName = user.LastName
+            };
 
-            var userFromDb = _repo.User.FindByCondition(u => u.Id == user.Id).FirstOrDefault();
-            if (userFromDb == null)
-                return NotFound();
+            Username = user.UserName;
 
-                Input = new InputModel
-                {
-                    Email = email,
-                    FirstName = userFromDb.FirstName,
-                    LastName = userFromDb.LastName
-                };
-            
             IsEmailConfirmed = await _userManager.IsEmailConfirmedAsync(user);
 
             return Page();
@@ -109,13 +104,13 @@ namespace WebApp.Areas.Identity.Pages.Account.Manage
 
             if (Input.FirstName != user.FirstName)
             {
-                    var setFirstNameSuccedded = await _userManager.SetFirstNameAsync(user, Input.FirstName);
-                    if(!setFirstNameSuccedded)
-                    {
+                var setFirstNameSuccedded = await _userManager.SetFirstNameAsync(user, Input.FirstName);
+                if (!setFirstNameSuccedded)
+                {
 
-                        var userId = await _userManager.GetUserIdAsync(user);
-                        throw new InvalidOperationException($"Unexpected error occurred setting first name for user with ID '{userId}'.");
-                    }
+                    var userId = await _userManager.GetUserIdAsync(user);
+                    throw new InvalidOperationException($"Unexpected error occurred setting first name for user with ID '{userId}'.");
+                }
             }
 
             if (Input.LastName != user.LastName)
