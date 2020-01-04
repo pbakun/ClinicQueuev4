@@ -16,5 +16,6 @@ namespace Entities
 
         public DbSet<Models.Queue> Queue { get; set; }
         public DbSet<User> User { get; set; }
+        public DbSet<FavoriteAdditionalMessage> FavoriteAdditionalMessage { get; set; }
     }
 }

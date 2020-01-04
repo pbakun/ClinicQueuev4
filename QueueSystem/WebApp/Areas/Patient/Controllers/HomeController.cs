@@ -4,7 +4,9 @@ using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 using Repository.Interfaces;
 using WebApp.BackgroundServices.Tasks;
 using WebApp.Models;
@@ -24,11 +26,8 @@ namespace WebApp.Areas.Patient.Controllers
 
         public IActionResult Index()
         {
-
-            var bla = _repo.User.FindAll();
-            var queue = _repo.Queue.FindAll();
-
             var availableRooms = SettingsHandler.ApplicationSettings.AvailableRooms;
+
 
             return View(availableRooms);
         }

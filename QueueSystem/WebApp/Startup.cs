@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
 using AutoMapper;
@@ -10,15 +11,21 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI;
+using Microsoft.AspNetCore.Identity.UI.Services;
+using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using Repository;
 using Repository.Initialization;
+using WebApp.Areas.Identity.Pages.Account.Manage;
 using WebApp.BackgroundServices.Tasks;
+using WebApp.Helpers;
 using WebApp.Hubs;
 using WebApp.Mappings;
+using WebApp.Models;
 using WebApp.ServiceLogic;
 
 namespace WebApp
@@ -42,8 +49,24 @@ namespace WebApp
                 options.MinimumSameSitePolicy = SameSiteMode.None;
             });
 
+            services.Configure<RequestLocalizationOptions>(options =>
+            {
+                var supportedCultures = new List<CultureInfo>
+                {
+                    new CultureInfo("en-US"),
+                    new CultureInfo("pl-PL")
+                };
+                options.DefaultRequestCulture = new RequestCulture("pl-PL");
+                options.SupportedCultures = supportedCultures;
+                options.SupportedUICultures = supportedCultures;
+            });
+
+            services.Configure<EmailSettings>(Configuration.GetSection("EmailSettings"));
+
             //add db context
             SetUpDatabase(services);
+
+            services.AddLocalization();
 
             services.AddIdentity<IdentityUser, IdentityRole>(config =>
             {
@@ -55,6 +78,8 @@ namespace WebApp
                 config.Password.RequireLowercase = false;
             })
                 .AddRoleManager<RoleManager<IdentityRole>>()
+                .AddUserManager<UserManager<IdentityUser>>()
+                .AddUserManager<CustomUserManager>()
                 .AddDefaultTokenProviders()
                 .AddDefaultUI(UIFramework.Bootstrap4)
                 .AddEntityFrameworkStores<RepositoryContext>(); //would be best to add this in ServiceExtensions class in Repository library
@@ -65,6 +90,7 @@ namespace WebApp
             services.AddScoped<IQueueService, QueueService>();
 
             services.AddSingleton<Microsoft.Extensions.Hosting.IHostedService, StartupSetUp>();
+            services.AddSingleton<IEmailSender, EmailSender>();
 
             services.AddSingleton<SettingsHandler>();
 
@@ -96,6 +122,9 @@ namespace WebApp
                 // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
                 app.UseHsts();
             }
+
+            var options = app.ApplicationServices.GetService<IOptions<RequestLocalizationOptions>>();
+            app.UseRequestLocalization(options.Value);
 
             //create DB on startup
             EnsureDbCreated();
