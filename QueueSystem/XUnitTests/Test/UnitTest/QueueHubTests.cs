@@ -46,7 +46,7 @@ namespace XUnitTests
 
         }
 
-        public async Task<Queue> CallRegisterDoctor(string id, int roomNo,
+        public async Task<Queue> CallRegisterDoctor(string id, string roomNo,
             Mock<IHubCallerClients> mockClients,
             Mock<Microsoft.AspNetCore.SignalR.IClientProxy> mockClientProxy,
             Mock<IGroupManager> mockGroupManager)
@@ -96,9 +96,9 @@ namespace XUnitTests
 
 
         [Theory]
-        [InlineData("1", 12)]
-        [InlineData("2", 12)]
-        public async Task RegisterDoctor_TestOneOwner(string id, int roomNo)
+        [InlineData("1", "12")]
+        [InlineData("2", "12")]
+        public async Task RegisterDoctor_TestOneOwner(string id, string roomNo)
         {
             var mockClientProxy = new Mock<Microsoft.AspNetCore.SignalR.IClientProxy>();
             var mockClients = new Mock<IHubCallerClients>();
@@ -125,11 +125,11 @@ namespace XUnitTests
         }
 
         [Theory]
-        [InlineData(12, 2)]
-        [InlineData(12, 3)]
-        [InlineData(13, 5)]
-        [InlineData(10, 30)]
-        public async Task RegisterDoctor_TestMoreThanOneOwner(int roomNo, int numberOfCalls)
+        [InlineData("12", 2)]
+        [InlineData("12", 3)]
+        [InlineData("13", 5)]
+        [InlineData("10", 30)]
+        public async Task RegisterDoctor_TestMoreThanOneOwner(string roomNo, int numberOfCalls)
         {
             var mockClientProxy = new Mock<Microsoft.AspNetCore.SignalR.IClientProxy>();
             var mockClients = new Mock<IHubCallerClients>();
@@ -174,9 +174,9 @@ namespace XUnitTests
         }
 
         [Theory]
-        [InlineData("1", 12)]
-        [InlineData("2", 12)]
-        public async Task NewQueueNoTest(string id, int roomNo)
+        [InlineData("1", "12")]
+        [InlineData("2", "12")]
+        public async Task NewQueueNoTest(string id, string roomNo)
         {
             var mockClientProxy = new Mock<Microsoft.AspNetCore.SignalR.IClientProxy>();
             var mockClients = new Mock<IHubCallerClients>();
@@ -205,9 +205,9 @@ namespace XUnitTests
         }
 
         [Theory]
-        [InlineData("1", 12, "bla bla bla")]
-        [InlineData("2", 12, "")]
-        public async Task NewAdditionalInfoTest(string id, int roomNo, string message)
+        [InlineData("1", "12", "bla bla bla")]
+        [InlineData("2", "12", "")]
+        public async Task NewAdditionalInfoTest(string id, string roomNo, string message)
         {
             var mockClientProxy = new Mock<Microsoft.AspNetCore.SignalR.IClientProxy>();
             var mockClients = new Mock<IHubCallerClients>();
@@ -255,7 +255,7 @@ namespace XUnitTests
             mockManageHubUser.Setup(h => h.GetUserByConnectionId(It.IsAny<string>())).Returns(new FakeHubUser(fakeId, fakeConnectionId, fakeRoomNo).Build());
 
             _mockQueueService.Setup(q => q.SetQueueInactive(fakeId));
-            _mockQueueService.Setup(q => q.CheckRoomSubordination(It.IsAny<string>(), It.IsAny<int>())).Returns(false);
+            _mockQueueService.Setup(q => q.CheckRoomSubordination(It.IsAny<string>(), It.IsAny<string>())).Returns(false);
 
             mockClients.Setup(c => c.Group(fakeRoomNo)).Returns(() => mockClientProxy.Object);
 

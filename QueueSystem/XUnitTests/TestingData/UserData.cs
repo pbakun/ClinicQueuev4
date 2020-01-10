@@ -8,7 +8,7 @@ namespace XUnitTests.TestingData
     {
         public Entities.Models.User User { get; set; }
 
-        private int _roomNo;
+        private string _roomNo;
         private string _id;
         private string _firstName;
         private string _lastName;
@@ -24,7 +24,7 @@ namespace XUnitTests.TestingData
             
         }
 
-        public UserData WithRoomNo(int roomNo)
+        public UserData WithRoomNo(string roomNo)
         {
             _roomNo = roomNo;
             return this;
@@ -57,7 +57,7 @@ namespace XUnitTests.TestingData
             return User;
         }
 
-        public Entities.Models.User Build(string id, string firstName, string lastName, int roomNo)
+        public Entities.Models.User Build(string id, string firstName, string lastName, string roomNo)
         {
             User.RoomNo = roomNo;
             User.Id = id;

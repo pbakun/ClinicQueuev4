@@ -56,8 +56,8 @@ namespace WebApp.Areas.Admin.Controllers
             RoomsViewModel roomVMElement = new RoomsViewModel();
             foreach (var room in availableRooms)
             {
-                int usersQuantity = queues.Where(q => q.RoomNo == room).ToList().Count();
-                var queue = queues.Where(q => q.RoomNo == room).OrderByDescending(t => t.Timestamp).FirstOrDefault();
+                int usersQuantity = queues.Where(q => q.RoomNo.Equals(room)).ToList().Count();
+                var queue = queues.Where(q => q.RoomNo.Equals(room)).OrderByDescending(t => t.Timestamp).FirstOrDefault();
                 if (queue != null)
                 {
                     var user = _repo.User.FindByCondition(u => u.Id == queue.UserId).FirstOrDefault();
@@ -85,11 +85,11 @@ namespace WebApp.Areas.Admin.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([FromForm] int roomNo)
+        public async Task<IActionResult> Create([FromForm] string roomNo)
         {
             if (!_appSettings.AvailableRooms.Contains(roomNo))
             {
-                if (roomNo > 0)
+                if (roomNo.Length > 0)
                 {
                     _appSettings.AvailableRooms.Add(roomNo);
                     SettingsHandler.Settings.WriteAllSettings(_appSettings);
@@ -99,11 +99,11 @@ namespace WebApp.Areas.Admin.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        public async Task<IActionResult> Details(int roomNo)
+        public async Task<IActionResult> Details(string roomNo)
         {
             var queues = _queueService.FindAll();
 
-            queues = queues.Where(q => q.RoomNo == roomNo).OrderByDescending(q => q.Timestamp).ToList();
+            queues = queues.Where(q => q.RoomNo.Equals(roomNo)).OrderByDescending(q => q.Timestamp).ToList();
             if (queues != null)
             {
                 foreach (var queue in queues)
@@ -121,7 +121,7 @@ namespace WebApp.Areas.Admin.Controllers
             return View(RoomsVM);
         }
 
-        public async Task<IActionResult> Delete(int roomNo)
+        public async Task<IActionResult> Delete(string roomNo)
         {
             _appSettings.AvailableRooms.Remove(roomNo);
             SettingsHandler.Settings.WriteAllSettings(_appSettings);

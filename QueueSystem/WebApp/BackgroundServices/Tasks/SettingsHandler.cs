@@ -80,7 +80,7 @@ namespace WebApp.BackgroundServices.Tasks
                 File.Create(path).Dispose();
                 WriteAllSettings(new ApplicationSettings()
                 {
-                    AvailableRooms = new List<int>(),
+                    AvailableRooms = new List<string>(),
                     QueueOccupiedMessage = string.Empty,
                     PatientViewNotificationAfterDoctorDisconnectedDelay = 60000,
                     MessageWhenNoDoctorActiveInQueue = StaticDetails.MessageWhenNoDoctorActiveInQueue

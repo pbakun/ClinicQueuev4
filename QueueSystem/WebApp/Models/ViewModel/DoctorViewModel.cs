@@ -10,7 +10,7 @@ namespace WebApp.Models.ViewModel
     public class DoctorViewModel
     {
         public Queue Queue { get; set; }
-        public List<int> AvailableRoomNo { get; set; }
+        public List<string> AvailableRoomNo { get; set; }
 
         public DoctorViewModel()
         {

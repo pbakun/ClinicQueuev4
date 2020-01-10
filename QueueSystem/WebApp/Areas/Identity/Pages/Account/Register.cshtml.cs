@@ -77,8 +77,8 @@ namespace WebApp.Areas.Identity.Pages.Account
             public string FirstName { get; set; }
             [Required]
             public string LastName { get; set; }
-            public int RoomNo { get; set; }
-            public List<int> AvailableRooms { get; set; }
+            public string RoomNo { get; set; }
+            public List<string> AvailableRooms { get; set; }
             public List<string> AvailableDoctors { get; set; }
         }
 
@@ -128,13 +128,22 @@ namespace WebApp.Areas.Identity.Pages.Account
                     LastName = Input.LastName,
                     RoomNo = Input.RoomNo
                 };
-                var result = await _userManager.CreateAsync(user, Input.Password);
+
+                var userByEmail = await _userManager.FindByEmailAsync(user.Email);
+                if(userByEmail != null)
+                {
+                    StatusMessage = "Błąd! Email zajęty";
+                    return RedirectToPage();
+                }
+
                 var userExists = await _userManager.FindByNameAsync(user.UserName);
                 if(userExists != null)
                 {
-                    StatusMessage = "Login zajęty.";
+                    StatusMessage = "Błąd! Login zajęty.";
                     return RedirectToPage();
                 }
+
+                var result = await _userManager.CreateAsync(user, Input.Password);
 
                 if (result.Succeeded)
                 {
@@ -160,7 +169,6 @@ namespace WebApp.Areas.Identity.Pages.Account
                             await _userManager.AddToRoleAsync(user, StaticDetails.NurseUser);
                             break;
                         default:
-                            //await _userManager.AddToRoleAsync(user, StaticDetails.AdminUser);
                             await _userManager.AddToRoleAsync(user, StaticDetails.PatientUser);
                             return LocalRedirect(returnUrl);
                     }
@@ -181,7 +189,7 @@ namespace WebApp.Areas.Identity.Pages.Account
 
                     //return LocalRedirect(returnUrl);
 
-                    return LocalRedirect(returnUrl);
+                    return LocalRedirect("/Admin/User");
                 }
                 foreach (var error in result.Errors)
                 {

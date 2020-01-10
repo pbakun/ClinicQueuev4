@@ -27,7 +27,7 @@ namespace WebApp.Hubs
             _queueService = queueService;
             _hubUser = hubUser;
         }
-        public async Task RegisterDoctor(string userId, int roomNo)
+        public async Task RegisterDoctor(string userId, string roomNo)
         {
             var newUser = new HubUser {
                 UserId = userId,
@@ -58,12 +58,12 @@ namespace WebApp.Hubs
             await _hubUser.AddUserAsync(newUser);
         }
 
-        public async Task RegisterPatientView(int roomNo)
+        public async Task RegisterPatientView(string roomNo)
         {   
             var newUser = new HubUser
             {
                 ConnectionId = Context.ConnectionId,
-                GroupName = roomNo.ToString()
+                GroupName = roomNo
             };
 
             await Groups.AddToGroupAsync(newUser.ConnectionId, newUser.GroupName);
@@ -82,13 +82,12 @@ namespace WebApp.Hubs
             string connectionString = Context.ConnectionId;
             var groupMember = _hubUser.GetUserByConnectionId(connectionString);
             
-            int memberRoomNo = Convert.ToInt32(groupMember.GroupName);
 
             await _hubUser.RemoveUserAsync(groupMember);
             await Groups.RemoveFromGroupAsync(connectionString, groupMember.GroupName);
 
             //if group member changed roomNo exit patient view
-            if (groupMember.UserId != null && !_queueService.CheckRoomSubordination(groupMember.UserId, memberRoomNo))
+            if (groupMember.UserId != null && !_queueService.CheckRoomSubordination(groupMember.UserId, groupMember.GroupName))
             {
                 _queueService.SetQueueInactive(groupMember.UserId);
                 InitGroupScreen(groupMember);
@@ -127,7 +126,7 @@ namespace WebApp.Hubs
             }
         }
 
-        public async Task NewQueueNo(string userId, int queueNo, int roomNo)
+        public async Task NewQueueNo(string userId, int queueNo, string roomNo)
         {
             var hubUser = _hubUser.GetConnectedUsers().Where(u => u.UserId == userId).FirstOrDefault();
             if (hubUser != null)
@@ -138,7 +137,7 @@ namespace WebApp.Hubs
             }
         }
 
-        public async Task NewAdditionalInfo(string userId, int roomNo, string message)
+        public async Task NewAdditionalInfo(string userId, string roomNo, string message)
         {
             var hubUser = _hubUser.GetConnectedUsers().Where(u => u.UserId == userId).FirstOrDefault();
             if (hubUser != null)

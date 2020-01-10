@@ -12,13 +12,13 @@ namespace WebApp.ServiceLogic
         Task<Queue> QueueNoUp(string userId);
         Task<Queue> QueueNoDown(string userId);
         Task<Queue> NewAdditionalInfo(string userId, string message);
-        Queue ChangeUserRoomNo(string userId, int newRoomNo);
+        Queue ChangeUserRoomNo(string userId, string newRoomNo);
         Queue ResetQueues();
         Queue FindByUserId(string userId);
-        Queue FindByRoomNo(int roomNo);
+        Queue FindByRoomNo(string roomNo);
         List<Queue> FindAll();
         Queue CreateQueue(string userId);
-        bool CheckRoomSubordination(string userId, int roomNo);
+        bool CheckRoomSubordination(string userId, string roomNo);
         void SetQueueActive(Entities.Models.Queue queueId);
         void SetQueueInactive(string userId);
         bool UpdateOwnerInitials(Entities.Models.User user);

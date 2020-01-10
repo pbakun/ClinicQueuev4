@@ -10,6 +10,6 @@ namespace WebApp.Models.ViewModel
         public string DoctorFullName { get; set; }
         public string QueueNoMessage { get; set; }
         public string QueueAdditionalInfo { get; set; }
-        public int RoomNo { get; set; }
+        public string RoomNo { get; set; }
     }
 }

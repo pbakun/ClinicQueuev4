@@ -15,7 +15,7 @@ namespace Entities.Models
         public bool IsBreak { get; set; }
         public string AdditionalMessage { get; set; }
         public string OwnerInitials { get; set; }
-        public int RoomNo { get; set; }
+        public string RoomNo { get; set; }
         public DateTime Timestamp { get; set; }
         [Required]
         public string UserId { get; set; }

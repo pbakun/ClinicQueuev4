@@ -83,7 +83,7 @@ namespace WebApp.Areas.Doctor.Controllers
         {
             var claimsIdentity = (ClaimsIdentity)this.User.Identity;
             var claim = claimsIdentity.FindFirst(ClaimTypes.NameIdentifier);
-            int roomNo = VM.Queue.RoomNo;
+            var roomNo = VM.Queue.RoomNo;
             var user = _repo.User.FindByCondition(u => u.Id == claim.Value).FirstOrDefault();
             
             var queue = _queueService.ChangeUserRoomNo(user.Id, roomNo);

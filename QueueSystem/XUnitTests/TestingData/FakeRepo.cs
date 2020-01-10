@@ -16,7 +16,7 @@ namespace XUnitTests.TestingData
 
         public Entities.Models.User FakeSingleUser()
         {
-            Entities.Models.User user = new UserData().Build("123", "Jan", "Kowalski", 12);
+            Entities.Models.User user = new UserData().Build("123", "Jan", "Kowalski", "12");
 
             _repo.User.Add(user);
             _repo.Save();
@@ -25,7 +25,7 @@ namespace XUnitTests.TestingData
 
         public Entities.Models.Queue FakeSingleQueue()
         {
-            var queue = new FakeQueue().WithUserId("123").WithRoomNo(12).WithQueueNo(14).Build();
+            var queue = new FakeQueue().WithUserId("123").WithRoomNo("12").WithQueueNo(14).Build();
 
             _repo.Queue.Add(queue);
             _repo.Save();

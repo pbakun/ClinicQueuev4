@@ -78,7 +78,7 @@ namespace XUnitTests
             return result;
         }
 
-        private WebApp.Models.Queue CallChangeUserRoomNo(int newRoomNo, int oldRoomNo) 
+        private WebApp.Models.Queue CallChangeUserRoomNo(string newRoomNo, string oldRoomNo) 
         {
             _mockRepo.Setup(x => x.Queue.FindByCondition(It.IsAny<Expression<Func<Entities.Models.Queue, bool>>>()))
                 .Returns(new FakeQueue().WithRoomNo(oldRoomNo).BuildAsList());
@@ -224,9 +224,9 @@ namespace XUnitTests
         #region ChangeUserRoomNo Tests
 
         [Theory]
-        [InlineData(12, 15)]
-        [InlineData(13, 13)]
-        public void ChangeUserRoomNo_Test(int newRoomNo, int oldRoomNo)
+        [InlineData("12", "15")]
+        [InlineData("13", "13")]
+        public void ChangeUserRoomNo_Test(string newRoomNo, string oldRoomNo)
         {
             var data = new FakeQueue();
 

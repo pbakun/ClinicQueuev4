@@ -24,7 +24,7 @@ namespace WebApp.ServiceLogic
 
         #region Implmenting interface
 
-        public Queue ChangeUserRoomNo(string userId, int newRoomNo)
+        public Queue ChangeUserRoomNo(string userId, string newRoomNo)
         {
             var user = _repo.User.FindByCondition(u => u.Id == userId).FirstOrDefault();
 
@@ -40,10 +40,10 @@ namespace WebApp.ServiceLogic
             return output;
         }
 
-        public Queue FindByRoomNo(int roomNo)
+        public Queue FindByRoomNo(string roomNo)
         {
             //returns queue with newest Timestamp
-            var queue = _repo.Queue.FindByCondition(r => r.RoomNo == roomNo && r.IsActive).OrderByDescending(t => t.Timestamp).FirstOrDefault();
+            var queue = _repo.Queue.FindByCondition(r => r.RoomNo.Equals(roomNo) && r.IsActive).OrderByDescending(t => t.Timestamp).FirstOrDefault();
 
             Queue output = _mapper.Map<Queue>(queue);
 
@@ -139,10 +139,10 @@ namespace WebApp.ServiceLogic
             return queue;
         }
 
-        public bool CheckRoomSubordination(string userId, int roomNo)
+        public bool CheckRoomSubordination(string userId, string roomNo)
         {
             var queue = _repo.Queue.FindByCondition(u => u.UserId == userId).FirstOrDefault();
-            if (queue.RoomNo == roomNo)
+            if (queue.RoomNo.Equals(roomNo))
                 return true;
 
             return false;

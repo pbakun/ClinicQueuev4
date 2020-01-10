@@ -8,11 +8,11 @@ namespace WebApp.Models
 {
     public class ApplicationSettings
     {
-        private List<int> availableRooms;
+        private List<string> availableRooms;
         private string queueOccupiedMessage;
         private int patientViewNotificationAfterDoctorDisconnectedDelay;
 
-        public List<int> AvailableRooms
+        public List<string> AvailableRooms
         {
             get { return availableRooms; }
             set

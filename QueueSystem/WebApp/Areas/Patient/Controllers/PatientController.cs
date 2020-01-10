@@ -34,15 +34,13 @@ namespace WebApp.Areas.Patient.Controllers
         [Route("patient/{roomNo}")]
         public IActionResult Index(string roomNo)
         {
-            int roomNoInt = Convert.ToInt32(roomNo);
-
-            var queue = _queueService.FindByRoomNo(roomNoInt);
+            var queue = _queueService.FindByRoomNo(roomNo);
             PatientVM = new PatientViewModel();
             
             if (queue == null)
             {
                 queue = new Queue();
-                queue.RoomNo = roomNoInt;
+                queue.RoomNo = roomNo;
                 PatientVM.DoctorFullName = string.Empty;
             }
             else

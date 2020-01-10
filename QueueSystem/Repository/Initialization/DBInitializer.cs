@@ -47,7 +47,7 @@ namespace Repository.Initialization
                 EmailConfirmed= true,
                 FirstName="Piotr",
                 LastName="Bakun",
-                RoomNo=12
+                RoomNo="12"
             }, "piotrek").GetAwaiter().GetResult();
 
             IdentityUser user = await _repo.User.FirstOrDefaultAsync(u => u.UserName == "admin");

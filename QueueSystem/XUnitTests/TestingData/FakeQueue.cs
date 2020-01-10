@@ -14,7 +14,7 @@ namespace XUnitTests.TestingData
         private bool _isSpecial;
         private bool _isActive;
         private string _ownerInitials;
-        private int _roomNo;
+        private string _roomNo;
         private string _userId;
 
         public FakeQueue()
@@ -42,7 +42,7 @@ namespace XUnitTests.TestingData
             return this;
         }
 
-        public FakeQueue WithRoomNo(int roomNo)
+        public FakeQueue WithRoomNo(string roomNo)
         {
             _roomNo = roomNo;
             return this;
