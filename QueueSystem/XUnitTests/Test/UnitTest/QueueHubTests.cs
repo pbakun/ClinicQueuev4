@@ -153,7 +153,7 @@ namespace XUnitTests
         [Fact]
         public async Task RegisterPatientTest()
         {
-            int fakeRoomNo = 12;
+            string fakeRoomNo = "12";
             
             var mockClients = new Mock<IHubCallerClients>();
             var mockGroupManager = new Mock<IGroupManager>();

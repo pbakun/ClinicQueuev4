@@ -1,6 +1,7 @@
 ﻿using Entities.Models;
 using Microsoft.AspNetCore.SignalR;
 using Repository.Interfaces;
+using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -69,11 +70,14 @@ namespace WebApp.Hubs
             await Groups.AddToGroupAsync(newUser.ConnectionId, newUser.GroupName);
 
             await _hubUser.AddUserAsync(newUser);
+
+            Log.Information(String.Concat("hub client ", newUser.ConnectionId, " registered as Patient"));
         }
 
         public async override Task OnConnectedAsync()
         {
-
+            var connectionId = this.Context.ConnectionId;
+            Log.Information(String.Concat("New hub client ", connectionId));
             await base.OnConnectedAsync();
         }
 

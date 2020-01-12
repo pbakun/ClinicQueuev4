@@ -8,21 +8,48 @@ using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Serilog;
 
 namespace WebApp
 {
     public class Program
     {
+        private static string _environmentName;
+
         public static void Main(string[] args)
         {
-            CreateWebHostBuilder(args).Build().Run();
+            var webHost = CreateWebHostBuilder(args);
 
+            var configuration = new ConfigurationBuilder()
+                                .SetBasePath(Directory.GetCurrentDirectory())
+                                .AddJsonFile("appsettings.json")
+                                .AddJsonFile("appsettings.{_environmentName}.json", optional: true, reloadOnChange: true)
+                                .Build();
+
+            Log.Logger = new LoggerConfiguration()
+                        .ReadFrom.Configuration(configuration)
+                        .CreateLogger();
+            try
+            {
+                Log.Information("Starting web host");
+                webHost.Run();
+            }
+            catch (Exception ex)
+            {
+                Log.Fatal(ex, "Host terminated unexpectedly");
+            }
         }
 
-        public static IWebHostBuilder CreateWebHostBuilder(string[] args) =>
+        public static IWebHost CreateWebHostBuilder(string[] args) =>
             WebHost.CreateDefaultBuilder(args)
-            .ConfigureKestrel(options => options.Limits.MaxConcurrentUpgradedConnections = 2048)
-            .UseUrls("https://*:5001", "http://*:5000")
-                .UseStartup<Startup>();
+                .ConfigureKestrel(options => options.Limits.MaxConcurrentUpgradedConnections = 2048)
+                //.UseUrls("https://*:5001", "http://*:5000")
+                .ConfigureLogging((hostingContext, config) =>
+                {
+                    config.ClearProviders();
+                    _environmentName = hostingContext.HostingEnvironment.EnvironmentName;
+                })
+                .UseStartup<Startup>()
+                .Build();
     }
 }
