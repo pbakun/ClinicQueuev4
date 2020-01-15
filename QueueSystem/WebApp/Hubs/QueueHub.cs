@@ -20,6 +20,8 @@ namespace WebApp.Hubs
         private readonly IQueueService _queueService;
         private readonly IManageHubUser _hubUser;
 
+        private string logPrefix = StaticDetails.logPrefixHub;
+
         public QueueHub(IRepositoryWrapper repo,
             IQueueService queueService,
             IManageHubUser hubUser)
@@ -57,6 +59,9 @@ namespace WebApp.Hubs
                 await Clients.Caller.SendAsync("NotifyQueueOccupied", StaticDetails.QueueOccupiedMessage);
             }
             await _hubUser.AddUserAsync(newUser);
+
+            Log.Information(String.Concat(logPrefix, "Client [ ",
+                                newUser.ConnectionId, " ] registered as Doctor for room: [ ", roomNo, " ]"));
         }
 
         public async Task RegisterPatientView(string roomNo)
@@ -71,24 +76,43 @@ namespace WebApp.Hubs
 
             await _hubUser.AddUserAsync(newUser);
 
-            Log.Information(String.Concat("hub client ", newUser.ConnectionId, " registered as Patient"));
+            Log.Information(String.Concat(logPrefix, "Client [ ", newUser.ConnectionId, " ] registered as Patient for room: [ ",
+                                        roomNo, " ]"));
         }
 
         public async override Task OnConnectedAsync()
         {
             var connectionId = this.Context.ConnectionId;
-            Log.Information(String.Concat("New hub client ", connectionId));
-            await base.OnConnectedAsync();
+            Log.Information(String.Concat(logPrefix, "New hub client [ ", connectionId, " ]"));
+            try
+            {
+                await base.OnConnectedAsync();
+            }
+            catch(Exception ex)
+            {
+                Log.Error(String.Concat("Connecting user [ ", connectionId, " ] :", ex.Message));
+            }
+            
         }
 
         public async override Task OnDisconnectedAsync(Exception exception)
         {
-            string connectionString = Context.ConnectionId;
-            var groupMember = _hubUser.GetUserByConnectionId(connectionString);
-            
+            string connectionId = Context.ConnectionId;
+            var groupMember = _hubUser.GetUserByConnectionId(connectionId);
+
+            if (exception != null)
+            {
+                Log.Warning(String.Concat(logPrefix, "Disconnecting user: [ ", connectionId, " ] for room: [ ",
+                                        groupMember.GroupName, " ]: \n", exception.Message));
+            }
+            else
+            {
+                Log.Information(String.Concat(logPrefix, "Disconnecting user: [ ", connectionId, " ] from room: [ ",
+                                            groupMember.GroupName, " ]"));
+            }
 
             await _hubUser.RemoveUserAsync(groupMember);
-            await Groups.RemoveFromGroupAsync(connectionString, groupMember.GroupName);
+            await Groups.RemoveFromGroupAsync(connectionId, groupMember.GroupName);
 
             //if group member changed roomNo exit patient view
             if (groupMember.UserId != null && !_queueService.CheckRoomSubordination(groupMember.UserId, groupMember.GroupName))
@@ -102,6 +126,8 @@ namespace WebApp.Hubs
                 if (_hubUser.GetConnectedUserById(groupMember.UserId) == null)
                 {
                     _queueService.SetQueueInactive(groupMember.UserId);
+                    Log.Information(String.Concat(logPrefix, "Room: [ ", groupMember.GroupName, " ] master disconnected, connectionId: [ ",
+                                                groupMember.ConnectionId, " ] userId: [ ", groupMember.UserId, " ]"));
                     InitGroupScreen(groupMember);
                 }
             }
@@ -157,6 +183,7 @@ namespace WebApp.Hubs
             await Clients.Group(hubUser.GroupName).SendAsync("ReceiveDoctorFullName", hubUser.UserId, string.Empty);
             await Clients.Group(hubUser.GroupName).SendAsync("ReceiveQueueNo", hubUser.UserId, SettingsHandler.ApplicationSettings.MessageWhenNoDoctorActiveInQueue);
             await Clients.Group(hubUser.GroupName).SendAsync("ReceiveAdditionalInfo", hubUser.UserId, string.Empty);
+            Log.Information(String.Concat(logPrefix, "Room: [ ", hubUser.GroupName, " ] view initialized with empty data"));
         }
 
     }

@@ -18,39 +18,29 @@ namespace WebApp.BackgroundServices.Tasks
 
         public static ApplicationSettings ApplicationSettings { get; private set; }
         
-
         private static readonly SettingsHandler _settingsHandler = new SettingsHandler();
-
         public static SettingsHandler Settings => _settingsHandler;
-
 
         private SettingsHandler()
         {
         }
 
-
         public ApplicationSettings ReadSettings()
         {
             CheckFileExists();
-
             var json = File.ReadAllText(path);
-           
             ApplicationSettings = JsonConvert.DeserializeObject<ApplicationSettings>(json);
 
             return ApplicationSettings;
-            
         }
 
         public void WriteAllSettings(ApplicationSettings settings)
         {
             CheckFileExists();
-
             ApplicationSettings = settings;
-
             string json = JsonConvert.SerializeObject(settings, Formatting.Indented);
 
             File.WriteAllText(path, json);
-
         }
 
         public void WriteSettingsExceptRooms(ApplicationSettings settings)
@@ -62,7 +52,7 @@ namespace WebApp.BackgroundServices.Tasks
             WriteAllSettings(ApplicationSettings);
         }
 
-        public void WriteNewRoom(int roomNo)
+        public void WriteNewRoom(string roomNo)
         {
 
         }
@@ -71,9 +61,7 @@ namespace WebApp.BackgroundServices.Tasks
         private void CheckFileExists()
         {
             if (!Directory.Exists(directory))
-            {
                 Directory.CreateDirectory(directory);
-            }
 
             if (!File.Exists(path))
             {

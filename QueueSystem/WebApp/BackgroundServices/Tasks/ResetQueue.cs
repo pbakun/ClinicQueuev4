@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.DependencyInjection;
 using Repository.Interfaces;
+using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,6 +10,7 @@ using System.Threading.Tasks;
 using WebApp.Hubs;
 using WebApp.Models;
 using WebApp.ServiceLogic;
+using WebApp.Utility;
 
 namespace WebApp.BackgroundServices.Tasks
 {
@@ -48,7 +50,7 @@ namespace WebApp.BackgroundServices.Tasks
                         _hubContext.Clients.Groups(queue.RoomNo.ToString()).SendAsync("ResetQueue", outputQueue.QueueNoMessage);
                 }
                 repo.Save();
-                Console.WriteLine("Queues reseted to 1");
+                Log.Information(String.Concat(StaticDetails.logPrefixQueue, "Queues reseted to 1"));
             }
 
             return Task.CompletedTask;

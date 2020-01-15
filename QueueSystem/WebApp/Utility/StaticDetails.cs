@@ -20,5 +20,10 @@ namespace WebApp.Utility
 
         public const string MessageWhenNoDoctorActiveInQueue = "NZMR Modzelewska-Bakun";
 
+        public const string logPrefixHub = "HUB | ";
+        public const string logPrefixQueue = "QUEUE | ";
+        public const string logPrefixUser = "USER | ";
+        public const string logPrefixStartup = "STARTUP | ";
+
     }
 }

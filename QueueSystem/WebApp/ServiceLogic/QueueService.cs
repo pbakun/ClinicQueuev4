@@ -1,11 +1,13 @@
 ﻿using AutoMapper;
 using Microsoft.Extensions.DependencyInjection;
 using Repository.Interfaces;
+using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using WebApp.Models;
+using WebApp.Utility;
 
 namespace WebApp.ServiceLogic
 {
@@ -28,6 +30,9 @@ namespace WebApp.ServiceLogic
         {
             var user = _repo.User.FindByCondition(u => u.Id == userId).FirstOrDefault();
 
+            Log.Information(String.Concat(StaticDetails.logPrefixQueue, StaticDetails.logPrefixUser, "User id: [ ",
+                                        userId, " ] changed room from: [ ", user.RoomNo, "to room: [ ", newRoomNo, " ]"));
+
             user.RoomNo = newRoomNo;
             _repo.User.Update(user);
             var queue = _repo.Queue.FindByCondition(q => q.UserId == userId).FirstOrDefault();
@@ -35,9 +40,7 @@ namespace WebApp.ServiceLogic
             _repo.Queue.Update(queue);
             _repo.Save();
 
-            var output = _mapper.Map<Queue>(queue);
-
-            return output;
+            return _mapper.Map<Queue>(queue);
         }
 
         public Queue FindByRoomNo(string roomNo)
@@ -45,9 +48,7 @@ namespace WebApp.ServiceLogic
             //returns queue with newest Timestamp
             var queue = _repo.Queue.FindByCondition(r => r.RoomNo.Equals(roomNo) && r.IsActive).OrderByDescending(t => t.Timestamp).FirstOrDefault();
 
-            Queue output = _mapper.Map<Queue>(queue);
-
-            return output;
+            return _mapper.Map<Queue>(queue);
         }
 
         public Queue FindByUserId(string userId)
@@ -78,9 +79,7 @@ namespace WebApp.ServiceLogic
             _repo.Queue.Update(queue);
             await _repo.SaveAsync();
 
-            Queue outputQueue = _mapper.Map<Queue>(queue);
-
-            return outputQueue;
+            return _mapper.Map<Queue>(queue);
         }
 
         public async Task<Queue> NewQueueNo(string userId, int queueNo)
@@ -112,9 +111,7 @@ namespace WebApp.ServiceLogic
             _repo.Queue.Update(queue);
             await _repo.SaveAsync();
 
-            Queue outputQueue = _mapper.Map<Queue>(queue);
-
-            return outputQueue;
+            return _mapper.Map<Queue>(queue);
         }
 
         public Queue ResetQueues()
@@ -180,8 +177,7 @@ namespace WebApp.ServiceLogic
         {
             var queues = _repo.Queue.FindAll().ToList();
 
-            var output = _mapper.Map<List<Queue>>(queues);
-            return output;
+            return _mapper.Map<List<Queue>>(queues);
         }
 
         public async Task<Queue> QueueNoUp(string userId)
@@ -195,9 +191,7 @@ namespace WebApp.ServiceLogic
             _repo.Queue.Update(queue);
             await _repo.SaveAsync();
 
-            Queue outputQueue = _mapper.Map<Queue>(queue);
-
-            return outputQueue;
+            return _mapper.Map<Queue>(queue);
         }
 
         public async Task<Queue> QueueNoDown(string userId)
@@ -214,9 +208,7 @@ namespace WebApp.ServiceLogic
             _repo.Queue.Update(queue);
             await _repo.SaveAsync();
 
-            Queue outputQueue = _mapper.Map<Queue>(queue);
-
-            return outputQueue;
+            return _mapper.Map<Queue>(queue);
         }
 
         public bool UpdateOwnerInitials(Entities.Models.User user)

@@ -1,10 +1,12 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
+using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using WebApp.ServiceLogic;
+using WebApp.Utility;
 
 namespace WebApp.BackgroundServices.Tasks
 {
@@ -17,37 +19,28 @@ namespace WebApp.BackgroundServices.Tasks
             _serviceScopeFactory = serviceScopeFactory;
         }
 
-        public override Task ProcessInScope(IServiceProvider serviceProvider)
+        //Process responsible for setting all queues to inactive status, executed at application startup
+        public override async Task ProcessInScope(IServiceProvider serviceProvider)
         {
-            SetAllQueuesInActive();
+            SetAllQueuesInactive();
+            Log.Information(String.Concat(StaticDetails.logPrefixStartup, "All queues set to state inactive"));
+            await this.StopAsync(System.Threading.CancellationToken.None);
 
-            this.StopAsync(System.Threading.CancellationToken.None);
-
-            return Task.CompletedTask;
+            await Task.CompletedTask;
         }
 
-        private void SetAllQueuesInActive()
+        private void SetAllQueuesInactive()
         {
             using(var scope = _serviceScopeFactory.CreateScope())
             {
                 var service = scope.ServiceProvider.GetRequiredService<IQueueService>();
 
                 var queues = service.FindAll();
-
                 foreach (var queue in queues)
                 {
                     service.SetQueueInactive(queue.UserId);
                 }
-
             }
-            
         }
-
-        //public override async Task StopAsync(CancellationToken cancellationToken)
-        //{
-
-        //}
-
-        
     }
 }
