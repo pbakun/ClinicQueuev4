@@ -22,6 +22,7 @@ using Repository;
 using Repository.Initialization;
 using WebApp.Areas.Identity.Pages.Account.Manage;
 using WebApp.BackgroundServices.Tasks;
+using WebApp.Extensions;
 using WebApp.Helpers;
 using WebApp.Hubs;
 using WebApp.Mappings;
@@ -99,7 +100,7 @@ namespace WebApp
             services.AddScoped<IManageHubUser, ManageHubUser>();
 
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
-            
+
             services.AddSignalR(options =>
             {
                 options.KeepAliveInterval = TimeSpan.FromSeconds(15);
@@ -112,16 +113,17 @@ namespace WebApp
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IHostingEnvironment env, IDBInitializer dbInitializer)
         {
-            if (env.IsDevelopment())
-            {
-                app.UseDeveloperExceptionPage();
-            }
-            else
-            {
-                app.UseExceptionHandler("/Home/Error");
-                // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
-                app.UseHsts();
-            }
+            //if (env.IsDevelopment())
+            //{
+            //    app.UseDeveloperExceptionPage();
+            //}
+            //else
+            //{
+            //    app.UseExceptionHandler("/Home/Error");
+            //    //The default HSTS value is 30 days.You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
+            //    app.UseHsts();
+            //}
+            app.ConfigureExceptionHandler();
 
             var options = app.ApplicationServices.GetService<IOptions<RequestLocalizationOptions>>();
             app.UseRequestLocalization(options.Value);

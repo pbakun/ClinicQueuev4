@@ -28,6 +28,7 @@ namespace WebApp.Areas.Patient.Controllers
 
         public IActionResult Index()
         {
+            throw new Exception("Test exception");
             var availableRooms = SettingsHandler.ApplicationSettings.AvailableRooms;
 
             return View(availableRooms);
