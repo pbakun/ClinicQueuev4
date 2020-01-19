@@ -38,7 +38,7 @@
                     <select asp-for="Queue.RoomNo" class="custom-select col-lg-3 col-sm-5" id="RoomSelection">
                         @foreach (var item in Model.AvailableRoomNo)
                         {
-                            <option>@Html.DisplayFor(m => item)</option>
+                        <option>@Html.DisplayFor(m => item)</option>
                         }
 
                     </select>
@@ -66,26 +66,44 @@
                 <div class="form-group col-6 offset-1">
                     <label for="additionalInfo">Dodatkowa informacja:</label>
                     <textarea class="form-control" id="additionalInfo" rows="3"
-                              oninput="textAreaChanged()" asp-for="Queue.AdditionalMessage">
+                              oninput="textAreaChanged()" asp-for="@Model.Queue.AdditionalMessage">
                     @Model.Queue.AdditionalMessage
                     </textarea>
-
+                    <a class="btn btn-info text-light" style="margin: 5px;" id="addFavMessageBtn" type="submit"
+                            asp-action="AddFavoriteMessage" asp-route-message="@Model.Queue.AdditionalMessage">
+                        Zapisz
+                    </a>
+                    <span asp-validation-for="Queue.AdditionalMessage" class="text-danger"></span>
+                    <a class="btn btn-info text-light anchorFavMessage">Wybierz</a>
                 </div>
                 <div class="row">
                     <div class="col-1">
                         <br />
                         <a class="btn btn-dark text-light" style="margin: 5px;" id="SendAdditionalMessage">Wyślij</a>
                         <a class="btn btn-info text-light" style="margin: 5px;" id="ClearAdditionalMessage">Wyczyść</a>
-
-                        <button class="btn btn-info text-light" style="margin: 5px;" type="submit" 
-                                asp-action="AddFavoriteMessage" asp-route-message="@Model.Queue.AdditionalMessage">Zapisz</button>
-                        <span asp-validation-for="Queue.AdditionalMessage" class="text-danger"></span>
-
                     </div>
                 </div>
             </div>
         </div>
     </form>
+</div>
+
+<div class="modal fade" id="favMessageModal" tabindex="-1" role="dialog" aria-hidden="true">
+
+    <div class="modal-dialog-centered modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-info justify-content-center">
+                <h5 class="modal-title text-light">Ulubione wiadomości</h5>
+                <button class="btn text-light align-content-center" id="myModalClose">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body justify-content-center" id="favMessageModalContent">
+
+            </div>
+        </div>
+    </div>
+
 </div>
 
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
@@ -94,6 +112,7 @@
     var roomNo = '@Model.Queue.RoomNo';
     var queueNo = parseInt('@Model.Queue.QueueNo');
     var id = '@Model.Queue.UserId';
+    var additionalInfo = '@Model.Queue.AdditionalMessage';
 
     //if enter was clicked while focus in input box call submit button clicked event
     $("#NewQueueNoInputBox").keyup(function (event) {
@@ -108,7 +127,58 @@
     function textAreaChanged() {
         var elementClassList = document.getElementById("SendAdditionalMessage").classList;
         elementClassList.replace("btn-success", "btn-dark");
+        additionalInfo = document.getElementById("additionalInfo").value;
+        console.log(additionalInfo)
+        additionalInfo = $("#additionalInfo").val();
+
     }
+    var favMessageURL = '/Doctor/Doctor/PickFavMessage';
+    var addFavMessageURL = '/Doctor/Doctor/AddFavoriteMessage';
+    $(function () {
+        $(".anchorFavMessage").click(function () {
+            $.ajax({
+                type: 'GET',
+                url: favMessageURL,
+                cache: false,
+                contentType: "application/json",
+                data: { "userId": id },
+                success: function (response) {
+                    $("#favMessageModalContent").html(response);
+                   $("#favMessageModal").modal('show');
+                },
+                error: function () {
+                    console.log("GET fav rooms failed")
+                }
+            })
+
+        });
+        $("#myModalClose").click(function () {
+            $("#favMessageModal").modal('hide');
+        });
+
+        //not working!
+        //$("#addFavMessageBtn").click(function () {
+        //    var myData = {
+        //        "message": document.getElementById("additionalInfo").value
+        //    }
+        //    $.ajax({
+        //        type: 'GET',
+        //        url: addFavMessageURL,
+        //        cache: false,
+        //        contentType: "application/json",
+        //        data: JSON.stringify(myData),
+        //        success: function () {
+        //            console.log(document.getElementById("additionalInfo").value)
+        //            console.log("Post succed")
+        //        },
+        //        error: function () {
+        //            console.log("POST new fav additional Info failed");
+        //        }
+        //    });
+        //});
+        
+
+    })
 
 </script>
 

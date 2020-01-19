@@ -92,20 +92,63 @@ namespace WebApp.Areas.Doctor.Controllers
             return View("Index", DoctorVM);
         }
 
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> AddFavoriteMessage(string message)
+        [Route("Doctor/Doctor/AddFavoriteMessage")]
+        public async Task<IActionResult> AddFavoriteMessage([FromQuery]string message)
         {
             var claimsIdentity = (ClaimsIdentity)this.User.Identity;
             var claim = claimsIdentity.FindFirst(ClaimTypes.NameIdentifier);
 
-            var favMsg = new Entities.Models.FavoriteAdditionalMessage
+            if(message != null && message.Length > 0)
             {
-                Message = message,
-                UserId = claim.Value
-            };
+                var favMsg = new Entities.Models.FavoriteAdditionalMessage
+                {
+                    Message = message,
+                    UserId = claim.Value
+                };
 
-            await _repo.FavoriteAdditionalMessage.AddAsync(favMsg);
+                await _repo.FavoriteAdditionalMessage.AddAsync(favMsg);
+                await _repo.SaveAsync();
+            }
+
+            return LocalRedirect("/Doctor/Doctor");
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> PickFavMessage(string userId)
+        {
+            var favMessages = _repo.FavoriteAdditionalMessage.FindByCondition(u => u.UserId == userId).ToList();
+            
+            return PartialView("_ShowFavMessage", favMessages);
+        }
+
+        [Route("PickFavMessagePost")]
+        public async Task<IActionResult> PickFavMessagePost(string messageId)
+        {
+            var claimsIdentity = (ClaimsIdentity)this.User.Identity;
+            var claims = claimsIdentity.FindFirst(ClaimTypes.NameIdentifier);
+
+            if (claims.Value == null)
+                return NotFound();
+
+            var message = _repo.FavoriteAdditionalMessage.FindByCondition(m => m.Id == messageId).FirstOrDefault();
+            if(message != null)
+            {
+                await _queueService.NewAdditionalInfo(claims.Value, message.Message);
+                return LocalRedirect("/Doctor/Doctor");
+            }
+            return NotFound();
+        }
+
+        public async Task<IActionResult> DeleteFavMessage(string messageId)
+        {
+            var claimsIdentity = (ClaimsIdentity)this.User.Identity;
+            var claims = claimsIdentity.FindFirst(ClaimTypes.NameIdentifier);
+
+            if (claims.Value == null)
+                return NotFound();
+
+            var message = _repo.FavoriteAdditionalMessage.FindByCondition(m => m.Id == messageId).FirstOrDefault();
+            _repo.FavoriteAdditionalMessage.Delete(message);
             await _repo.SaveAsync();
 
             return LocalRedirect("/Doctor/Doctor");

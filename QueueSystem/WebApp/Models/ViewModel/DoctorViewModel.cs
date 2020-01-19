@@ -11,7 +11,6 @@ namespace WebApp.Models.ViewModel
     {
         public Queue Queue { get; set; }
         public List<string> AvailableRoomNo { get; set; }
-
         public DoctorViewModel()
         {
             AvailableRoomNo = SettingsHandler.ApplicationSettings.AvailableRooms;

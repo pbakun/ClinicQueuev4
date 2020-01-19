@@ -1,11 +1,25 @@
-﻿
-
-
-<form method="post" asp-area="Admin" asp-controller="Rooms" asp-action="Create">
-    <div class="container row">
-        <div class="col-4">
-            <p>blablabla</p>
-            <input class="form-control" />
+﻿<div class="modal-dialog-centered modal-dialog" role="document">
+    <div class="modal-content">
+        <div class="modal-header bg-info justify-content-center">
+            <h5 class="modal-title text-light">Dodaj Pokój</h5>
+            <button class="btn text-light align-content-center" id="myModalClose">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="modal-body justify-content-center" id="myModalContent">
+            <form method="post" asp-area="Admin" asp-controller="Rooms" asp-action="Create">
+                <div class="container row">
+                    <div class="col-4">
+                        <label class="col-form-label">Nowy pokój:</label>
+                    </div>
+                    <div class="col-4">
+                        <input class="form-control" type="text" name="roomNo" />
+                    </div>
+                    <div class="col-2">
+                        <button type="submit" class="btn btn-success">Dodaj!</button>
+                    </div>
+                </div>
+            </form>
         </div>
     </div>
-</form>
+</div>
