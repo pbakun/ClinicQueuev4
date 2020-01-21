@@ -233,6 +233,15 @@ namespace WebApp.ServiceLogic
            return true;
         }
 
+        public string GetRoomNoByUserId(string userId)
+        {
+            if (userId == null)
+                throw new NullReferenceException("User Id cannot be null");
+
+            var queue = _repo.Queue.FindByCondition(q => q.UserId == userId).SingleOrDefault();
+            return queue.RoomNo;
+        }
+
         #endregion
 
         #region Custom Private Methods

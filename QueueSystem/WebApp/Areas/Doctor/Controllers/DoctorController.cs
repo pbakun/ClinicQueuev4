@@ -6,7 +6,10 @@ using System.Threading.Tasks;
 using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 using Repository.Interfaces;
+using Serilog;
+using WebApp.Hubs;
 using WebApp.Models;
 using WebApp.Models.ViewModel;
 using WebApp.ServiceLogic;
@@ -22,15 +25,20 @@ namespace WebApp.Areas.Doctor.Controllers
         private IRepositoryWrapper _repo;
         private readonly IMapper _mapper;
         private readonly IQueueService _queueService;
+        private readonly IHubContext<QueueHub> _hubContext;
 
         [BindProperty]
         public DoctorViewModel DoctorVM { get; set; }
 
-        public DoctorController(IRepositoryWrapper repo, IMapper mapper, IQueueService queueService)
+        public DoctorController(IRepositoryWrapper repo,
+                                IMapper mapper,
+                                IQueueService queueService,
+                                IHubContext<QueueHub> hubContext)
         {
             _repo = repo;
             _mapper = mapper;
             _queueService = queueService;
+            _hubContext = hubContext;
         }
 
         public async Task<IActionResult> Index()
@@ -93,7 +101,8 @@ namespace WebApp.Areas.Doctor.Controllers
         }
 
         [Route("Doctor/Doctor/AddFavoriteMessage")]
-        public async Task<IActionResult> AddFavoriteMessage([FromQuery]string message)
+        [HttpPost]
+        public async Task<IActionResult> AddFavoriteMessage([FromBody]string message)
         {
             var claimsIdentity = (ClaimsIdentity)this.User.Identity;
             var claim = claimsIdentity.FindFirst(ClaimTypes.NameIdentifier);
@@ -110,7 +119,7 @@ namespace WebApp.Areas.Doctor.Controllers
                 await _repo.SaveAsync();
             }
 
-            return LocalRedirect("/Doctor/Doctor");
+            return Ok();
         }
 
         [HttpGet]
@@ -121,8 +130,8 @@ namespace WebApp.Areas.Doctor.Controllers
             return PartialView("_ShowFavMessage", favMessages);
         }
 
-        [Route("PickFavMessagePost")]
-        public async Task<IActionResult> PickFavMessagePost(string messageId)
+        [HttpPost]
+        public async Task<IActionResult> PickFavMessagePost([FromBody]string messageId)
         {
             var claimsIdentity = (ClaimsIdentity)this.User.Identity;
             var claims = claimsIdentity.FindFirst(ClaimTypes.NameIdentifier);
@@ -130,15 +139,27 @@ namespace WebApp.Areas.Doctor.Controllers
             if (claims.Value == null)
                 return NotFound();
 
+            var roomNo = _queueService.GetRoomNoByUserId(claims.Value);
+
             var message = _repo.FavoriteAdditionalMessage.FindByCondition(m => m.Id == messageId).FirstOrDefault();
             if(message != null)
             {
-                await _queueService.NewAdditionalInfo(claims.Value, message.Message);
-                return LocalRedirect("/Doctor/Doctor");
+                try
+                {
+                    await _queueService.NewAdditionalInfo(claims.Value, message.Message);
+                    await _hubContext.Clients.Groups(roomNo).SendAsync("ReceiveAdditionalInfo", claims.Value, message.Message);
+                }
+                catch(Exception ex)
+                {
+                    Log.Error(ex.Message);
+                }
+                return Ok(message.Message);
             }
             return NotFound();
         }
 
+        [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteFavMessage(string messageId)
         {
             var claimsIdentity = (ClaimsIdentity)this.User.Identity;

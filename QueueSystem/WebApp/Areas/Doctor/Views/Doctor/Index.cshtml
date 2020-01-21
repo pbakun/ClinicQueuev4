@@ -69,8 +69,8 @@
                               oninput="textAreaChanged()" asp-for="@Model.Queue.AdditionalMessage">
                     @Model.Queue.AdditionalMessage
                     </textarea>
-                    <a class="btn btn-info text-light" style="margin: 5px;" id="addFavMessageBtn" type="submit"
-                            asp-action="AddFavoriteMessage" asp-route-message="@Model.Queue.AdditionalMessage">
+                    <a class="btn btn-info text-light" style="margin: 5px;" id="addFavMessageBtn" @*type="submit"*@
+                            @*asp-action="AddFavoriteMessage" asp-route-message="@Model.Queue.AdditionalMessage"*@>
                         Zapisz
                     </a>
                     <span asp-validation-for="Queue.AdditionalMessage" class="text-danger"></span>
@@ -128,8 +128,6 @@
         var elementClassList = document.getElementById("SendAdditionalMessage").classList;
         elementClassList.replace("btn-success", "btn-dark");
         additionalInfo = document.getElementById("additionalInfo").value;
-        console.log(additionalInfo)
-        additionalInfo = $("#additionalInfo").val();
 
     }
     var favMessageURL = '/Doctor/Doctor/PickFavMessage';
@@ -144,7 +142,7 @@
                 data: { "userId": id },
                 success: function (response) {
                     $("#favMessageModalContent").html(response);
-                   $("#favMessageModal").modal('show');
+                    $("#favMessageModal").modal('show');
                 },
                 error: function () {
                     console.log("GET fav rooms failed")
@@ -157,25 +155,25 @@
         });
 
         //not working!
-        //$("#addFavMessageBtn").click(function () {
-        //    var myData = {
-        //        "message": document.getElementById("additionalInfo").value
-        //    }
-        //    $.ajax({
-        //        type: 'GET',
-        //        url: addFavMessageURL,
-        //        cache: false,
-        //        contentType: "application/json",
-        //        data: JSON.stringify(myData),
-        //        success: function () {
-        //            console.log(document.getElementById("additionalInfo").value)
-        //            console.log("Post succed")
-        //        },
-        //        error: function () {
-        //            console.log("POST new fav additional Info failed");
-        //        }
-        //    });
-        //});
+        $("#addFavMessageBtn").click(function () {
+            var newFavMsg = document.getElementById("additionalInfo").value;
+            
+            $.ajax({
+                type: 'POST',
+                url: addFavMessageURL,
+                cache: false,
+                contentType: "application/json; charset=utf-8",
+                datatype: "text",
+                data: JSON.stringify(newFavMsg),
+                success: function () {
+                    console.log("New favorite message posted");
+                    alert("Wiadomość dodana do ulubionych");
+                },
+                error: function () {
+                    console.log("POST new fav additional Info failed");
+                }
+            });
+        });
         
 
     })

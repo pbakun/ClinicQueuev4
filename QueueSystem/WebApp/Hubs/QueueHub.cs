@@ -35,7 +35,7 @@ namespace WebApp.Hubs
             var newUser = new HubUser {
                 UserId = userId,
                 ConnectionId = Context.ConnectionId,
-                GroupName = roomNo.ToString()
+                GroupName = roomNo
             };
 
             var userInControl = _hubUser.GetGroupMaster(newUser.GroupName);
@@ -46,7 +46,7 @@ namespace WebApp.Hubs
                 var user = _repo.User.FindByCondition(u => u.Id == userId).FirstOrDefault();
 
                 string doctorFullName = QueueHelper.GetDoctorFullName(user);
-                await Clients.Group(roomNo.ToString()).SendAsync("ReceiveDoctorFullName", userId, doctorFullName);
+                await Clients.Group(roomNo).SendAsync("ReceiveDoctorFullName", userId, doctorFullName);
 
                 var queue = _queueService.FindByUserId(userId);
                 _queueService.SetQueueActive(queue);
@@ -163,7 +163,7 @@ namespace WebApp.Hubs
             {
                 WebApp.Models.Queue outputQueue = await _queueService.NewQueueNo(userId, queueNo);
 
-                await Clients.Group(roomNo.ToString()).SendAsync("ReceiveQueueNo", userId, outputQueue.QueueNoMessage);
+                await Clients.Group(roomNo).SendAsync("ReceiveQueueNo", userId, outputQueue.QueueNoMessage);
             }
         }
 
@@ -174,7 +174,7 @@ namespace WebApp.Hubs
             {
                 WebApp.Models.Queue outputQueue = await _queueService.NewAdditionalInfo(userId, message);
 
-                await Clients.Group(roomNo.ToString()).SendAsync("ReceiveAdditionalInfo", userId, outputQueue.AdditionalMessage);
+                await Clients.Group(roomNo).SendAsync("ReceiveAdditionalInfo", userId, outputQueue.AdditionalMessage);
             }
         }
 

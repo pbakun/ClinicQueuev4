@@ -8,9 +8,9 @@
             <table>
                 <tr>
                     <td>
-                        <a class="list-group-item list-group-item-action"
-                           asp-action="PickFavMessagePost"
-                           asp-route-messageId="@item.Id">
+                        <a class="list-group-item list-group-item-action anchorItemClicked" 
+                           @*asp-action="PickFavMessagePost"
+                           asp-route-messageId="@item.Id"*@ id="@item.Id">
                             @item.Message
                         </a>
                     </td>
@@ -31,3 +31,31 @@
         }
     </div>
 </form>
+
+
+<script type="text/javascript">
+
+    $(".anchorItemClicked").click(function () {
+        var formMessageId = $(this).attr("id");
+        $.ajax({
+            type: 'POST',
+            url: '/Doctor/Doctor/PickFavMessagePost',
+            cache: false,
+            contentType: "application/json; charset=utf-8",
+            datatype: "text",
+            data: JSON.stringify(formMessageId),
+            success: function (response) {
+                //additionalInfo and favMessageModal defined in Doctor Index.cshtml
+                $("#additionalInfo").val(response);
+                $("#favMessageModal").modal('hide');
+            },
+            error: function (error) {
+                console.log(error)
+                console.log("Error while POST of PickFavMessage")
+            }
+        });
+    });
+
+
+
+</script>

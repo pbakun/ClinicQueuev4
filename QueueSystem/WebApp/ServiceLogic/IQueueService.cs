@@ -22,5 +22,7 @@ namespace WebApp.ServiceLogic
         void SetQueueActive(Entities.Models.Queue queueId);
         void SetQueueInactive(string userId);
         bool UpdateOwnerInitials(Entities.Models.User user);
+        string GetRoomNoByUserId(string userId);
+
     }
 }
