@@ -33,7 +33,7 @@
                     <a class="btn btn-info text-light" id="Break">Przerwa</a>
                     <a class="btn btn-info text-light" id="Special">Specjalny nr</a>
                 </div>
-                <div class="col-3">
+                @*<div class="col-3">
                     <br />
                     <label asp-for="Queue.RoomNo" class="form-check-inline">Nr gabinetu</label>
                     <select asp-for="Queue.RoomNo" class="custom-select col-lg-3 col-sm-5" id="RoomSelection">
@@ -45,7 +45,7 @@
                     </select>
                     <button type="submit" asp-action="NewRoomNo" class="btn btn-info text-light">Zmień</button>
                     <span asp-validation-for="Queue.RoomNo" class="text-danger"></span>
-                </div>
+                </div>*@
 
             </div>
             <br />
@@ -59,6 +59,22 @@
                     <br />
                     <a class="btn btn-success text-light" style="margin: 5px;" id="NewQueueNoSubmit">New</a>
                 </div>
+                <div class="col-6">
+                    <br />
+                    <label asp-for="Queue.RoomNo" class="col-form-label">Nr gabinetu</label>
+                    <select asp-for="Queue.RoomNo" class="custom-select col-lg-3 col-sm-5 form-control" id="RoomSelection">
+                        @foreach (var item in Model.AvailableRoomNo)
+                        {
+                            <option>@Html.DisplayFor(m => item)</option>
+                        }
+
+                    </select>
+                    <button type="submit" asp-action="NewRoomNo" class="btn btn-info text-light">Zmień</button>
+                    <span asp-validation-for="Queue.RoomNo" class="text-danger"></span>
+                </div>
+            </div>
+            <div class="row">
+                
             </div>
             <br />
             <br />
