@@ -1,5 +1,6 @@
 ﻿using Entities.Models;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Repository.Interfaces;
@@ -17,6 +18,7 @@ namespace WebApp.Areas.Identity.Pages.Account.Manage
         private readonly RoleManager<IdentityRole> _roleManager;
         private readonly IRepositoryWrapper _repo;
         private readonly IQueueService _queue;
+        private readonly IServiceScopeFactory _scopeFactory;
         public CustomUserManager(IUserStore<IdentityUser> store, 
                                 IOptions<IdentityOptions> optionsAccessor,
                                 IPasswordHasher<IdentityUser> passwordHasher,
@@ -28,12 +30,14 @@ namespace WebApp.Areas.Identity.Pages.Account.Manage
                                 ILogger<UserManager<IdentityUser>> logger,
                                 RoleManager<IdentityRole> roleManager,
                                 IRepositoryWrapper repo,
-                                IQueueService queue
+                                IQueueService queue,
+                                IServiceScopeFactory serviceScopeFactory
                                 ) : base(store, optionsAccessor, passwordHasher, userValidators, passwordValidators, 
                                     keyNormalizer, errors, services, logger)
         {
             _repo = repo;
             _queue = queue;
+            _scopeFactory = serviceScopeFactory;
         }
 
         public override async Task<bool> IsEmailConfirmedAsync(IdentityUser user)
@@ -57,8 +61,13 @@ namespace WebApp.Areas.Identity.Pages.Account.Manage
             {
                 return await Task.FromResult<bool>(false);
             }
-            _repo.User.Update(user);
-            await _repo.SaveAsync();
+
+            using ( var scope = _scopeFactory.CreateScope())
+            {
+                var repo = scope.ServiceProvider.GetRequiredService<IRepositoryWrapper>();
+                repo.User.Update(user);
+                await _repo.SaveAsync();
+            }
 
             return await Task.FromResult<bool>(true);
         }
@@ -71,8 +80,13 @@ namespace WebApp.Areas.Identity.Pages.Account.Manage
             {
                 return await Task.FromResult<bool>(false);
             }
-            _repo.User.Update(user);
-            await _repo.SaveAsync();
+
+            using (var scope = _scopeFactory.CreateScope())
+            {
+                var repo = scope.ServiceProvider.GetRequiredService<IRepositoryWrapper>();
+                repo.User.Update(user);
+                await _repo.SaveAsync();
+            }
 
             return await Task.FromResult<bool>(true);
         }
