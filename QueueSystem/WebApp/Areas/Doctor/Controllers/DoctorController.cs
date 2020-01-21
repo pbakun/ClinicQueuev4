@@ -25,7 +25,7 @@ namespace WebApp.Areas.Doctor.Controllers
         private IRepositoryWrapper _repo;
         private readonly IMapper _mapper;
         private readonly IQueueService _queueService;
-        private readonly IHubContext<QueueHub> _hubContext;
+        private readonly IQueueHubContext _queueHubContext;
 
         [BindProperty]
         public DoctorViewModel DoctorVM { get; set; }
@@ -33,12 +33,12 @@ namespace WebApp.Areas.Doctor.Controllers
         public DoctorController(IRepositoryWrapper repo,
                                 IMapper mapper,
                                 IQueueService queueService,
-                                IHubContext<QueueHub> hubContext)
+                                IQueueHubContext queueHubContext)
         {
             _repo = repo;
             _mapper = mapper;
             _queueService = queueService;
-            _hubContext = hubContext;
+            _queueHubContext = queueHubContext;
         }
 
         public async Task<IActionResult> Index()
@@ -100,8 +100,8 @@ namespace WebApp.Areas.Doctor.Controllers
             return View("Index", DoctorVM);
         }
 
-        [Route("Doctor/Doctor/AddFavoriteMessage")]
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> AddFavoriteMessage([FromBody]string message)
         {
             var claimsIdentity = (ClaimsIdentity)this.User.Identity;
@@ -117,9 +117,10 @@ namespace WebApp.Areas.Doctor.Controllers
 
                 await _repo.FavoriteAdditionalMessage.AddAsync(favMsg);
                 await _repo.SaveAsync();
-            }
 
-            return Ok();
+                return Ok();
+            }
+            return BadRequest();
         }
 
         [HttpGet]
@@ -131,6 +132,7 @@ namespace WebApp.Areas.Doctor.Controllers
         }
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> PickFavMessagePost([FromBody]string messageId)
         {
             var claimsIdentity = (ClaimsIdentity)this.User.Identity;
@@ -147,7 +149,7 @@ namespace WebApp.Areas.Doctor.Controllers
                 try
                 {
                     await _queueService.NewAdditionalInfo(claims.Value, message.Message);
-                    await _hubContext.Clients.Groups(roomNo).SendAsync("ReceiveAdditionalInfo", claims.Value, message.Message);
+                    await _queueHubContext.SendAdditionalInfo(roomNo, claims.Value, message.Message);
                 }
                 catch(Exception ex)
                 {
@@ -155,24 +157,27 @@ namespace WebApp.Areas.Doctor.Controllers
                 }
                 return Ok(message.Message);
             }
-            return NotFound();
+            return BadRequest();
         }
 
-        [HttpPost]
+        [HttpDelete]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteFavMessage(string messageId)
+        public async Task<IActionResult> DeleteFavMessage([FromBody]string messageId)
         {
             var claimsIdentity = (ClaimsIdentity)this.User.Identity;
             var claims = claimsIdentity.FindFirst(ClaimTypes.NameIdentifier);
 
             if (claims.Value == null)
-                return NotFound();
+                return StatusCode(500);
 
             var message = _repo.FavoriteAdditionalMessage.FindByCondition(m => m.Id == messageId).FirstOrDefault();
-            _repo.FavoriteAdditionalMessage.Delete(message);
-            await _repo.SaveAsync();
-
-            return LocalRedirect("/Doctor/Doctor");
+            if(message != null)
+            {
+                _repo.FavoriteAdditionalMessage.Delete(message);
+                await _repo.SaveAsync();
+                return Ok();
+            }
+            return BadRequest();
         }
     }
 }

@@ -106,6 +106,8 @@ namespace WebApp
                 options.KeepAliveInterval = TimeSpan.FromSeconds(15);
             });
 
+            services.AddScoped<IQueueHubContext, QueueHubContext>();
+
             services.AddSingleton<Microsoft.Extensions.Hosting.IHostedService, ResetQueue>();
             services.AddScoped<IQueueHub, HubHelper>();
         }

@@ -2,6 +2,7 @@
 @{
     ViewData["Title"] = "System Kolejkowy";
     Layout = "~/Views/Shared/_Layout.cshtml";
+
 }
 <br />
 
@@ -38,7 +39,7 @@
                     <select asp-for="Queue.RoomNo" class="custom-select col-lg-3 col-sm-5" id="RoomSelection">
                         @foreach (var item in Model.AvailableRoomNo)
                         {
-                        <option>@Html.DisplayFor(m => item)</option>
+                            <option>@Html.DisplayFor(m => item)</option>
                         }
 
                     </select>
@@ -69,8 +70,7 @@
                               oninput="textAreaChanged()" asp-for="@Model.Queue.AdditionalMessage">
                     @Model.Queue.AdditionalMessage
                     </textarea>
-                    <a class="btn btn-info text-light" style="margin: 5px;" id="addFavMessageBtn" @*type="submit"*@
-                            @*asp-action="AddFavoriteMessage" asp-route-message="@Model.Queue.AdditionalMessage"*@>
+                    <a class="btn btn-info text-light" style="margin: 5px;" id="addFavMessageBtn">
                         Zapisz
                     </a>
                     <span asp-validation-for="Queue.AdditionalMessage" class="text-danger"></span>
@@ -105,6 +105,8 @@
     </div>
 
 </div>
+
+@{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
 
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
 
@@ -147,23 +149,23 @@
                 error: function () {
                     console.log("GET fav rooms failed")
                 }
-            })
+            });
 
         });
         $("#myModalClose").click(function () {
             $("#favMessageModal").modal('hide');
         });
 
-        //not working!
         $("#addFavMessageBtn").click(function () {
             var newFavMsg = document.getElementById("additionalInfo").value;
-            
+
             $.ajax({
                 type: 'POST',
                 url: addFavMessageURL,
                 cache: false,
                 contentType: "application/json; charset=utf-8",
                 datatype: "text",
+                headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
                 data: JSON.stringify(newFavMsg),
                 success: function () {
                     console.log("New favorite message posted");
@@ -172,10 +174,8 @@
                 error: function () {
                     console.log("POST new fav additional Info failed");
                 }
-            });
+            })
         });
-        
-
     })
 
 </script>

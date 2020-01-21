@@ -1,41 +1,40 @@
 ﻿@model List<Entities.Models.FavoriteAdditionalMessage>
 
-<form method="post" asp-area="Doctor" asp-controller="Doctor">
+
     <div class="container">
-        @if(@Model.Count > 0){
-        <div class="list-group">
-            @foreach(var item in Model){
-            <table>
-                <tr>
-                    <td>
-                        <a class="list-group-item list-group-item-action anchorItemClicked" 
-                           @*asp-action="PickFavMessagePost"
-                           asp-route-messageId="@item.Id"*@ id="@item.Id">
-                            @item.Message
-                        </a>
-                    </td>
-                    <td>
-                        <a class="btn btn-danger p-1" asp-action="DeleteFavMessage" asp-route-messageId="@item.Id">
-                            <i class="far fa-trash-alt text-light"></i>
-                        </a>
-                    </td>
-                </tr>
-            </table>
-           
-            }
-        </div>
-        }
-        else 
+        @if (@Model.Count > 0)
         {
-        <p>Brak ulubionych wiadomości.</p>
+            <div class="list-group">
+                @foreach (var item in Model)
+                {
+                    <table>
+                        <tr>
+                            <td>
+                                <a class="list-group-item list-group-item-action anchorItemPick" id="@item.Id">
+                                    @item.Message
+                                </a>
+                            </td>
+                            <td>
+                                <a class="btn btn-danger p-1 anchorItemDelete" id="@item.Id">
+                                    <i class="far fa-trash-alt text-light"></i>
+                                </a>
+                            </td>
+                        </tr>
+                    </table>
+                }
+            </div>
+        }
+        else
+        {
+            <p>Brak ulubionych wiadomości.</p>
         }
     </div>
-</form>
 
 
 <script type="text/javascript">
 
-    $(".anchorItemClicked").click(function () {
+    $(".anchorItemPick").click(function () {
+        $(this).off("click");
         var formMessageId = $(this).attr("id");
         $.ajax({
             type: 'POST',
@@ -43,6 +42,7 @@
             cache: false,
             contentType: "application/json; charset=utf-8",
             datatype: "text",
+            headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
             data: JSON.stringify(formMessageId),
             success: function (response) {
                 //additionalInfo and favMessageModal defined in Doctor Index.cshtml
@@ -50,9 +50,35 @@
                 $("#favMessageModal").modal('hide');
             },
             error: function (error) {
-                console.log(error)
                 console.log("Error while POST of PickFavMessage")
+                console.warn(error)
             }
+        }).done(function () {
+            $(this).on("click");
+        });
+    });
+
+    $(".anchorItemDelete").click(function () {
+        $(this).off("click");
+        var deleteMessageId = $(this).attr("id");
+        $.ajax({
+            type: 'DELETE',
+            url: '/Doctor/Doctor/DeleteFavMessage',
+            cache: false,
+            contentType: "application/json; charset=utf-8",
+            datatype: "text",
+            headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
+            data: JSON.stringify(deleteMessageId),
+            success: function (response) {
+                //modal defined in Doctor Index.cshtml
+                $("#favMessageModal").modal('hide');
+            },
+            error: function (error) {
+                console.log("Error while DELETE FavMessage");
+                console.warn(error);
+            }
+        }).done(function () {
+            $(this).on("click");
         });
     });
 
