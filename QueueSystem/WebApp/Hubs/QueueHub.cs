@@ -122,8 +122,7 @@ namespace WebApp.Hubs
             }
             else if (groupMember.UserId != null)
             {
-                await Task.Delay(SettingsHandler.ApplicationSettings.PatientViewNotificationAfterDoctorDisconnectedDelay);
-                await Task.Delay(TimeSpan.FromMinutes(3));
+                await Task.Delay(TimeSpan.FromMinutes(SettingsHandler.ApplicationSettings.PatientViewNotificationAfterDoctorDisconnectedDelay));
                 if (_hubUser.GetConnectedUserById(groupMember.UserId) == null)
                 {
                     _queueService.SetQueueInactive(groupMember.UserId);

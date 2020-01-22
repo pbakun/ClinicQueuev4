@@ -29,8 +29,6 @@ namespace WebApp.Areas.Admin.Controllers
         {
             var ApplicationSettings = _mapper.Map<ApplicationSettings>(SettingsHandler.ApplicationSettings);
             
-            ApplicationSettings.PatientViewNotificationAfterDoctorDisconnectedDelay = FromMiliseconds(ApplicationSettings.PatientViewNotificationAfterDoctorDisconnectedDelay);
-
             return View(ApplicationSettings);
         }
 
@@ -39,9 +37,9 @@ namespace WebApp.Areas.Admin.Controllers
         public async Task<IActionResult> Submit(ApplicationSettings settings)
         {
             bool somethingChanged = false;
-            if(settings.PatientViewNotificationAfterDoctorDisconnectedDelay < 1000)
+            if(!settings.PatientViewNotificationAfterDoctorDisconnectedDelay.Equals(string.Empty))
             {
-                SettingsHandler.ApplicationSettings.PatientViewNotificationAfterDoctorDisconnectedDelay = ToMiliseconds(settings.PatientViewNotificationAfterDoctorDisconnectedDelay);
+                SettingsHandler.ApplicationSettings.PatientViewNotificationAfterDoctorDisconnectedDelay = settings.PatientViewNotificationAfterDoctorDisconnectedDelay;
                 somethingChanged = true;
                 
             }
@@ -57,7 +55,6 @@ namespace WebApp.Areas.Admin.Controllers
             }
 
             ApplicationSettings = _mapper.Map<ApplicationSettings>(SettingsHandler.ApplicationSettings);
-            ApplicationSettings.PatientViewNotificationAfterDoctorDisconnectedDelay = FromMiliseconds(ApplicationSettings.PatientViewNotificationAfterDoctorDisconnectedDelay);
 
             return View("Index", ApplicationSettings);
         }

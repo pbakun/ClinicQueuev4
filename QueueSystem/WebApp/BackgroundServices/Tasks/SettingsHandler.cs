@@ -70,7 +70,7 @@ namespace WebApp.BackgroundServices.Tasks
                 {
                     AvailableRooms = new List<string>(),
                     QueueOccupiedMessage = string.Empty,
-                    PatientViewNotificationAfterDoctorDisconnectedDelay = 60000,
+                    PatientViewNotificationAfterDoctorDisconnectedDelay = 1,
                     MessageWhenNoDoctorActiveInQueue = StaticDetails.MessageWhenNoDoctorActiveInQueue
                 });
             }
