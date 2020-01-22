@@ -46,5 +46,12 @@ namespace WebApp.Areas.Patient.Controllers
             //return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
             return View("_CustomError");
         }
+
+        [AllowAnonymous]
+        [Route("{url}", Order = 999)]
+        public IActionResult CatchAll()
+        {
+            return View("_CustomError");
+        }
     }
 }

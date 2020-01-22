@@ -53,6 +53,13 @@ namespace WebApp.Areas.Identity.Pages.Account.Manage
             return true;
         }
 
+        public async Task<IList<string>> GetRolesAsync(WebApp.Models.User user)
+        {
+            var identityUser = await base.FindByIdAsync(user.Id);
+
+            return await base.GetRolesAsync(identityUser);
+        }
+
         public async Task<bool> SetFirstNameAsync(User user, string newFirstName)
         {
             user.FirstName = newFirstName;

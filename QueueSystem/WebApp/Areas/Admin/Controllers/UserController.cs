@@ -5,9 +5,12 @@ using System.Security.Claims;
 using System.Threading.Tasks;
 using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Repository.Interfaces;
+using WebApp.Areas.Identity.Pages.Account.Manage;
 using WebApp.Models;
+using WebApp.Models.ViewModel;
 using WebApp.Utility;
 
 namespace WebApp.Areas.Admin.Controllers
@@ -18,23 +21,42 @@ namespace WebApp.Areas.Admin.Controllers
     {
         private readonly IRepositoryWrapper _repo;
         private readonly IMapper _mapper;
+        private readonly CustomUserManager _userManager;
 
-        public UserController(IRepositoryWrapper repo, IMapper mapper)
+        public List<UserViewModel> UserVM { get; set; }
+
+        public UserController(IRepositoryWrapper repo, IMapper mapper, CustomUserManager userManager)
         {
             _repo = repo;
             _mapper = mapper;
+            _userManager = userManager;
+
+            UserVM = new List<UserViewModel>();
         }
 
         public async Task<IActionResult> Index()
         {
             var claimsIdentity = (ClaimsIdentity)this.User.Identity;
             var claim = claimsIdentity.FindFirst(ClaimTypes.NameIdentifier);
-            var role = claimsIdentity.FindFirst(ClaimTypes.Role);
+
+            if (claim.Value == null)
+                return BadRequest();
 
             var users = _repo.User.FindAll().ToList();
+            var usersInModel = _mapper.Map<List<User>>(users);
 
-            var outputUsers = _mapper.Map <List<User>> (users);
-            return View(outputUsers);
+            foreach (var user in usersInModel)
+            {
+                var userRoles = await _userManager.GetRolesAsync(user);
+
+                UserVM.Add(new UserViewModel()
+                {
+                    User = user,
+                    Roles = userRoles.ToList()
+                });
+            }
+
+            return View(UserVM);
         }
 
         public async Task<IActionResult> Lock(string id)

@@ -1,4 +1,4 @@
-﻿@model IEnumerable<User>
+﻿@model IEnumerable<WebApp.Models.ViewModel.UserViewModel>
 @{
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
@@ -26,6 +26,9 @@
                         Nazwisko
                     </th>
                     <th>
+                        Role
+                    </th>
+                    <th>
                         Email
                     </th>
                     <th>
@@ -36,37 +39,58 @@
                 </tr>
                 @foreach (var item in Model)
                 {
-            <tr>
-                <td class="align-middle">
-                    @Html.DisplayFor(m => item.UserName)
-                </td>
+                    <tr>
+                        <td class="align-middle">
+                            @Html.DisplayFor(m => item.User.UserName)
+                        </td>
 
-                <td class="align-middle">
-                    @Html.DisplayFor(m => item.FirstName) @Html.DisplayFor(m => item.LastName)
-                </td>
-                <td class="align-middle">
-                    @Html.DisplayFor(m => item.Email)
-                </td>
-                <td class="align-middle">
-                    @Html.DisplayFor(m => item.RoomNo)
-                </td>
+                        <td class="align-middle">
+                            @Html.DisplayFor(m => item.User.FirstName) @Html.DisplayFor(m => item.User.LastName)
+                        </td>
+                        <td class="align-middle">
+                            @switch (item.Roles.Count)
+                            {
+                                case 1:
+                                    @Html.DisplayFor(m => item.Roles[0]);
+                                    break;
+                                default:
+                                    @Html.Raw("Brak");
+                                    break;
+                            }
+                        </td>
+                        <td class="align-middle">
+                            @Html.DisplayFor(m => item.User.Email)
+                        </td>
+                        <td class="align-middle">
+                            @Html.DisplayFor(m => item.User.RoomNo)
+                        </td>
 
-                <td class="align-middle">
-                    @if (item.LockoutEnd == null || item.LockoutEnd < DateTime.Now)
-                    {
-                        <a class="btn btn-success text-white" asp-action="Lock" asp-route-id="@item.Id">
-                            <i class="fas fa-lock-open"></i>
-                        </a>
-                    }
-                    else
-                    {
-                        <a class="btn btn-danger text-white" asp-action="Unlock" asp-route-id="@item.Id">
-                            <i class="fas fa-lock"></i>
-                        </a>
-                    }
+                        <td class="align-middle">
+                            @if (item.User.LockoutEnd == null || item.User.LockoutEnd < DateTime.Now)
+                            {
+                                <div class="btn-group">
+                                    <a class="btn btn-success p-2 text-white" asp-action="Lock" asp-route-id="@item.User.Id">
+                                        <i class="fas fa-lock-open"></i>
+                                    </a>
+                                    <a class="btn btn-primary p-2 text-white">
+                                        <i class="far fa-edit"></i>
+                                    </a>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="btn-group">
+                                    <a class="btn btn-danger p-1 text-white" asp-action="Unlock" asp-route-id="@item.User.Id">
+                                        <i class="fas fa-lock"></i>
+                                    </a>
+                                    <a class="btn btn-primary p-1 text-white">
+                                        <i class="far fa-edit"></i>
+                                    </a>
+                                </div>
+                            }
 
-                </td>
-            </tr>
+                        </td>
+                    </tr>
                 }
             </table>
         }
