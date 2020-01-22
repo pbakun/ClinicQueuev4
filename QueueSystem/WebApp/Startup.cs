@@ -121,12 +121,11 @@ namespace WebApp
             }
             else
             {
-                app.ConfigureExceptionHandler();
                 app.UseExceptionHandler("/Home/Error");
+                app.UseMiddleware<LoggingExceptionHandler>();
                 //The default HSTS value is 30 days.You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
                 app.UseHsts();
             }
-
 
             var options = app.ApplicationServices.GetService<IOptions<RequestLocalizationOptions>>();
             app.UseRequestLocalization(options.Value);

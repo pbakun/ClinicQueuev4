@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using Entities.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.Mvc;
@@ -29,7 +30,6 @@ namespace WebApp.Areas.Patient.Controllers
         public IActionResult Index()
         {
             var availableRooms = SettingsHandler.ApplicationSettings.AvailableRooms;
-
             return View(availableRooms);
         }
 
@@ -38,10 +38,13 @@ namespace WebApp.Areas.Patient.Controllers
             return View();
         }
 
+        [Route("/Home/Error")]
+        [AllowAnonymous]
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
         public IActionResult Error()
         {
-            return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
+            //return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
+            return View("_CustomError");
         }
     }
 }
