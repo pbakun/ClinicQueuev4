@@ -173,6 +173,7 @@
         });
 
         $("#addFavMessageBtn").click(function () {
+            $(this).attr('disabled', true);
             var newFavMsg = document.getElementById("additionalInfo").value;
 
             $.ajax({
@@ -190,7 +191,9 @@
                 error: function () {
                     console.log("POST new fav additional Info failed");
                 }
-            })
+            }).done(function () {
+                $(this).attr('disabled', false);
+            });
         });
     })
 

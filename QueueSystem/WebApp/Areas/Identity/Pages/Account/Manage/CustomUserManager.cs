@@ -1,4 +1,5 @@
-﻿using Entities.Models;
+﻿using AutoMapper;
+using Entities.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -19,6 +20,7 @@ namespace WebApp.Areas.Identity.Pages.Account.Manage
         private readonly IRepositoryWrapper _repo;
         private readonly IQueueService _queue;
         private readonly IServiceScopeFactory _scopeFactory;
+        private readonly IMapper _mapper;
         public CustomUserManager(IUserStore<IdentityUser> store, 
                                 IOptions<IdentityOptions> optionsAccessor,
                                 IPasswordHasher<IdentityUser> passwordHasher,
@@ -31,13 +33,16 @@ namespace WebApp.Areas.Identity.Pages.Account.Manage
                                 RoleManager<IdentityRole> roleManager,
                                 IRepositoryWrapper repo,
                                 IQueueService queue,
-                                IServiceScopeFactory serviceScopeFactory
+                                IServiceScopeFactory serviceScopeFactory,
+                                IMapper mapper
                                 ) : base(store, optionsAccessor, passwordHasher, userValidators, passwordValidators, 
                                     keyNormalizer, errors, services, logger)
         {
+            _roleManager = roleManager;
             _repo = repo;
             _queue = queue;
             _scopeFactory = serviceScopeFactory;
+            _mapper = mapper;
         }
 
         public override async Task<bool> IsEmailConfirmedAsync(IdentityUser user)
@@ -58,6 +63,37 @@ namespace WebApp.Areas.Identity.Pages.Account.Manage
             var identityUser = await base.FindByIdAsync(user.Id);
 
             return await base.GetRolesAsync(identityUser);
+        }
+
+        public async Task<IList<string>> RemoveFromRolesAsync(string userId, string[] roles)
+        {
+            var identityUser = await base.FindByIdAsync(userId);
+            await base.RemoveFromRolesAsync(identityUser, roles);
+
+            return await base.GetRolesAsync(identityUser);
+        }
+
+        public async Task<IList<string>> AddToRolesAsync(string userId, string[] roles)
+        {
+            var identityUser = await base.FindByIdAsync(userId);
+            foreach(var role in roles)
+            {
+                await base.AddToRoleAsync(identityUser, role);
+            }
+            
+            return await base.GetRolesAsync(identityUser);
+        }
+
+        public List<string> GetRoles()
+        {
+            return _roleManager.Roles.Select(r => r.Name).ToList();
+            
+        }
+
+        public async Task<WebApp.Models.User> FindByIdAsync(string userId)
+        {
+            var user = _repo.User.FindByCondition(u => u.Id == userId).SingleOrDefault();
+            return _mapper.Map<WebApp.Models.User>(user);
         }
 
         public async Task<bool> SetFirstNameAsync(User user, string newFirstName)

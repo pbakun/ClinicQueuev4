@@ -31,7 +31,7 @@
 <script type="text/javascript">
 
     $(".anchorItemPick").click(function () {
-        $(this).off("click");
+        $(this).attr('disabled', true);
         var formMessageId = $(this).attr("id");
         $.ajax({
             type: 'POST',
@@ -51,12 +51,12 @@
                 console.warn(error)
             }
         }).done(function () {
-            $(this).on("click");
+            $(this).attr('disabled', false);
         });
     });
 
     $(".anchorItemDelete").click(function () {
-        $(this).off("click");
+        $(this).attr('disabled', true);
         var deleteMessageId = $(this).attr("id");
         $.ajax({
             type: 'DELETE',
@@ -75,7 +75,7 @@
                 console.warn(error);
             }
         }).done(function () {
-            $(this).on("click");
+            $(this).attr('disabled', false);
         });
     });
 

@@ -1,0 +1,96 @@
+﻿@model WebApp.Models.ModifyUserRoles
+
+<div class="modal-dialog-centered modal-dialog w-25" role="document">
+    <div class="modal-content">
+        <div class="modal-header bg-info justify-content-center">
+            <h5 class="modal-title text-light">Możliwe role</h5>
+            <button class="btn text-light align-content-center anchorAvailableRolesClose">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="modal-body justify-content-center">
+            <div class="container">
+                <div class=" offset-4">
+                    @if (Model.AvailableRoles.Count() > 0)
+                    {
+                        @foreach (var role in Model.AvailableRoles)
+                        {
+                            <div class="custom-control custom-checkbox align-items-center">
+                                @if (Model.Roles.Contains(role))
+                                {
+                                    <input type="checkbox" class="custom-control-input checkInp" id="@role" value="@role" checked />
+                                }
+                                else
+                                {
+                                    <input type="checkbox" class="custom-control-input checkInp" id="@role" value="@role" />
+                                }
+                                <label class="custom-control-label" for="@role">@Html.Raw(role)</label>
+                            </div>
+                        }
+                    }
+                </div>
+                <div class="row justify-content-center">
+                    <a class="btn btn-success text-light m-2" id="SaveRolesBtn">Zapisz</a>
+                    <a class="btn btn-info text-light m-2 anchorAvailableRolesClose">Anuluj</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script type="text/javascript">
+
+    $(".anchorAvailableRolesClose").click(function () {
+        $("#availableRoles").modal("hide");
+    });
+
+    $("#SaveRolesBtn").click(function () {
+        $(this).attr("disabled", true);
+
+        var dataToSend = {
+            UserId: '@Model.UserId',
+            Roles: getCheckedInputs(),
+            AvailableRoles: null
+        };
+
+        $.ajax({
+            type: 'POST',
+            url: '/Admin/User/AddRole',
+            cache: false,
+            contentType: "application/json",
+            dataType: "json",
+            headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
+            data: JSON.stringify(dataToSend),
+            success: function (response) {
+                $("#rolesSelect").find("option").remove();
+                response.forEach(function (element) {
+                    $("#rolesSelect").append(new Option(element));
+                });
+                $("#availableRoles").modal("hide");
+                console.log("POST success");
+            },
+            error: function (error) {
+                console.log("Error while POST addroles");
+                console.error(error);
+            }
+        }).done(function () {
+            $(this).attr("disabled", false);
+        });
+
+    });
+
+    function getCheckedInputs() {
+        var inputs = $(".checkInp");
+        var checkedData = new Array();
+        for (var i = 0; i < inputs.length; i++) {
+            if ($(inputs[i]).is(":checked")) {
+                checkedData.push($(inputs[i]).val());
+            }
+        }
+        return checkedData;
+    }
+
+    function checkUserRoles() {
+
+    }
+</script>

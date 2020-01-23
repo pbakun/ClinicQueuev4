@@ -1,0 +1,160 @@
+﻿@model WebApp.Models.ViewModel.UserViewModel
+
+<div class="modal-dialog-centered modal-dialog" role="document">
+    <div class="modal-content">
+        <div class="modal-header bg-info justify-content-center">
+            <h5 class="modal-title text-light">Szczegóły</h5>
+            <button class="btn text-light align-content-center anchorClose">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="modal-body justify-content-center" id="myModalContent">
+            <form method="post" asp-area="Admin" asp-controller="User">
+                <div class="container">
+                    <div class="row">
+                        <div class="col-6">
+                            <div class="form-group">
+                                <label class="form-check-label" for="Model.User.FirstName">Imię</label>
+                                <input type="text" class="form-control" placeholder="Imię"
+                                       id="firstNameInput" value="@Model.User.FirstName"
+                                       asp-for="User.FirstName" name="User.FirstName" disabled>
+                                <span asp-validation-for="User.FirstName" class="text-danger"></span>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-check-label" for="Model.User.LastName">Nazwisko</label>
+                                <input type="text" class="form-control" placeholder="Nazwisko"
+                                       id="lastNameInput" value="@Model.User.LastName"
+                                       asp-for="User.LastName" disabled>
+                                <span asp-validation-for="User.LastName" class="text-danger"></span>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-check-label" for="@Model.User.Email">Email</label>
+                                <input type="email" class="form-control" placeholder="Email"
+                                       id="emailInput" value="@Model.User.Email"
+                                       asp-for="User.Email" readonly>
+                                <span asp-validation-for="User.Email" class="text-danger"></span>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-check-label" for="@Model.User.RoomNo">Gabinet</label>
+                            <select class="form-control" asp-for="@Model.User.RoomNo" disabled id="roomNoSelect">
+                                @foreach (var item in Model.AvailableRoomNo)
+                                {
+                                    @if (item == Model.User.RoomNo)
+                                    {
+                                        <option selected>@Html.DisplayFor(m => item)</option>
+                                    }
+                                    else
+                                    {
+                                        <option>@Html.DisplayFor(m => item)</option>
+                                    }
+                                }
+                            </select>
+                            <span asp-validation-for="User.RoomNo" class="text-danger"></span>
+                            <label class="form-check-label mt-3" for="@Model.Roles">Rodzaje uprawnień</label>
+                            <select class="custom-select form-control" multiple 
+                                    size="2" disabled id="rolesSelect" asp-for="Roles">
+                                @foreach (var item in Model.Roles)
+                                {
+                                    <option>@Html.DisplayFor(m => item)</option>
+                                }
+                            </select>
+                            <div class="row justify-content-center">
+                                <a class="btn btn-success text-light col-4 mt-3 d-inline anchorRoleAdd">Dodaj</a>
+                                <a class="btn btn-danger text-light col-4 offset-1 mt-3 d-inline anchorRoleDelete" disabled>Usuń</a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row justify-content-center">
+                        <a class="btn btn-danger form-control text-light mt-1 col-5" id="changePassword">Zmień hasło</a>
+                    </div>
+
+                    <div class="row justify-content-center">
+                        <a class="btn btn-success text-light m-2 col-3" id="EditBtn">Edytuj</a>
+                        <button class="btn btn-success text-light m-2 col-3" id="SaveBtn" 
+                                type="submit" asp-action="Edit" asp-route-id="@Model.User.Id" hidden>Zapisz</button>
+                        <a class="btn btn-info m-2 text-light col-3 anchorClose">Anuluj</a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="availableRoles" tabindex="-1" role="dialog" aria-hidden="true">
+    <!-- here popups view with available roles details -->
+</div>
+
+<script type="text/javascript">
+    var editEnable = false;
+    $(".anchorClose").click(function () {
+        $("#userDetailsModal").modal('hide');
+        editEnable = false;
+    });
+
+    $("#EditBtn").click(function () {
+        editEnable = true;
+        $("#firstNameInput").attr("disabled", false);
+        $("#lastNameInput").attr("disabled", false);
+        $("#roomNoSelect").attr("disabled", false);
+        $("#rolesSelect").attr("disabled", false);
+        $(".anchorRoleDelete").attr("disabled", false);
+        $(this).hide();
+        $("#SaveBtn").attr("hidden", false);
+    });
+
+    $(".anchorRoleDelete").click(function () {
+        $(this).attr("disabled", true);
+        var dataToDelete = {
+            UserId: '@Model.User.Id',
+            Roles: $("#rolesSelect").val()
+        };
+
+        $.ajax({
+            type: 'DELETE',
+            url: '/Admin/User/DeleteRole',
+            cache: false,
+            contentType: "application/json",
+            datatype: "json",
+            headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
+            data: JSON.stringify(dataToDelete),
+            success: function (response) {
+                $("#rolesSelect").find("option").remove();
+                response.forEach(function (element) {
+                    $("#rolesSelect").append(new Option(element));
+                });
+            },
+            error: function (error) {
+                console.log("Error while DELETE user's role");
+                console.warn(error);
+            }
+        }).done(function () {
+            $(this).attr('disabled', false);
+        });
+    });
+
+    $(".anchorRoleAdd").click(function () {
+        $(this).attr("disabled", true);
+
+        $.ajax({
+            type: 'GET',
+            url: '/Admin/User/GetAllRoles',
+            cache: false,
+            contentType: "application/json",
+            datatype: "json",
+            data: {"userId": '@Model.User.Id'},
+            headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
+            success: function (response) {
+                $("#availableRoles").html(response);
+                $("#availableRoles").modal("show");
+            },
+            error: function (error) {
+                console.log("Error while GET all possible roles");
+                console.warn(error);
+            }
+        }).done(function () {
+            $(this).attr('disabled', false);
+        });
+    });
+</script>

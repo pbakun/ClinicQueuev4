@@ -50,11 +50,14 @@
                         <td class="align-middle">
                             @switch (item.Roles.Count)
                             {
+                                case 0:
+                                    @Html.Raw("Brak");
+                                    break;
                                 case 1:
                                     @Html.DisplayFor(m => item.Roles[0]);
                                     break;
                                 default:
-                                    @Html.Raw("Brak");
+                                    @Html.DisplayFor(m => item.Roles[0]);
                                     break;
                             }
                         </td>
@@ -66,29 +69,23 @@
                         </td>
 
                         <td class="align-middle">
-                            @if (item.User.LockoutEnd == null || item.User.LockoutEnd < DateTime.Now)
-                            {
-                                <div class="btn-group">
+                            <div class="btn-group">
+                                @if (item.User.LockoutEnd == null || item.User.LockoutEnd < DateTime.Now)
+                                {
                                     <a class="btn btn-success p-2 text-white" asp-action="Lock" asp-route-id="@item.User.Id">
                                         <i class="fas fa-lock-open"></i>
                                     </a>
-                                    <a class="btn btn-primary p-2 text-white">
-                                        <i class="far fa-edit"></i>
-                                    </a>
-                                </div>
-                            }
-                            else
-                            {
-                                <div class="btn-group">
-                                    <a class="btn btn-danger p-1 text-white" asp-action="Unlock" asp-route-id="@item.User.Id">
+                                }
+                                else
+                                {
+                                    <a class="btn btn-danger p-2 text-white" asp-action="Unlock" asp-route-id="@item.User.Id">
                                         <i class="fas fa-lock"></i>
                                     </a>
-                                    <a class="btn btn-primary p-1 text-white">
-                                        <i class="far fa-edit"></i>
-                                    </a>
-                                </div>
-                            }
-
+                                }
+                                <a class="btn btn-primary p-2 text-white anchorDetails" id="@item.User.Id">
+                                    <i class="far fa-edit"></i>
+                                </a>
+                            </div>
                         </td>
                     </tr>
                 }
@@ -100,3 +97,35 @@
         }
     </div>
 </div>
+
+
+<div class="modal fade" id="userDetailsModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <!-- here popups view with user details -->
+</div>
+
+<script type="text/javascript">
+
+
+    $(".anchorDetails").click(function () {
+        var btn = $(this);
+            btn.attr('disabled', true);
+        var id = $(this).attr("id");
+        $.ajax({
+            type: 'GET',
+            url: '/Admin/User/Details',
+            cache: false,
+            contentType: "application/json",
+            data: { "userId": id },
+            success: function (response) {
+                $("#userDetailsModal").html(response);
+                $("#userDetailsModal").modal('show');
+            },
+            error: function () {
+                console.log("GET user details failed");
+            }
+        }).done(function () {
+            btn.attr('disabled', false);
+        });
+    });
+
+</script>
