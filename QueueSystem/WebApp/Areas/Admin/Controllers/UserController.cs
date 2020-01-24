@@ -151,7 +151,8 @@ namespace WebApp.Areas.Admin.Controllers
                 if (!user.RoomNo.Equals(EditUserVM.User.RoomNo))
                 {
                     user.RoomNo = EditUserVM.User.RoomNo;
-                    _queueService.ChangeUserRoomNo(user.Id, user.RoomNo);
+                    await _userManager.SetRoomNoAsync(user.Id, user.RoomNo);
+                    await _queueService.ChangeUserRoomNo(user.Id, user.RoomNo);
                 }
                 _repo.User.Update(user);
                 await _repo.SaveAsync();

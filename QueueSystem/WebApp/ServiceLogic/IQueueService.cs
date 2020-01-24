@@ -12,7 +12,7 @@ namespace WebApp.ServiceLogic
         Task<Queue> QueueNoUp(string userId);
         Task<Queue> QueueNoDown(string userId);
         Task<Queue> NewAdditionalInfo(string userId, string message);
-        Queue ChangeUserRoomNo(string userId, string newRoomNo);
+        Task<Queue> ChangeUserRoomNo(string userId, string newRoomNo);
         Queue ResetQueues();
         Queue FindByUserId(string userId);
         Queue FindByRoomNo(string roomNo);

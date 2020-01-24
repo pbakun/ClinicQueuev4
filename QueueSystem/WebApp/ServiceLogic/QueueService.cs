@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using WebApp.Areas.Identity.Pages.Account.Manage;
 using WebApp.Models;
 using WebApp.Utility;
 
@@ -16,8 +17,11 @@ namespace WebApp.ServiceLogic
         private readonly IRepositoryWrapper _repo;
         private readonly IMapper _mapper;
         private readonly IServiceScopeFactory _scopeFactory;
+        private readonly CustomUserManager _userManager;
 
-        public QueueService(IRepositoryWrapper repo, IMapper mapper, IServiceScopeFactory serviceScopeFactory)
+        public QueueService(IRepositoryWrapper repo, 
+                            IMapper mapper, 
+                            IServiceScopeFactory serviceScopeFactory)
         {
             _repo = repo;
             _mapper = mapper;
@@ -26,19 +30,17 @@ namespace WebApp.ServiceLogic
 
         #region Implmenting interface
 
-        public Queue ChangeUserRoomNo(string userId, string newRoomNo)
+        public async Task<Queue> ChangeUserRoomNo(string userId, string newRoomNo)
         {
-            var user = _repo.User.FindByCondition(u => u.Id == userId).FirstOrDefault();
-
-            Log.Information(String.Concat(StaticDetails.logPrefixQueue, StaticDetails.logPrefixUser, "User id: [ ",
-                                        userId, " ] changed room from: [ ", user.RoomNo, "to room: [ ", newRoomNo, " ]"));
-
-            user.RoomNo = newRoomNo;
-            _repo.User.Update(user);
             var queue = _repo.Queue.FindByCondition(q => q.UserId == userId).FirstOrDefault();
+            if (queue == null)
+                return null;
             queue.RoomNo = newRoomNo;
             _repo.Queue.Update(queue);
-            _repo.Save();
+            await _repo.SaveAsync();
+
+            Log.Information(String.Concat(StaticDetails.logPrefixQueue, StaticDetails.logPrefixUser, "User id: [ ",
+                                        userId, " ] changed room from: [ ", queue.RoomNo, "to room: [ ", newRoomNo, " ]"));
 
             return _mapper.Map<Queue>(queue);
         }

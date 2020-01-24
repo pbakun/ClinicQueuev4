@@ -134,5 +134,18 @@ namespace WebApp.Areas.Identity.Pages.Account.Manage
             return await Task.FromResult<bool>(true);
         }
 
+        public async Task<bool> SetRoomNoAsync(string userId, string newRoomNo)
+        {
+            var user = _repo.User.FindByCondition(u => u.Id == userId).FirstOrDefault();
+            user.RoomNo = newRoomNo;
+            using (var scope = _scopeFactory.CreateScope())
+            {
+                var repo = scope.ServiceProvider.GetRequiredService<IRepositoryWrapper>();
+                repo.User.Update(user);
+                await repo.SaveAsync();
+            }
+            return await Task.FromResult<bool>(true);
+        }
+
     }
 }

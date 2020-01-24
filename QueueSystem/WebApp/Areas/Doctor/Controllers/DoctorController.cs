@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
 using Repository.Interfaces;
 using Serilog;
+using WebApp.Areas.Identity.Pages.Account.Manage;
 using WebApp.Hubs;
 using WebApp.Models;
 using WebApp.Models.ViewModel;
@@ -26,6 +27,7 @@ namespace WebApp.Areas.Doctor.Controllers
         private readonly IMapper _mapper;
         private readonly IQueueService _queueService;
         private readonly IQueueHubContext _queueHubContext;
+        private readonly CustomUserManager _userManager;
 
         [BindProperty]
         public DoctorViewModel DoctorVM { get; set; }
@@ -33,12 +35,14 @@ namespace WebApp.Areas.Doctor.Controllers
         public DoctorController(IRepositoryWrapper repo,
                                 IMapper mapper,
                                 IQueueService queueService,
-                                IQueueHubContext queueHubContext)
+                                IQueueHubContext queueHubContext,
+                                CustomUserManager userManager)
         {
             _repo = repo;
             _mapper = mapper;
             _queueService = queueService;
             _queueHubContext = queueHubContext;
+            _userManager = userManager;
         }
 
         public async Task<IActionResult> Index()
@@ -94,7 +98,8 @@ namespace WebApp.Areas.Doctor.Controllers
             var roomNo = VM.Queue.RoomNo;
             var user = _repo.User.FindByCondition(u => u.Id == claim.Value).FirstOrDefault();
             
-            var queue = _queueService.ChangeUserRoomNo(user.Id, roomNo);
+            var queue = await _queueService.ChangeUserRoomNo(user.Id, roomNo);
+            await _userManager.SetRoomNoAsync(user.Id, roomNo);
             DoctorVM.Queue = queue;
 
             return View("Index", DoctorVM);
@@ -124,7 +129,7 @@ namespace WebApp.Areas.Doctor.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> PickFavMessage(string userId)
+        public IActionResult PickFavMessage(string userId)
         {
             var favMessages = _repo.FavoriteAdditionalMessage.FindByCondition(u => u.UserId == userId).ToList();
             
