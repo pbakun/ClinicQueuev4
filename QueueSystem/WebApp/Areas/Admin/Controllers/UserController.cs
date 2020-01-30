@@ -131,28 +131,25 @@ namespace WebApp.Areas.Admin.Controllers
         {
             if (ModelState.IsValid)
             {
-                var user = await _userManager.FindByIdAsync(id);
-                bool changes = false;
-                if (!user.FirstName.Equals(EditUserVM.User.FirstName))
+                var user = await _userManager.FindByIdAsync(id) as Entities.Models.User;
+                if (EditUserVM.User.FirstName != null && !user.FirstName.Equals(EditUserVM.User.FirstName))
                 {
-                    user.FirstName = EditUserVM.User.FirstName;
-                    changes = true;
+                    await _userManager.SetFirstNameAsync(user, EditUserVM.User.FirstName);
                 }
 
-                if (!user.LastName.Equals(EditUserVM.User.LastName))
+                if (EditUserVM.User.LastName != null && !user.LastName.Equals(EditUserVM.User.LastName))
                 {
-                    user.LastName = EditUserVM.User.LastName;
-                    changes = true;
+                    await _userManager.SetLastNameAsync(user, EditUserVM.User.LastName);
                 }
-                if (changes)
-                {
-                    _queueService.UpdateOwnerInitials(user);
-                }
-                if (!user.RoomNo.Equals(EditUserVM.User.RoomNo))
+                if (EditUserVM.User.RoomNo != null && !user.RoomNo.Equals(EditUserVM.User.RoomNo))
                 {
                     user.RoomNo = EditUserVM.User.RoomNo;
                     await _userManager.SetRoomNoAsync(user.Id, user.RoomNo);
                     await _queueService.ChangeUserRoomNo(user.Id, user.RoomNo);
+                }
+                if(EditUserVM.User.PasswordHash != null && !user.PasswordHash.Equals(EditUserVM.User.PasswordHash))
+                {
+                    await _userManager.ChangePasswordAsync(user, EditUserVM.User.PasswordHash);
                 }
                 _repo.User.Update(user);
                 await _repo.SaveAsync();

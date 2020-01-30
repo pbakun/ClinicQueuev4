@@ -1,5 +1,11 @@
 ﻿@model WebApp.Models.ViewModel.UserViewModel
 
+<style>
+    .hideContent {
+        display: none;
+    }
+</style>
+
 <div class="modal-dialog-centered modal-dialog" role="document">
     <div class="modal-content">
         <div class="modal-header bg-info justify-content-center">
@@ -11,7 +17,7 @@
         <div class="modal-body justify-content-center" id="myModalContent">
             <form method="post" asp-area="Admin" asp-controller="User">
                 <div class="container">
-                    <div class="row">
+                    <div class="row" id="editDetailsContent">
                         <div class="col-6">
                             <div class="form-group">
                                 <label class="form-check-label" for="Model.User.FirstName">Imię</label>
@@ -36,29 +42,29 @@
                             </div>
                         </div>
                         <div class="col-6">
-                            <label class="form-check-label" for="@Model.User.RoomNo">Gabinet</label>
-                            <select class="form-control" asp-for="@Model.User.RoomNo" disabled id="roomNoSelect">
-                                @foreach (var item in Model.AvailableRoomNo)
-                                {
-                                    @if (item == Model.User.RoomNo)
+                                <label class="form-check-label" for="@Model.User.RoomNo">Gabinet</label>
+                                <select class="form-control" asp-for="@Model.User.RoomNo" disabled id="roomNoSelect">
+                                    @foreach (var item in Model.AvailableRoomNo)
                                     {
-                                        <option selected>@Html.DisplayFor(m => item)</option>
+                                        @if (item == Model.User.RoomNo)
+                                        {
+                                            <option selected>@Html.DisplayFor(m => item)</option>
+                                        }
+                                        else
+                                        {
+                                            <option>@Html.DisplayFor(m => item)</option>
+                                        }
                                     }
-                                    else
+                                </select>
+                                <span asp-validation-for="User.RoomNo" class="text-danger"></span>
+                                <label class="form-check-label mt-3" for="@Model.Roles">Rodzaje uprawnień</label>
+                                <select class="custom-select form-control" multiple
+                                        size="2" disabled id="rolesSelect" asp-for="Roles">
+                                    @foreach (var item in Model.Roles)
                                     {
                                         <option>@Html.DisplayFor(m => item)</option>
                                     }
-                                }
-                            </select>
-                            <span asp-validation-for="User.RoomNo" class="text-danger"></span>
-                            <label class="form-check-label mt-3" for="@Model.Roles">Rodzaje uprawnień</label>
-                            <select class="custom-select form-control" multiple 
-                                    size="2" disabled id="rolesSelect" asp-for="Roles">
-                                @foreach (var item in Model.Roles)
-                                {
-                                    <option>@Html.DisplayFor(m => item)</option>
-                                }
-                            </select>
+                                </select>
                             <div class="row justify-content-center">
                                 <a class="btn btn-success text-light col-4 mt-3 d-inline anchorRoleAdd">Dodaj</a>
                                 <a class="btn btn-danger text-light col-4 offset-1 mt-3 d-inline anchorRoleDelete" disabled>Usuń</a>
@@ -66,8 +72,18 @@
                         </div>
                     </div>
 
+                    <div class="row hideContent" id="changePasswordContent">
+                        <div class="form-group col-10 offset-1">
+                            <label class="form-control-plaintext" for="@Model.User.PasswordHash">Nowe hasło</label>
+                            <input type="password" class="form-control" placeholder="Hasło"
+                                   id="passwordInput"
+                                   asp-for="User.PasswordHash" name="User.PasswordHash" disabled>
+                            <span asp-validation-for="User.PasswordHash" class="text-danger"></span>
+                        </div>
+                    </div>
+
                     <div class="row justify-content-center">
-                        <a class="btn btn-danger form-control text-light mt-1 col-5" id="changePassword">Zmień hasło</a>
+                        <a class="btn btn-primary btn-danger form-control text-light mt-1 col-5" id="changePassword">Zmień hasło</a>
                     </div>
 
                     <div class="row justify-content-center">
@@ -95,11 +111,7 @@
 
     $("#EditBtn").click(function () {
         editEnable = true;
-        $("#firstNameInput").attr("disabled", false);
-        $("#lastNameInput").attr("disabled", false);
-        $("#roomNoSelect").attr("disabled", false);
-        $("#rolesSelect").attr("disabled", false);
-        $(".anchorRoleDelete").attr("disabled", false);
+        toggleFormEnable(false);
         $(this).hide();
         $("#SaveBtn").attr("hidden", false);
     });
@@ -157,4 +169,23 @@
             $(this).attr('disabled', false);
         });
     });
+
+    $("#changePassword").click(function () {
+        $("#editDetailsContent").toggleClass("hideContent");
+        $("#changePasswordContent").toggleClass("hideContent");
+        editEnable ? toggleFormEnable(true) : toggleFormEnable(false);
+        editEnable = !editEnable;
+        $("#passwordInput").attr("disabled") ? $("#passwordInput").attr("disabled", false) : $("#passwordInput").attr("disabled", true);
+        //$(this).toggleClass("btn-primary");
+        $(this).toggleClass("btn-danger");
+        this.innerHTML = this.innerHTML === "Zmień hasło" ? "Edytuj dane" : "Zmień hasło";
+    });
+
+    function toggleFormEnable(state) {
+        $("#firstNameInput").attr("disabled", state);
+        $("#lastNameInput").attr("disabled", state);
+        $("#roomNoSelect").attr("disabled", state);
+        $("#rolesSelect").attr("disabled", state);
+        $(".anchorRoleDelete").attr("disabled", state);
+    }
 </script>

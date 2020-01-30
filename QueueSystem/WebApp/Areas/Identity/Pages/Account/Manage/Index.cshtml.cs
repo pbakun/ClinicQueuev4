@@ -107,7 +107,6 @@ namespace WebApp.Areas.Identity.Pages.Account.Manage
                 var setFirstNameSuccedded = await _userManager.SetFirstNameAsync(user, Input.FirstName);
                 if (!setFirstNameSuccedded)
                 {
-
                     var userId = await _userManager.GetUserIdAsync(user);
                     throw new InvalidOperationException($"Unexpected error occurred setting first name for user with ID '{userId}'.");
                 }

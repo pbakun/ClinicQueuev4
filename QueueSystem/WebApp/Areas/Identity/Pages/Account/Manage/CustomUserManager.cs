@@ -100,6 +100,7 @@ namespace WebApp.Areas.Identity.Pages.Account.Manage
         {
             user.FirstName = newFirstName;
             var initialsUpdateSucess = _queue.UpdateOwnerInitials(user);
+
             if (!initialsUpdateSucess)
             {
                 return await Task.FromResult<bool>(false);
@@ -119,7 +120,7 @@ namespace WebApp.Areas.Identity.Pages.Account.Manage
         {
             user.LastName = newLastName;
             var initialsUpdateSucess = _queue.UpdateOwnerInitials(user);
-            if(!initialsUpdateSucess)
+            if (!initialsUpdateSucess)
             {
                 return await Task.FromResult<bool>(false);
             }
@@ -130,13 +131,16 @@ namespace WebApp.Areas.Identity.Pages.Account.Manage
                 repo.User.Update(user);
                 await _repo.SaveAsync();
             }
-
             return await Task.FromResult<bool>(true);
         }
 
         public async Task<bool> SetRoomNoAsync(string userId, string newRoomNo)
         {
             var user = _repo.User.FindByCondition(u => u.Id == userId).FirstOrDefault();
+            if(user == null)
+            {
+                return await Task.FromResult<bool>(false);
+            }
             user.RoomNo = newRoomNo;
             using (var scope = _scopeFactory.CreateScope())
             {
@@ -145,6 +149,17 @@ namespace WebApp.Areas.Identity.Pages.Account.Manage
                 await repo.SaveAsync();
             }
             return await Task.FromResult<bool>(true);
+        }
+
+        public async Task<IdentityResult> ChangePasswordAsync(Entities.Models.User userIn, string newPassword)
+        {
+            var user = userIn as IdentityUser;
+            
+            var passResult = await this.ValidatePasswordAsync(user, newPassword);
+            if (!passResult.Succeeded)
+                return passResult;
+
+            return await UpdatePasswordHash(user, newPassword, false);
         }
 
     }
