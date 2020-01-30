@@ -132,6 +132,9 @@ namespace WebApp.Areas.Admin.Controllers
             if (ModelState.IsValid)
             {
                 var user = await _userManager.FindByIdAsync(id) as Entities.Models.User;
+                if (user == null)
+                    return BadRequest();
+
                 if (EditUserVM.User.FirstName != null && !user.FirstName.Equals(EditUserVM.User.FirstName))
                 {
                     await _userManager.SetFirstNameAsync(user, EditUserVM.User.FirstName);
@@ -172,7 +175,6 @@ namespace WebApp.Areas.Admin.Controllers
                 AvailableRoles = _userManager.GetRoles().ToList()
             };
 
-            //return Ok(model);
             return PartialView("_AvailableRoles", model);
         }
 
