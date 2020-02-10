@@ -78,7 +78,7 @@ namespace XUnitTests
             return result;
         }
 
-        private WebApp.Models.Queue CallChangeUserRoomNo(string newRoomNo, string oldRoomNo) 
+        private async Task<WebApp.Models.Queue> CallChangeUserRoomNo(string newRoomNo, string oldRoomNo) 
         {
             _mockRepo.Setup(x => x.Queue.FindByCondition(It.IsAny<Expression<Func<Entities.Models.Queue, bool>>>()))
                 .Returns(new FakeQueue().WithRoomNo(oldRoomNo).BuildAsList());
@@ -88,7 +88,7 @@ namespace XUnitTests
 
             var sut = new QueueService(_mockRepo.Object, _mapper, null);
 
-            var result = sut.ChangeUserRoomNo("1", newRoomNo);
+            var result = await sut.ChangeUserRoomNo("1", newRoomNo);
             return result;
         }
 
@@ -226,11 +226,11 @@ namespace XUnitTests
         [Theory]
         [InlineData("12", "15")]
         [InlineData("13", "13")]
-        public void ChangeUserRoomNo_Test(string newRoomNo, string oldRoomNo)
+        public async void ChangeUserRoomNo_Test(string newRoomNo, string oldRoomNo)
         {
             var data = new FakeQueue();
 
-            var result = CallChangeUserRoomNo(newRoomNo, oldRoomNo);
+            var result = await CallChangeUserRoomNo(newRoomNo, oldRoomNo);
 
             Assert.Equal(newRoomNo, result.RoomNo);
         }

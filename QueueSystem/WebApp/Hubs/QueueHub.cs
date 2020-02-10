@@ -51,8 +51,8 @@ namespace WebApp.Hubs
                 var queue = _queueService.FindByUserId(userId);
                 _queueService.SetQueueActive(queue);
 
-                await Clients.Group(roomNo.ToString()).SendAsync("ReceiveQueueNo", userId, queue.QueueNoMessage);
-                await Clients.Group(roomNo.ToString()).SendAsync("ReceiveAdditionalInfo", userId, queue.AdditionalMessage);
+                await Clients.Group(roomNo).SendAsync("ReceiveQueueNo", userId, queue.QueueNoMessage);
+                await Clients.Group(roomNo).SendAsync("ReceiveAdditionalInfo", userId, queue.AdditionalMessage);
             }
             else
             {

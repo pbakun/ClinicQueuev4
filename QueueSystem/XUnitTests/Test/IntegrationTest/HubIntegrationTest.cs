@@ -14,6 +14,9 @@ using AutoMapper;
 using WebApp.Mappings;
 using WebApp.Hubs;
 using Microsoft.AspNetCore.SignalR;
+using System.Collections.Generic;
+using XUnitTests.Test.IntegrationTest.Models;
+using System;
 
 namespace XUnitTests.Test.IntegrationTest
 {
@@ -24,12 +27,7 @@ namespace XUnitTests.Test.IntegrationTest
         private readonly IMapper _mapper;
         private readonly IManageHubUser _hubUser;
 
-        public string ReceiveQueueNo { get; set; }
-        public string ReceiveAdditionalMessage { get; set; }
-        public string ReceiveDoctorFullName { get; set; }
-        public string ReceiveUserId { get; set; }
-        public string ReceiveQueueOccupied { get; set; }
-
+        public QueueHubResponse HubResponse { get; set; }
 
         public HubIntegrationTest()
         {
@@ -44,6 +42,8 @@ namespace XUnitTests.Test.IntegrationTest
             _server = new TestServer(webHostBuilder);
             _context = _server.Host.Services.GetService(typeof(IRepositoryWrapper)) as IRepositoryWrapper;
             _hubUser = _server.Host.Services.GetService(typeof(IManageHubUser)) as IManageHubUser;
+
+            HubResponse = new QueueHubResponse();
         }
 
         private HubConnection MakeHubConnection()
@@ -61,9 +61,10 @@ namespace XUnitTests.Test.IntegrationTest
             //System.Diagnostics.Debugger.Launch();
             var repo = new FakeRepo(_context);
             var fakeUser = repo.FakeSingleUser();
+
             var fakeQueue = repo.FakeSingleQueue();
             var expectedQueue = _mapper.Map<WebApp.Models.Queue>(fakeQueue);
-
+            
             var connection = MakeHubConnection();
 
             MakeDoctorFullNameReceive(connection);
@@ -78,13 +79,58 @@ namespace XUnitTests.Test.IntegrationTest
             string expected = QueueHelper.GetDoctorFullName(fakeUser);
             Assert.True(fakeQueue.IsActive);
 
-            Assert.Equal(expected, ReceiveDoctorFullName);
-            Assert.Equal(fakeUser.Id, ReceiveUserId);
+            Assert.Equal(expected, HubResponse.ReceiveDoctorFullName);
+            Assert.Equal(fakeUser.Id, HubResponse.ReceiveUserId);
 
-            Assert.Equal(expectedQueue.QueueNoMessage, ReceiveQueueNo);
-            Assert.Equal(expectedQueue.AdditionalMessage, ReceiveAdditionalMessage);
+            Assert.Equal(expectedQueue.QueueNoMessage, HubResponse.ReceiveQueueNo);
+            Assert.Equal(expectedQueue.AdditionalMessage, HubResponse.ReceiveAdditionalMessage);
 
             await connection.DisposeAsync();
+        }
+
+        [Theory]
+        [InlineData(2)]
+        [InlineData(1)]
+        [InlineData(25)]
+        [InlineData(100)]
+        public async Task RegisterMultipleDoctors(int reps)
+        {
+            string roomNo = "12";
+            var repo = new FakeRepo(_context);
+            var fakeUsers = repo.FakeMultipleUsers(reps, roomNo);
+
+            var fakeQueues = repo.FakeMultipleQueues(fakeUsers);
+            List<WebApp.Models.Queue> expectedQueues = _mapper.Map<List<WebApp.Models.Queue>>(fakeQueues);
+
+            var connection = MakeHubConnection();
+
+            MakeDoctorFullNameReceive(connection);
+            MakeQueueNoReceive(connection);
+            MakeQueueAdditionalMessageReceive(connection);
+            MakeNotifyQueueOccupied(connection);
+
+            await connection.StartAsync();
+
+            int occupiedMsgCount = 0;
+            int queueMsgMatchCount = 0;
+            for(int i=0; i<fakeUsers.Count; i++)
+            {
+                await connection.InvokeAsync("RegisterDoctor", fakeUsers[i].Id, fakeUsers[i].RoomNo);
+                if (!String.IsNullOrEmpty(HubResponse.ReceiveQueueOccupied))
+                {
+                    occupiedMsgCount++;
+                    HubResponse.ReceiveQueueOccupied = String.Empty;
+                }
+                if (HubResponse.ReceiveQueueNo.Equals(expectedQueues[i].QueueNoMessage))
+                {
+                    queueMsgMatchCount++;
+                    HubResponse.ReceiveQueueNo = String.Empty;
+                }
+            }
+
+            Assert.Equal(reps - 1, occupiedMsgCount);
+            Assert.Equal(reps - 1, _hubUser.GetWaitingUsersCount(roomNo));
+            Assert.Equal(1, _hubUser.GetConnectedUsersCount(roomNo));
         }
 
         [Fact]
@@ -107,7 +153,7 @@ namespace XUnitTests.Test.IntegrationTest
 
             var expectedMessage = StaticDetails.QueueOccupiedMessage;
 
-            Assert.Equal(expectedMessage, ReceiveQueueOccupied);
+            Assert.Equal(expectedMessage, HubResponse.ReceiveQueueOccupied);
         }
 
         [Fact]
@@ -142,7 +188,7 @@ namespace XUnitTests.Test.IntegrationTest
         {
             await Task.Run(() => connection.On<string, string>("ReceiveQueueNo", (id, msg) =>
             {
-                ReceiveQueueNo = msg;
+                HubResponse.ReceiveQueueNo = msg;
             }));
         }
 
@@ -150,7 +196,7 @@ namespace XUnitTests.Test.IntegrationTest
         {
             await Task.Run(() => connection.On<string, string>("ReceiveAdditionalInfo", (id, msg) =>
             {
-                ReceiveAdditionalMessage = msg;
+                HubResponse.ReceiveAdditionalMessage = msg;
             }));
         }
 
@@ -158,8 +204,8 @@ namespace XUnitTests.Test.IntegrationTest
         {
             await Task.Run(() => connection.On<string, string>("ReceiveDoctorFullName", (id, msg) =>
             {
-                ReceiveUserId = id;
-                ReceiveDoctorFullName = msg;
+                HubResponse.ReceiveUserId = id;
+                HubResponse.ReceiveDoctorFullName = msg;
             }));
         }
 
@@ -167,7 +213,7 @@ namespace XUnitTests.Test.IntegrationTest
         {
             await Task.Run(() => connection.On<string>("NotifyQueueOccupied", msg =>
             {
-                ReceiveQueueOccupied = msg;
+                HubResponse.ReceiveQueueOccupied = msg;
             }));
         }
 

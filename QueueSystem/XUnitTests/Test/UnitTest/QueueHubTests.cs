@@ -126,9 +126,9 @@ namespace XUnitTests
 
         [Theory]
         [InlineData("12", 2)]
-        [InlineData("12", 3)]
-        [InlineData("13", 5)]
-        [InlineData("10", 30)]
+        //[InlineData("12", 3)]
+        //[InlineData("13", 5)]
+        //[InlineData("10", 30)]
         public async Task RegisterDoctor_TestMoreThanOneOwner(string roomNo, int numberOfCalls)
         {
             var mockClientProxy = new Mock<Microsoft.AspNetCore.SignalR.IClientProxy>();
@@ -143,7 +143,7 @@ namespace XUnitTests
                 var queue = await CallRegisterDoctor(i.ToString(), roomNo, mockClients, mockClientProxy, mockGroupManager);
             }
 
-            mockClients.Verify(c => c.Group(roomNo.ToString()), Times.AtLeastOnce);
+            mockClients.Verify(c => c.Group(roomNo), Times.AtLeastOnce);
 
             mockClientProxy.Verify(p => p.SendCoreAsync("NotifyQueueOccupied",
                 It.Is<object[]>(o => o != null && o.Length == 1),
