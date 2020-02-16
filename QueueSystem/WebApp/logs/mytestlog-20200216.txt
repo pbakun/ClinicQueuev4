@@ -1,0 +1,6 @@
+[2020-02-16 20:01:28.814 +01:00] [Information] Starting web host
+[2020-02-16 20:01:31.181 +01:00] [Information] STARTUP | All queues set to state inactive
+[2020-02-16 20:01:36.236 +01:00] [Information] STARTUP | All queues set to state inactive
+[2020-02-16 20:01:47.158 +01:00] [Information] HUB | New hub client [ UZfLkQJboUSb5RnkhvkseA ]
+[2020-02-16 20:01:47.303 +01:00] [Information] HUB | Client [ UZfLkQJboUSb5RnkhvkseA ] registered as Doctor for room: [ 13 ]
+[2020-02-16 20:02:04.949 +01:00] [Information] HUB | Disconnecting user: [ UZfLkQJboUSb5RnkhvkseA ] from room: [ 13 ]

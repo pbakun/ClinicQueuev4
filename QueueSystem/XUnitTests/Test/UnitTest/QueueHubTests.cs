@@ -49,28 +49,24 @@ namespace XUnitTests
         public async Task<Queue> CallRegisterDoctor(string id, string roomNo,
             Mock<IHubCallerClients> mockClients,
             Mock<Microsoft.AspNetCore.SignalR.IClientProxy> mockClientProxy,
-            Mock<IGroupManager> mockGroupManager)
+            Mock<IGroupManager> mockGroupManager,
+            Mock<IManageHubUser> mockManageHubUser = null)
         {
             if (mockClients == null)
-            {
                 mockClients = _mockClients;
-            }
             if (mockClientProxy == null)
-            {
                 mockClientProxy = _mockClientProxy;
-            }
             if (mockGroupManager == null)
-            {
                 mockGroupManager = _mockGroupManager;
-            }
-            var mockManageHubUser = new Mock<IManageHubUser>();
+            if(mockManageHubUser == null)
+                mockManageHubUser = new Mock<IManageHubUser>();
 
             var prepareQueue = new FakeQueue().WithQueueNo(12).WithRoomNo(roomNo).Build();
             var queue = _mapper.Map<Queue>(prepareQueue);
 
             var prepareUser = new UserData().WithRoomNo(roomNo).BuildAsList();
 
-            mockManageHubUser.Setup(h => h.GetGroupMaster(It.IsAny<string>())).Returns(new FakeHubUser(id, null, roomNo.ToString()).BuildAsList());
+            mockManageHubUser.Setup(h => h.GetGroupMaster(It.IsAny<string>())).Returns(new FakeHubUser(id, null, roomNo).BuildAsList());
             _mockRepo.Setup(r => r.User.FindByCondition(It.IsAny<Expression<Func<Entities.Models.User, bool>>>()))
                 .Returns(prepareUser);
             _mockQueueService.Setup(q => q.FindByUserId(It.IsAny<string>())).Returns(queue);
@@ -78,9 +74,7 @@ namespace XUnitTests
 
             _mockHubCallerContext.Setup(c => c.ConnectionId).Returns(It.IsAny<string>());
 
-            mockClients.Setup(c => c.Group(queue.RoomNo.ToString())).Returns(() => mockClientProxy.Object);
-            //System.Diagnostics.Debugger.Launch();
-
+            mockClients.Setup(c => c.Group(queue.RoomNo)).Returns(() => mockClientProxy.Object);
 
             var hub = new QueueHub(_mockRepo.Object, _mockQueueService.Object, mockManageHubUser.Object)
             {
