@@ -54,5 +54,28 @@ namespace WebApp.Areas.Patient.Controllers
             return View(PatientVM);
 
         }
+
+        [Route("api/patient/{roomNo}")]
+        public IActionResult IndexApi(string roomNo)
+        {
+            var queue = _queueService.FindByRoomNo(roomNo);
+            PatientVM = new PatientViewModel();
+
+            if (queue == null)
+            {
+                queue = new Queue();
+                queue.RoomNo = roomNo;
+                PatientVM.DoctorFullName = string.Empty;
+            }
+            else
+            {
+                var user = _repo.User.FindByCondition(u => u.Id == queue.UserId).FirstOrDefault();
+                PatientVM.DoctorFullName = QueueHelper.GetDoctorFullName(user);
+            }
+            PatientVM.QueueNoMessage = queue.QueueNoMessage;
+            PatientVM.QueueAdditionalInfo = queue.AdditionalMessage;
+
+            return Ok(PatientVM);
+        }
     }
 }

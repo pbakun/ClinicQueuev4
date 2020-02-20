@@ -110,6 +110,18 @@ namespace WebApp
 
             services.AddSingleton<Microsoft.Extensions.Hosting.IHostedService, ResetQueue>();
             services.AddScoped<IQueueHub, HubHelper>();
+
+            //services.AddCors(options =>
+            //{
+            //    options.AddPolicy("AllowAll", builder =>
+            //    {
+            //        builder.AllowAnyOrigin()
+            //            .AllowAnyMethod()
+            //            .AllowAnyHeader()
+            //            .AllowCredentials();
+            //    });
+            //});
+            services.AddCors();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -138,6 +150,13 @@ namespace WebApp
             //app.UseHttpsRedirection();
             app.UseStaticFiles();
             app.UseCookiePolicy();
+            app.UseCors(builder =>
+            {
+                builder.WithOrigins("http://localhost:3000")
+                    .AllowAnyMethod()
+                    .AllowAnyHeader()
+                    .AllowCredentials();
+            });
             app.UseAuthentication();
             app.UseSignalR(routes =>
             {
