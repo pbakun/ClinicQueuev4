@@ -111,16 +111,6 @@ namespace WebApp
             services.AddSingleton<Microsoft.Extensions.Hosting.IHostedService, ResetQueue>();
             services.AddScoped<IQueueHub, HubHelper>();
 
-            //services.AddCors(options =>
-            //{
-            //    options.AddPolicy("AllowAll", builder =>
-            //    {
-            //        builder.AllowAnyOrigin()
-            //            .AllowAnyMethod()
-            //            .AllowAnyHeader()
-            //            .AllowCredentials();
-            //    });
-            //});
             services.AddCors();
         }
 
@@ -145,6 +135,7 @@ namespace WebApp
             //create DB on startup
             EnsureDbCreated();
 
+
             dbInitializer.Initialize();
             SettingsHandler.Settings.ReadSettings();
             //app.UseHttpsRedirection();
@@ -152,7 +143,10 @@ namespace WebApp
             app.UseCookiePolicy();
             app.UseCors(builder =>
             {
-                builder.WithOrigins("http://localhost:3000")
+                builder
+                    .WithOrigins(new string[] { "http://localhost:3000" })
+                    //.AllowAnyOrigin()
+                    //.SetIsOriginAllowed(_ => true)
                     .AllowAnyMethod()
                     .AllowAnyHeader()
                     .AllowCredentials();

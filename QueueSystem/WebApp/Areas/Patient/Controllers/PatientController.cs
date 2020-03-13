@@ -73,6 +73,7 @@ namespace WebApp.Areas.Patient.Controllers
                 PatientVM.DoctorFullName = QueueHelper.GetDoctorFullName(user);
             }
             PatientVM.QueueNoMessage = queue.QueueNoMessage;
+            PatientVM.RoomNo = roomNo;
             PatientVM.QueueAdditionalInfo = queue.AdditionalMessage;
 
             return Ok(PatientVM);
