@@ -9,6 +9,8 @@
 *.userosscache
 *.sln.docstates
 QueueSystem/WebApp/appsettings.json
+QueueSystem/WebApp/logs/
+bundleconfig.json
 appsettings.json
 
 # User-specific files (MonoDevelop/Xamarin Studio)
