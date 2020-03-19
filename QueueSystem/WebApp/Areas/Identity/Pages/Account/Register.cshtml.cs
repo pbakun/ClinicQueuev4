@@ -1,9 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
-using System.Linq;
 using System.Security.Claims;
-using System.Text.Encodings.Web;
 using System.Threading.Tasks;
 using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
@@ -56,26 +54,26 @@ namespace WebApp.Areas.Identity.Pages.Account
 
         public class InputModel
         {
-            [Required]
+            [Required(ErrorMessage = "Email użytkownika jest wymagany.")]
             [EmailAddress]
             [Display(Name = "Email")]
             public string Email { get; set; }
 
             [Required]
-            [StringLength(100, ErrorMessage = "The {0} must be at least {2} and at max {1} characters long.", MinimumLength = 6)]
+            [StringLength(100, ErrorMessage = "{0} musi mieć przynajmniej {2} i maksymalnie {1} znaków.", MinimumLength = 6)]
             [DataType(DataType.Password)]
-            [Display(Name = "Password")]
+            [Display(Name = "Hasło")]
             public string Password { get; set; }
 
             [DataType(DataType.Password)]
-            [Display(Name = "Confirm password")]
-            [Compare("Password", ErrorMessage = "The password and confirmation password do not match.")]
+            [Display(Name = "Potwierdź hasło")]
+            [Compare("Password", ErrorMessage = "Podane hasła nie są takie same.")]
             public string ConfirmPassword { get; set; }
-            [Required]
+            [Required(ErrorMessage = "Nazwa użytkownika jest wymagana.")]
             public string UserName { get; set; }
-            [Required]
+            [Required(ErrorMessage = "Imię użytkownika jest wymagane.")]
             public string FirstName { get; set; }
-            [Required]
+            [Required(ErrorMessage = "Nazwisko użytkownika jest wymagane.")]
             public string LastName { get; set; }
             public string RoomNo { get; set; }
             public List<string> AvailableRooms { get; set; }
@@ -115,6 +113,9 @@ namespace WebApp.Areas.Identity.Pages.Account
 
         public async Task<IActionResult> OnPostAsync(string returnUrl = null)
         {
+            var claimIdentity = (ClaimsIdentity)this.User.Identity;
+            var claim = claimIdentity.FindFirst(ClaimTypes.Role);
+
             string role = Request.Form["rdUserRole"].ToString();
 
             returnUrl = returnUrl ?? Url.Content("~/");
@@ -129,18 +130,21 @@ namespace WebApp.Areas.Identity.Pages.Account
                     RoomNo = Input.RoomNo
                 };
 
+                if(claim != null && claim.Value == StaticDetails.AdminUser)
+                    Input.AvailableRooms = SettingsHandler.ApplicationSettings.AvailableRooms;
+
                 var userByEmail = await _userManager.FindByEmailAsync(user.Email);
                 if(userByEmail != null)
                 {
                     StatusMessage = "Błąd! Email zajęty";
-                    return RedirectToPage();
+                    return Page();
                 }
 
                 var userExists = await _userManager.FindByNameAsync(user.UserName);
                 if(userExists != null)
                 {
                     StatusMessage = "Błąd! Login zajęty.";
-                    return RedirectToPage();
+                    return Page();
                 }
 
                 var result = await _userManager.CreateAsync(user, Input.Password);
