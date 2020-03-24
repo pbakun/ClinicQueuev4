@@ -64,6 +64,26 @@ namespace WebApp.Areas.Doctor.Controllers
             return View(DoctorVM);
         }
 
+        [Route("api/doctor")]
+        public async Task<IActionResult> Get()
+        {
+            var claimsIdentity = (ClaimsIdentity)this.User.Identity;
+            var claim = claimsIdentity.FindFirst(ClaimTypes.NameIdentifier);
+
+            var user = _repo.User.FindByCondition(u => u.Id == claim.Value).FirstOrDefault();
+            if (user == null)
+                return NotFound();
+
+            var queue = _queueService.FindByUserId(user.Id);
+
+            DoctorVM = new DoctorViewModel()
+            {
+                Queue = queue
+            };
+
+            return Ok(DoctorVM);
+        }
+
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Next()
