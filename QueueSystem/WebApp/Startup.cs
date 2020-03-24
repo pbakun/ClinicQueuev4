@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using AutoMapper;
 using Entities;
+using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
@@ -85,6 +86,16 @@ namespace WebApp
                 .AddDefaultUI(UIFramework.Bootstrap4)
                 .AddEntityFrameworkStores<RepositoryContext>(); //would be best to add this in ServiceExtensions class in Repository library
 
+            //Sets 401 as a response when user unauthorized
+            services.ConfigureApplicationCookie(options => {
+                options.Events.OnRedirectToLogin = context =>
+                {
+                    context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                    return Task.CompletedTask;
+                };
+            });
+            //services.AddAntiforgery(options => options.HeaderName = "X-XSRF-TOKEN");
+
             services.AddScoped<IDBInitializer, DBInitializer>();
             services.AddAutoMapper(typeof(MappingProfile), typeof(HubUserMappingProfile));
             //all queues somehow needs to be set to inactive on app startup
@@ -115,7 +126,11 @@ namespace WebApp
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env, IDBInitializer dbInitializer)
+        public void Configure(IApplicationBuilder app, 
+                              IHostingEnvironment env,
+                              IDBInitializer dbInitializer,
+                              IAntiforgery antiforgery
+            )
         {
             if (env.IsDevelopment())
             {
@@ -135,7 +150,6 @@ namespace WebApp
             //create DB on startup
             EnsureDbCreated();
 
-
             dbInitializer.Initialize();
             SettingsHandler.Settings.ReadSettings();
             //app.UseHttpsRedirection();
@@ -151,6 +165,7 @@ namespace WebApp
                     .AllowAnyHeader()
                     .AllowCredentials();
             });
+
             app.UseAuthentication();
             app.UseSignalR(routes =>
             {

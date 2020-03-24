@@ -68,7 +68,7 @@ namespace WebApp.Areas.Doctor.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Next()
         {
-            
+
             if (ModelState.IsValid)
             {
                 var claimsIdentity = (ClaimsIdentity)this.User.Identity;
@@ -83,9 +83,9 @@ namespace WebApp.Areas.Doctor.Controllers
 
                 return View("Index", outputQueue);
             }
-            
+
             return NotFound();
-            
+
         }
 
         [HttpPost]
@@ -97,7 +97,7 @@ namespace WebApp.Areas.Doctor.Controllers
             var claim = claimsIdentity.FindFirst(ClaimTypes.NameIdentifier);
             var roomNo = VM.Queue.RoomNo;
             var user = _repo.User.FindByCondition(u => u.Id == claim.Value).FirstOrDefault();
-            
+
             var queue = await _queueService.ChangeUserRoomNo(user.Id, roomNo);
             await _userManager.SetRoomNoAsync(user.Id, roomNo);
             DoctorVM.Queue = queue;
@@ -112,7 +112,7 @@ namespace WebApp.Areas.Doctor.Controllers
             var claimsIdentity = (ClaimsIdentity)this.User.Identity;
             var claim = claimsIdentity.FindFirst(ClaimTypes.NameIdentifier);
 
-            if(message != null && message.Length > 0)
+            if (message != null && message.Length > 0)
             {
                 var favMsg = new Entities.Models.FavoriteAdditionalMessage
                 {
@@ -132,7 +132,7 @@ namespace WebApp.Areas.Doctor.Controllers
         public IActionResult PickFavMessage(string userId)
         {
             var favMessages = _repo.FavoriteAdditionalMessage.FindByCondition(u => u.UserId == userId).ToList();
-            
+
             return PartialView("_ShowFavMessage", favMessages);
         }
 
@@ -149,14 +149,14 @@ namespace WebApp.Areas.Doctor.Controllers
             var roomNo = _queueService.GetRoomNoByUserId(claims.Value);
 
             var message = _repo.FavoriteAdditionalMessage.FindByCondition(m => m.Id == messageId).FirstOrDefault();
-            if(message != null)
+            if (message != null)
             {
                 try
                 {
                     await _queueService.NewAdditionalInfo(claims.Value, message.Message);
                     await _queueHubContext.SendAdditionalInfo(roomNo, claims.Value, message.Message);
                 }
-                catch(Exception ex)
+                catch (Exception ex)
                 {
                     Log.Error(ex.Message);
                 }
@@ -176,13 +176,34 @@ namespace WebApp.Areas.Doctor.Controllers
                 return StatusCode(500);
 
             var message = _repo.FavoriteAdditionalMessage.FindByCondition(m => m.Id == messageId).FirstOrDefault();
-            if(message != null)
+            if (message != null)
             {
                 _repo.FavoriteAdditionalMessage.Delete(message);
                 await _repo.SaveAsync();
                 return Ok();
             }
             return BadRequest();
+        }
+
+        [HttpGet]
+        [Route("/api/doctor")]
+        public async Task<IActionResult> IndexApi()
+        {
+            var claimsIdentity = (ClaimsIdentity)this.User.Identity;
+            var claim = claimsIdentity.FindFirst(ClaimTypes.NameIdentifier);
+
+            var user = _repo.User.FindByCondition(u => u.Id == claim.Value).FirstOrDefault();
+            if (user == null)
+                return NotFound();
+
+            var queue = _queueService.FindByUserId(user.Id);
+
+            DoctorVM = new DoctorViewModel()
+            {
+                Queue = queue
+            };
+
+            return Ok(DoctorVM);
         }
     }
 }
