@@ -94,7 +94,8 @@ namespace WebApp
                     return Task.CompletedTask;
                 };
             });
-            //services.AddAntiforgery(options => options.HeaderName = "X-XSRF-TOKEN");
+            //services.AddAntiforgery(options => options.HeaderName = "__RequestVerificationToken");
+            services.AddAntiforgery();
 
             services.AddScoped<IDBInitializer, DBInitializer>();
             services.AddAutoMapper(typeof(MappingProfile), typeof(HubUserMappingProfile));
