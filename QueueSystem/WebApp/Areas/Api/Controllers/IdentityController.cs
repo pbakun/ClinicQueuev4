@@ -61,7 +61,7 @@ namespace WebApp.Areas.Api.Controllers
             if (user == null)
                 throw new UnauthorizedAccessException("No user with id {id} in database.");
 
-            LoginResponse response = await Authenticate(user.FirstName);
+            LoginResponse response = Authenticate(user.FirstName);
 
             return Ok(response);
         }
@@ -77,7 +77,7 @@ namespace WebApp.Areas.Api.Controllers
                 if (user == null)
                     throw new UnauthorizedAccessException("No user with id {id} in database.");
 
-                LoginResponse response = await Authenticate(user.FirstName);
+                LoginResponse response = Authenticate(user.FirstName);
                 
                 return Ok(response);
             }
@@ -102,11 +102,10 @@ namespace WebApp.Areas.Api.Controllers
             return Ok();
         }
 
-        private async Task<LoginResponse> Authenticate(string username)
+        private LoginResponse Authenticate(string username)
         {
 
             var tokens = _antiforgery.GetAndStoreTokens(HttpContext);
-
             var response = new LoginResponse
             {
                 Username = username,

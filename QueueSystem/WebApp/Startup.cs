@@ -88,6 +88,8 @@ namespace WebApp
 
             //Sets 401 as a response when user unauthorized
             services.ConfigureApplicationCookie(options => {
+                options.Cookie.SameSite = SameSiteMode.None;
+                options.Cookie.HttpOnly = false;
                 options.Events.OnRedirectToLogin = context =>
                 {
                     context.Response.StatusCode = StatusCodes.Status401Unauthorized;
@@ -95,7 +97,7 @@ namespace WebApp
                 };
             });
             //services.AddAntiforgery(options => options.HeaderName = "__RequestVerificationToken");
-            services.AddAntiforgery();
+            //services.AddAntiforgery(options => options.Cookie.SameSite = SameSiteMode.None);
 
             services.AddScoped<IDBInitializer, DBInitializer>();
             services.AddAutoMapper(typeof(MappingProfile), typeof(HubUserMappingProfile));

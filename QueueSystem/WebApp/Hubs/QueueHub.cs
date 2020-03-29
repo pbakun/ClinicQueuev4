@@ -134,6 +134,24 @@ namespace WebApp.Hubs
             await base.OnDisconnectedAsync(exception);
         }
 
+        public async Task UserDisconnect()
+        {
+            var connectionId = this.Context.ConnectionId;
+            var user = _hubUser.GetUserByConnectionId(connectionId);
+
+            await _hubUser.RemoveUserAsync(user);
+            await Groups.RemoveFromGroupAsync(connectionId, user.GroupName);
+
+            if (!_queueService.CheckRoomSubordination(user.UserId, user.GroupName))
+            {
+                _queueService.SetQueueInactive(user.UserId);
+                InitGroupScreen(user);
+                Log.Information(String.Concat(logPrefix, "Room: [ ", user.GroupName, " ] master disconnected, connectionId: [ ",
+                                                user.ConnectionId, " ] userId: [ ", user.UserId, " ]"));
+            }
+
+        }
+
         public async Task QueueNoUp(string userId, string roomNo)
         {
             var hubUser = _hubUser.GetConnectedUsers().Where(u => u.UserId == userId).FirstOrDefault();

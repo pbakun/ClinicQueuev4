@@ -84,18 +84,17 @@ namespace WebApp.Areas.Api.Controllers
             return Ok();
         }
 
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> AddFavoriteMessage([FromBody]string message)
+        [HttpPost("AddFavoriteMessage")]
+        public async Task<IActionResult> AddFavoriteMessage([FromBody]FavoriteMessageModel favMessage)
         {
             var claimsIdentity = (ClaimsIdentity)this.User.Identity;
             var claim = claimsIdentity.FindFirst(ClaimTypes.NameIdentifier);
 
-            if (message != null && message.Length > 0)
+            if (favMessage.Message != null && favMessage.Message.Length > 0)
             {
                 var favMsg = new Entities.Models.FavoriteAdditionalMessage
                 {
-                    Message = message,
+                    Message = favMessage.Message,
                     UserId = claim.Value
                 };
 
@@ -107,17 +106,23 @@ namespace WebApp.Areas.Api.Controllers
             return BadRequest();
         }
 
-        [HttpGet("/pickfavmessage")]
-        public IActionResult PickFavMessage(string userId)
+        [HttpGet("pickfavmessage")]
+        [Route("api/doctor/pickvafmessage")]
+        public IActionResult PickFavMessage()
         {
-            var favMessages = _repo.FavoriteAdditionalMessage.FindByCondition(u => u.UserId == userId).ToList();
+            var claimsIdentity = (ClaimsIdentity)this.User.Identity;
+            var claim = claimsIdentity.FindFirst(ClaimTypes.NameIdentifier);
 
-            return PartialView("_ShowFavMessage", favMessages);
+            var favMessages = _repo.FavoriteAdditionalMessage.FindByCondition(u => u.UserId == claim.Value).ToList();
+
+            if (favMessages == null)
+                return NotFound();
+
+            return Ok(favMessages);
         }
 
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> PickFavMessagePost([FromBody]string messageId)
+        [HttpPost("PickFavMessage")]
+        public async Task<IActionResult> PickFavMessagePost([FromBody]FavoriteMessageModel favMessage)
         {
             var claimsIdentity = (ClaimsIdentity)this.User.Identity;
             var claims = claimsIdentity.FindFirst(ClaimTypes.NameIdentifier);
@@ -127,7 +132,7 @@ namespace WebApp.Areas.Api.Controllers
 
             var roomNo = _queueService.GetRoomNoByUserId(claims.Value);
 
-            var message = _repo.FavoriteAdditionalMessage.FindByCondition(m => m.Id == messageId).FirstOrDefault();
+            var message = _repo.FavoriteAdditionalMessage.FindByCondition(m => m.Id == favMessage.Id).FirstOrDefault();
             if (message != null)
             {
                 try
@@ -144,9 +149,8 @@ namespace WebApp.Areas.Api.Controllers
             return BadRequest();
         }
 
-        [HttpDelete]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteFavMessage([FromBody]string messageId)
+        [HttpDelete("DeleteFavMessage")]
+        public async Task<IActionResult> DeleteFavMessage([FromBody]FavoriteMessageModel favMessage)
         {
             var claimsIdentity = (ClaimsIdentity)this.User.Identity;
             var claims = claimsIdentity.FindFirst(ClaimTypes.NameIdentifier);
@@ -154,12 +158,14 @@ namespace WebApp.Areas.Api.Controllers
             if (claims.Value == null)
                 return StatusCode(500);
 
-            var message = _repo.FavoriteAdditionalMessage.FindByCondition(m => m.Id == messageId).FirstOrDefault();
+            var favMessages = _repo.FavoriteAdditionalMessage.FindByCondition(u => u.UserId == claims.Value && u.Id != favMessage.Id).ToList();
+            var message = _repo.FavoriteAdditionalMessage.FindByCondition(m => m.Id == favMessage.Id).SingleOrDefault();
+
             if (message != null)
             {
                 _repo.FavoriteAdditionalMessage.Delete(message);
                 await _repo.SaveAsync();
-                return Ok();
+                return Ok(favMessages);
             }
             return BadRequest();
         }
@@ -181,5 +187,11 @@ namespace WebApp.Areas.Api.Controllers
     public class NewRoomNoInput
     {
         public string NewRoomNo { get; set; }
+    }
+
+    public class FavoriteMessageModel
+    {
+        public string Id { get; set; }
+        public string Message { get; set; }
     }
 }
