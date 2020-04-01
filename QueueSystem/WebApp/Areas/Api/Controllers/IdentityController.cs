@@ -4,13 +4,16 @@ using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Antiforgery;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Serilog;
 using WebApp.Areas.Identity.Pages.Account.Manage;
 using WebApp.Hubs;
+using WebApp.Models.Dtos;
 using WebApp.ServiceLogic;
+using WebApp.ServiceLogic.Interface;
 using WebApp.Utility;
 
 namespace WebApp.Areas.Api.Controllers
@@ -18,6 +21,11 @@ namespace WebApp.Areas.Api.Controllers
     [Area("Api")]
     [ApiController]
     [Route("api/auth")]
+    [Authorize(
+            Roles = StaticDetails.AdminUser,
+            AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme
+            )
+    ]
     public class IdentityController : Controller
     {
         private readonly SignInManager<IdentityUser> _signInManager;
@@ -26,13 +34,15 @@ namespace WebApp.Areas.Api.Controllers
         private readonly IManageHubUser _manageHubUser;
         private readonly IQueueHub _queueHub;
         private readonly IAntiforgery _antiforgery;
+        private readonly IUserService _userService;
 
         public IdentityController(SignInManager<IdentityUser> signInManager,
                                 CustomUserManager userManager,
                                 IQueueHub queueHub,
                                 IManageHubUser manageHubUser,
                                 IQueueService queueService,
-                                IAntiforgery antiforgery)
+                                IAntiforgery antiforgery,
+                                IUserService userService)
         {
             _signInManager = signInManager;
             _userManager = userManager;
@@ -40,16 +50,10 @@ namespace WebApp.Areas.Api.Controllers
             _manageHubUser = manageHubUser;
             _queueService = queueService;
             _antiforgery = antiforgery;
-        }
-
-        //[Route("api/auth/index")]
-        public IActionResult Index()
-        {
-            return NotFound();
+            _userService = userService;
         }
 
         [HttpGet("status")]
-        [Authorize(Roles = StaticDetails.AdminUser + "," + StaticDetails.DoctorUser)]
         public async Task<IActionResult> CheckIfLogged()
         {
             var claimIdentity = (ClaimsIdentity)this.User.Identity;
@@ -68,20 +72,12 @@ namespace WebApp.Areas.Api.Controllers
 
         [HttpPost("login")]
         [AllowAnonymous]
-        public async Task<IActionResult> Login([FromBody]LoginModel input)
+        public async Task<IActionResult> Login([FromBody]LoginDto input)
          {
-            var result = await _signInManager.PasswordSignInAsync(input.Username, input.Password, false, lockoutOnFailure: false);
-            if (result.Succeeded)
-            {
-                Entities.Models.User user = await _userManager.FindByNameAsync(input.Username);
-                if (user == null)
-                    throw new UnauthorizedAccessException("No user with id {id} in database.");
-
-                LoginResponse response = Authenticate(user.FirstName);
-                
-                return Ok(response);
-            }
-            return BadRequest();
+            AuthDto response = await _userService.AuthenticateAsync(input.Username, input.Password);
+            if (response == null)
+                return BadRequest(new { message = "Username or password incorrect" });
+            return Ok(response);
         }
 
         [HttpPost("logout")]
@@ -114,12 +110,6 @@ namespace WebApp.Areas.Api.Controllers
 
             return response;
         }
-    }
-
-    public class LoginModel
-    {
-        public string Username { get; set; }
-        public string Password { get; set; }
     }
 
     public class LoginResponse

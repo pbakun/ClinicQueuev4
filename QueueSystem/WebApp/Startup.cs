@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 using AutoMapper;
 using Entities;
@@ -19,6 +20,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.Tokens;
 using Repository;
 using Repository.Initialization;
 using WebApp.Areas.Identity.Pages.Account.Manage;
@@ -29,9 +31,11 @@ using WebApp.Hubs;
 using WebApp.Mappings;
 using WebApp.Models;
 using WebApp.ServiceLogic;
+using WebApp.ServiceLogic.Interface;
 
 namespace WebApp
 {
+    [System.Runtime.InteropServices.Guid("82768D70-44A2-4B79-A16C-015FC69924F1")]
     public class Startup
     {
         public Startup(IConfiguration configuration)
@@ -65,6 +69,8 @@ namespace WebApp
 
             services.Configure<EmailSettings>(Configuration.GetSection("EmailSettings"));
 
+            var authSection = Configuration.GetSection("AuthSettings");
+            services.Configure<AuthSettings>(authSection);
             //add db context
             SetUpDatabase(services);
 
@@ -87,17 +93,33 @@ namespace WebApp
                 .AddEntityFrameworkStores<RepositoryContext>(); //would be best to add this in ServiceExtensions class in Repository library
 
             //Sets 401 as a response when user unauthorized
-            services.ConfigureApplicationCookie(options => {
-                options.Cookie.SameSite = SameSiteMode.None;
-                options.Cookie.HttpOnly = false;
-                options.Events.OnRedirectToLogin = context =>
+            //services.ConfigureApplicationCookie(options => {
+            //    options.Cookie.SameSite = SameSiteMode.None;
+            //    options.Cookie.HttpOnly = false;
+            //    options.Events.OnRedirectToLogin = context =>
+            //    {
+            //        context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+            //        return Task.CompletedTask;
+            //    };
+            //});
+            var authSettings = authSection.Get<AuthSettings>();
+            var key = Encoding.ASCII.GetBytes(authSettings.Secret);
+            services.AddAuthentication()
+                .AddCookie(cfg => cfg.SlidingExpiration = true)
+                .AddJwtBearer(x =>
                 {
-                    context.Response.StatusCode = StatusCodes.Status401Unauthorized;
-                    return Task.CompletedTask;
-                };
-            });
-            //services.AddAntiforgery(options => options.HeaderName = "__RequestVerificationToken");
-            //services.AddAntiforgery(options => options.Cookie.SameSite = SameSiteMode.None);
+                    x.RequireHttpsMetadata = false;
+                    x.SaveToken = true;
+                    x.TokenValidationParameters = new TokenValidationParameters
+                    {
+                        ValidateIssuerSigningKey = true,
+                        IssuerSigningKey = new SymmetricSecurityKey(key),
+                        ValidateIssuer = false,
+                        ValidateAudience = false
+                    };
+                });
+
+            services.AddScoped<IUserService, UserService>();
 
             services.AddScoped<IDBInitializer, DBInitializer>();
             services.AddAutoMapper(typeof(MappingProfile), typeof(HubUserMappingProfile));
@@ -162,7 +184,7 @@ namespace WebApp
             {
                 builder
                     .WithOrigins(new string[] { "http://localhost:3000" })
-                    //.AllowAnyOrigin()
+                    .AllowAnyOrigin()
                     //.SetIsOriginAllowed(_ => true)
                     .AllowAnyMethod()
                     .AllowAnyHeader()

@@ -4,6 +4,7 @@ using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using AutoMapper;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
@@ -20,7 +21,11 @@ namespace WebApp.Areas.Api.Controllers
 {
     [Area("Api")]
     [Route("api/doctor")]
-    [Authorize(Roles = StaticDetails.AdminUser + "," + StaticDetails.DoctorUser)]
+    [Authorize(
+            Roles = StaticDetails.AdminUser + "," + StaticDetails.DoctorUser,
+            AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme
+            )
+    ]
     public class DoctorController : Controller
     {
 
