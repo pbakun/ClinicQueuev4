@@ -184,7 +184,7 @@ namespace WebApp
             {
                 builder
                     .WithOrigins(new string[] { "http://localhost:3000" })
-                    .AllowAnyOrigin()
+                    //.AllowAnyOrigin()
                     //.SetIsOriginAllowed(_ => true)
                     .AllowAnyMethod()
                     .AllowAnyHeader()

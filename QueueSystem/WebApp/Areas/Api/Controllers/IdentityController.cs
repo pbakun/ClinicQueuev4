@@ -81,6 +81,7 @@ namespace WebApp.Areas.Api.Controllers
         }
 
         [HttpPost("logout")]
+        //[AllowAnonymous]
         public async Task<IActionResult> Logout()
         {
             var claimIdentity = (ClaimsIdentity)this.User.Identity;
@@ -93,7 +94,7 @@ namespace WebApp.Areas.Api.Controllers
             {
                 _queueHub.InitGroupScreen(hubUser.FirstOrDefault());
             }
-            await _signInManager.SignOutAsync();
+            //await _signInManager.SignOutAsync();
 
             return Ok();
         }
