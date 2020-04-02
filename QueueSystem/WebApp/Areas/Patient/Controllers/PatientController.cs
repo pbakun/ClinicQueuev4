@@ -32,6 +32,7 @@ namespace WebApp.Areas.Patient.Controllers
         }
 
         [Route("patient/{roomNo}")]
+        [NonAction]
         public IActionResult Index(string roomNo)
         {
             var queue = _queueService.FindByRoomNo(roomNo);
@@ -56,6 +57,7 @@ namespace WebApp.Areas.Patient.Controllers
         }
 
         [Route("api/patient/{roomNo}")]
+        [NonAction]
         public IActionResult IndexApi(string roomNo)
         {
             var queue = _queueService.FindByRoomNo(roomNo);

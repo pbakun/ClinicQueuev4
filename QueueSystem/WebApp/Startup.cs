@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using AutoMapper;
+using DocumentFormat.OpenXml.Bibliography;
 using Entities;
 using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Builder;
@@ -23,6 +24,7 @@ using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Repository;
 using Repository.Initialization;
+using Swashbuckle.AspNetCore.Swagger;
 using WebApp.Areas.Identity.Pages.Account.Manage;
 using WebApp.BackgroundServices.Tasks;
 using WebApp.Extensions;
@@ -137,6 +139,15 @@ namespace WebApp
 
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
 
+            services.AddSwaggerGen(x =>
+            {
+                x.SwaggerDoc("v1", new Swashbuckle.AspNetCore.Swagger.Info
+                {
+                    Title = "Queue System API",
+                    Version = "v1"
+                });
+            });
+
             services.AddSignalR(options =>
             {
                 options.KeepAliveInterval = TimeSpan.FromSeconds(15);
@@ -169,9 +180,20 @@ namespace WebApp
                 app.UseHsts();
             }
 
-            var options = app.ApplicationServices.GetService<IOptions<RequestLocalizationOptions>>();
-            app.UseRequestLocalization(options.Value);
+            var swaggerOptions = new WebApp.Utility.SwaggerOptions();
+            Configuration.GetSection(nameof(SwaggerOptions)).Bind(swaggerOptions);
 
+            //app.UseSwagger(options =>
+            //{
+            //    options.RouteTemplate = swaggerOptions.JsonRoute;
+            //});
+            app.UseSwagger();
+
+            app.UseSwaggerUI(options =>
+            {
+                //options.SwaggerEndpoint(swaggerOptions.UiEndpoint, swaggerOptions.Description);
+                options.SwaggerEndpoint("/swagger/v1/swagger.json", swaggerOptions.Description);
+            });
             //create DB on startup
             EnsureDbCreated();
 
@@ -183,7 +205,7 @@ namespace WebApp
             app.UseCors(builder =>
             {
                 builder
-                    .WithOrigins(new string[] { "http://localhost:3000" })
+                    .WithOrigins(new string[] { "http://localhost:3000", "http://clinic-queue.herokuapp.com/" })
                     //.AllowAnyOrigin()
                     //.SetIsOriginAllowed(_ => true)
                     .AllowAnyMethod()
