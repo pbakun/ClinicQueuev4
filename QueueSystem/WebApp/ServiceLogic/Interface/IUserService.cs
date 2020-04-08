@@ -10,5 +10,6 @@ namespace WebApp.ServiceLogic.Interface
     public interface IUserService
     {
         Task<AuthDto> AuthenticateAsync(string username, string password);
+        Entities.Models.User GetUserById(string id);
     }
 }

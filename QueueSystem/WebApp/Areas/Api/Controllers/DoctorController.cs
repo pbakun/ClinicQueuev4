@@ -35,7 +35,7 @@ namespace WebApp.Areas.Api.Controllers
         private readonly IQueueHubContext _queueHubContext;
         private readonly CustomUserManager _userManager;
 
-        [BindProperty]
+        //[BindProperty]
         public DoctorResponse DoctorVM { get; set; }
 
         public DoctorController(IRepositoryWrapper repo,
@@ -89,7 +89,7 @@ namespace WebApp.Areas.Api.Controllers
             return Ok();
         }
 
-        [HttpPost("AddFavoriteMessage")]
+        [HttpPost("addfavoritemessage")]
         public async Task<IActionResult> AddFavoriteMessage([FromBody]FavoriteMessageModel favMessage)
         {
             var claimsIdentity = (ClaimsIdentity)this.User.Identity;
@@ -112,7 +112,6 @@ namespace WebApp.Areas.Api.Controllers
         }
 
         [HttpGet("pickfavmessage")]
-        [Route("api/doctor/pickvafmessage")]
         public IActionResult PickFavMessage()
         {
             var claimsIdentity = (ClaimsIdentity)this.User.Identity;
@@ -126,7 +125,7 @@ namespace WebApp.Areas.Api.Controllers
             return Ok(favMessages);
         }
 
-        [HttpPost("PickFavMessage")]
+        [HttpPost("pickfavmessage")]
         public async Task<IActionResult> PickFavMessagePost([FromBody]FavoriteMessageModel favMessage)
         {
             var claimsIdentity = (ClaimsIdentity)this.User.Identity;
@@ -154,7 +153,7 @@ namespace WebApp.Areas.Api.Controllers
             return BadRequest();
         }
 
-        [HttpDelete("DeleteFavMessage")]
+        [HttpDelete("deletefavmessage")]
         public async Task<IActionResult> DeleteFavMessage([FromBody]FavoriteMessageModel favMessage)
         {
             var claimsIdentity = (ClaimsIdentity)this.User.Identity;

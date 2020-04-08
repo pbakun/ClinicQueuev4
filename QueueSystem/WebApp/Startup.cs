@@ -94,16 +94,6 @@ namespace WebApp
                 .AddDefaultUI(UIFramework.Bootstrap4)
                 .AddEntityFrameworkStores<RepositoryContext>(); //would be best to add this in ServiceExtensions class in Repository library
 
-            //Sets 401 as a response when user unauthorized
-            //services.ConfigureApplicationCookie(options => {
-            //    options.Cookie.SameSite = SameSiteMode.None;
-            //    options.Cookie.HttpOnly = false;
-            //    options.Events.OnRedirectToLogin = context =>
-            //    {
-            //        context.Response.StatusCode = StatusCodes.Status401Unauthorized;
-            //        return Task.CompletedTask;
-            //    };
-            //});
             var authSettings = authSection.Get<AuthSettings>();
             var key = Encoding.ASCII.GetBytes(authSettings.Secret);
             services.AddAuthentication()
@@ -146,6 +136,22 @@ namespace WebApp
                     Title = "Queue System API",
                     Version = "v1"
                 });
+
+                var security = new Dictionary<string, IEnumerable<string>>
+                {
+                    {"Bearer", new string[] { }},
+                };
+
+
+                x.AddSecurityDefinition("Bearer", new ApiKeyScheme
+                {
+                    Description = "JWT Token Auth",
+                    Name = "Authorization",
+                    In = "header",
+                    Type = "apiKey"
+                });
+
+                x.AddSecurityRequirement(security);
             });
 
             services.AddSignalR(options =>

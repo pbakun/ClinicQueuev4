@@ -35,6 +35,8 @@ namespace WebApp.ServiceLogic
             _roleManager = roleManager;
         }
 
+        #region authentication
+
         public async Task<AuthDto> AuthenticateAsync(string username, string password)
         {
             var user = await _userManager.FindByNameAsync(username);
@@ -74,6 +76,13 @@ namespace WebApp.ServiceLogic
             };
             var token = tokenHandler.CreateToken(tokenDescriptor);
             return tokenHandler.WriteToken(token);
+        }
+
+        #endregion
+
+        public Entities.Models.User GetUserById(string id)
+        {
+            return _repo.User.FindByCondition(u => u.Id == id).SingleOrDefault();
         }
     }
 }

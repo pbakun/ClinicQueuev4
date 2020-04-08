@@ -27,14 +27,13 @@ namespace WebApp.Areas.Patient.Controllers
             _repo = repo;
         }
 
-        [NonAction]
+
         public IActionResult Index()
         {
             var availableRooms = SettingsHandler.ApplicationSettings.AvailableRooms;
             return View(availableRooms);
         }
 
-        [NonAction]
         public IActionResult Privacy()
         {
             return View();
