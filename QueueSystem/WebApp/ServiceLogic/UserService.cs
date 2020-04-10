@@ -13,6 +13,7 @@ using WebApp.Areas.Identity.Pages.Account.Manage;
 using WebApp.Models;
 using WebApp.Models.Dtos;
 using WebApp.ServiceLogic.Interface;
+using WebApp.Utility;
 
 namespace WebApp.ServiceLogic
 {
@@ -49,6 +50,10 @@ namespace WebApp.ServiceLogic
             if (!result)
                 throw new UnauthorizedAccessException();
 
+            result = await CheckRoles(user);
+            if (!result)
+                throw new UnauthorizedAccessException();
+
             return new AuthDto
             {
                 FirstName = user.FirstName,
@@ -76,6 +81,17 @@ namespace WebApp.ServiceLogic
             };
             var token = tokenHandler.CreateToken(tokenDescriptor);
             return tokenHandler.WriteToken(token);
+        }
+
+        private async Task<bool> CheckRoles(Entities.Models.User user)
+        {
+            var roles = await _userManager.GetRolesAsync(user as IdentityUser);
+
+            if(roles.Contains(StaticDetails.AdminUser) || roles.Contains(StaticDetails.DoctorUser)) {
+                return true;
+            }
+
+            return false;
         }
 
         #endregion

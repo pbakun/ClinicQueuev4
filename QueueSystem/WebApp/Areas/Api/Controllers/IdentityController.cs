@@ -2,13 +2,17 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
+using System.Text.Encodings.Web;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.WebUtilities;
 using Serilog;
+using WebApp.Areas.Api.Data.Identity;
 using WebApp.Areas.Identity.Pages.Account.Manage;
 using WebApp.Hubs;
 using WebApp.Models.Dtos;
@@ -22,7 +26,6 @@ namespace WebApp.Areas.Api.Controllers
     [ApiController]
     [Route("api/auth")]
     [Authorize(
-            Roles = StaticDetails.AdminUser,
             AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme
             )
     ]
@@ -35,6 +38,7 @@ namespace WebApp.Areas.Api.Controllers
         private readonly IQueueHub _queueHub;
         private readonly IAntiforgery _antiforgery;
         private readonly IUserService _userService;
+        private readonly IEmailSender _emailSender;
 
         public IdentityController(SignInManager<IdentityUser> signInManager,
                                 CustomUserManager userManager,
@@ -42,7 +46,8 @@ namespace WebApp.Areas.Api.Controllers
                                 IManageHubUser manageHubUser,
                                 IQueueService queueService,
                                 IAntiforgery antiforgery,
-                                IUserService userService)
+                                IUserService userService,
+                                IEmailSender emailSender)
         {
             _signInManager = signInManager;
             _userManager = userManager;
@@ -51,38 +56,29 @@ namespace WebApp.Areas.Api.Controllers
             _queueService = queueService;
             _antiforgery = antiforgery;
             _userService = userService;
-        }
-
-        [HttpGet("status")]
-        public async Task<IActionResult> CheckIfLogged()
-        {
-            var claimIdentity = (ClaimsIdentity)this.User.Identity;
-            var claim = claimIdentity.FindFirst(ClaimTypes.NameIdentifier);
-
-            Log.Information("Login attempt");
-
-            Entities.Models.User user = await _userManager.FindByIdAsync(claim.Value);
-            if (user == null)
-                throw new UnauthorizedAccessException("No user with id {id} in database.");
-
-            LoginResponse response = Authenticate(user.FirstName);
-
-            return Ok(response);
+            _emailSender = emailSender;
         }
 
         [HttpPost("login")]
         [AllowAnonymous]
-        public async Task<IActionResult> Login([FromBody]LoginDto input)
-         {
-            AuthDto response = await _userService.AuthenticateAsync(input.Username, input.Password);
-            if (response == null)
-                return BadRequest(new { message = "Username or password incorrect" });
-            return Ok(response);
+        public async Task<IActionResult> Login([FromBody]LoginDtin input)
+        {
+            try
+            {
+                AuthDto response = await _userService.AuthenticateAsync(input.Username, input.Password);
+
+                if (response == null)
+                    return BadRequest(new { message = "Username or password incorrect" });
+                return Ok(response);
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return Unauthorized();
+            }
         }
 
         [HttpPost("logout")]
-        //[AllowAnonymous]
-        public async Task<IActionResult> Logout()
+        public IActionResult Logout()
         {
             var claimIdentity = (ClaimsIdentity)this.User.Identity;
             var claim = claimIdentity.FindFirst(ClaimTypes.NameIdentifier);
@@ -94,28 +90,39 @@ namespace WebApp.Areas.Api.Controllers
             {
                 _queueHub.InitGroupScreen(hubUser.FirstOrDefault());
             }
-            //await _signInManager.SignOutAsync();
 
             return Ok();
         }
 
-        private LoginResponse Authenticate(string username)
+        [HttpPost("forgotpassword")]
+        [AllowAnonymous]
+        public async Task<IActionResult> ForgotPassword([FromBody]ForgotPasswordDtin input)
         {
 
-            var tokens = _antiforgery.GetAndStoreTokens(HttpContext);
-            var response = new LoginResponse
+            var user = await _userManager.FindByEmailAsync(input.Email);
+            if (user == null || !(await _userManager.IsEmailConfirmedAsync(user)))
             {
-                Username = username,
-                Token = tokens.RequestToken
-            };
+                // Don't reveal that the user does not exist or is not confirmed
+                return Ok();
+            }
 
-            return response;
+            var code = await _userManager.GeneratePasswordResetTokenAsync(user);
+
+            var callbackUrl = Url.Page(
+                "/Account/ResetPassword",
+                pageHandler: null,
+                values: new { code },
+                protocol: JwtBearerDefaults.AuthenticationScheme);
+
+            string callbackUrl2 = QueryHelpers.AddQueryString("http://localhost:5000/Identity/Account/ResetPassword", "code", code);
+
+            await _emailSender.SendEmailAsync(
+                input.Email,
+                "Reset Hasła",
+                $"Please reset your password by <a href='{HtmlEncoder.Default.Encode(callbackUrl2)}'>clicking here</a>.");
+
+            return Ok();
         }
     }
 
-    public class LoginResponse
-    {
-        public string Username { get; set; }
-        public string Token { get; set; }
-    }
 }
