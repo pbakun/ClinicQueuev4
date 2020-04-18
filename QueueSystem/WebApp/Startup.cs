@@ -189,15 +189,10 @@ namespace WebApp
             var swaggerOptions = new WebApp.Utility.SwaggerOptions();
             Configuration.GetSection(nameof(SwaggerOptions)).Bind(swaggerOptions);
 
-            //app.UseSwagger(options =>
-            //{
-            //    options.RouteTemplate = swaggerOptions.JsonRoute;
-            //});
             app.UseSwagger();
 
             app.UseSwaggerUI(options =>
             {
-                //options.SwaggerEndpoint(swaggerOptions.UiEndpoint, swaggerOptions.Description);
                 options.SwaggerEndpoint("/swagger/v1/swagger.json", swaggerOptions.Description);
             });
             //create DB on startup
@@ -208,10 +203,14 @@ namespace WebApp
             //app.UseHttpsRedirection();
             app.UseStaticFiles();
             app.UseCookiePolicy();
+
+            var corsSettings = new CorsSettings();
+            Configuration.GetSection(nameof(CorsSettings)).Bind(corsSettings);
+
             app.UseCors(builder =>
             {
                 builder
-                    .WithOrigins(new string[] { "http://localhost:3000", "http://clinic-queue.herokuapp.com/" })
+                    .WithOrigins(corsSettings.AllowedOrigins)
                     //.AllowAnyOrigin()
                     //.SetIsOriginAllowed(_ => true)
                     .AllowAnyMethod()
