@@ -34,6 +34,7 @@ using WebApp.Mappings;
 using WebApp.Models;
 using WebApp.ServiceLogic;
 using WebApp.ServiceLogic.Interface;
+using WebApp.Utility;
 
 namespace WebApp
 {
@@ -187,7 +188,7 @@ namespace WebApp
             }
 
             var swaggerOptions = new WebApp.Utility.SwaggerOptions();
-            Configuration.GetSection(nameof(SwaggerOptions)).Bind(swaggerOptions);
+            Configuration.GetSection(nameof(WebApp.Utility.SwaggerOptions)).Bind(swaggerOptions);
 
             app.UseSwagger();
 
