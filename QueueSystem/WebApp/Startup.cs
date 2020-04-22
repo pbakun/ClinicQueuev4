@@ -2,9 +2,12 @@
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 using AutoMapper;
+using DocumentFormat.OpenXml.Bibliography;
 using Entities;
+using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
@@ -18,8 +21,10 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.Tokens;
 using Repository;
 using Repository.Initialization;
+using Swashbuckle.AspNetCore.Swagger;
 using WebApp.Areas.Identity.Pages.Account.Manage;
 using WebApp.BackgroundServices.Tasks;
 using WebApp.Extensions;
@@ -28,9 +33,11 @@ using WebApp.Hubs;
 using WebApp.Mappings;
 using WebApp.Models;
 using WebApp.ServiceLogic;
+using WebApp.ServiceLogic.Interface;
 
 namespace WebApp
 {
+    [System.Runtime.InteropServices.Guid("82768D70-44A2-4B79-A16C-015FC69924F1")]
     public class Startup
     {
         public Startup(IConfiguration configuration)
@@ -64,6 +71,8 @@ namespace WebApp
 
             services.Configure<EmailSettings>(Configuration.GetSection("EmailSettings"));
 
+            var authSection = Configuration.GetSection("AuthSettings");
+            services.Configure<AuthSettings>(authSection);
             //add db context
             SetUpDatabase(services);
 
@@ -85,6 +94,25 @@ namespace WebApp
                 .AddDefaultUI(UIFramework.Bootstrap4)
                 .AddEntityFrameworkStores<RepositoryContext>(); //would be best to add this in ServiceExtensions class in Repository library
 
+            var authSettings = authSection.Get<AuthSettings>();
+            var key = Encoding.ASCII.GetBytes(authSettings.Secret);
+            services.AddAuthentication()
+                .AddCookie(cfg => cfg.SlidingExpiration = true)
+                .AddJwtBearer(x =>
+                {
+                    x.RequireHttpsMetadata = false;
+                    x.SaveToken = true;
+                    x.TokenValidationParameters = new TokenValidationParameters
+                    {
+                        ValidateIssuerSigningKey = true,
+                        IssuerSigningKey = new SymmetricSecurityKey(key),
+                        ValidateIssuer = false,
+                        ValidateAudience = false
+                    };
+                });
+
+            services.AddScoped<IUserService, UserService>();
+
             services.AddScoped<IDBInitializer, DBInitializer>();
             services.AddAutoMapper(typeof(MappingProfile), typeof(HubUserMappingProfile));
             //all queues somehow needs to be set to inactive on app startup
@@ -101,6 +129,31 @@ namespace WebApp
 
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
 
+            services.AddSwaggerGen(x =>
+            {
+                x.SwaggerDoc("v1", new Swashbuckle.AspNetCore.Swagger.Info
+                {
+                    Title = "Queue System API",
+                    Version = "v1"
+                });
+
+                var security = new Dictionary<string, IEnumerable<string>>
+                {
+                    {"Bearer", new string[] { }},
+                };
+
+
+                x.AddSecurityDefinition("Bearer", new ApiKeyScheme
+                {
+                    Description = "JWT Token Auth",
+                    Name = "Authorization",
+                    In = "header",
+                    Type = "apiKey"
+                });
+
+                x.AddSecurityRequirement(security);
+            });
+
             services.AddSignalR(options =>
             {
                 options.KeepAliveInterval = TimeSpan.FromSeconds(15);
@@ -110,10 +163,16 @@ namespace WebApp
 
             services.AddSingleton<Microsoft.Extensions.Hosting.IHostedService, ResetQueue>();
             services.AddScoped<IQueueHub, HubHelper>();
+
+            services.AddCors();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env, IDBInitializer dbInitializer)
+        public void Configure(IApplicationBuilder app, 
+                              IHostingEnvironment env,
+                              IDBInitializer dbInitializer,
+                              IAntiforgery antiforgery
+            )
         {
             if (env.IsDevelopment())
             {
@@ -127,9 +186,15 @@ namespace WebApp
                 app.UseHsts();
             }
 
-            var options = app.ApplicationServices.GetService<IOptions<RequestLocalizationOptions>>();
-            app.UseRequestLocalization(options.Value);
+            var swaggerOptions = new WebApp.Utility.SwaggerOptions();
+            Configuration.GetSection(nameof(SwaggerOptions)).Bind(swaggerOptions);
 
+            app.UseSwagger();
+
+            app.UseSwaggerUI(options =>
+            {
+                options.SwaggerEndpoint("/swagger/v1/swagger.json", swaggerOptions.Description);
+            });
             //create DB on startup
             EnsureDbCreated();
 
@@ -138,6 +203,21 @@ namespace WebApp
             //app.UseHttpsRedirection();
             app.UseStaticFiles();
             app.UseCookiePolicy();
+
+            var corsSettings = new CorsSettings();
+            Configuration.GetSection(nameof(CorsSettings)).Bind(corsSettings);
+
+            app.UseCors(builder =>
+            {
+                builder
+                    .WithOrigins(corsSettings.AllowedOrigins)
+                    //.AllowAnyOrigin()
+                    //.SetIsOriginAllowed(_ => true)
+                    .AllowAnyMethod()
+                    .AllowAnyHeader()
+                    .AllowCredentials();
+            });
+
             app.UseAuthentication();
             app.UseSignalR(routes =>
             {

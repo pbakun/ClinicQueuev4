@@ -84,6 +84,8 @@ namespace WebApp.Hubs
         {
             var connectionId = this.Context.ConnectionId;
             Log.Information(String.Concat(logPrefix, "New hub client [ ", connectionId, " ]"));
+            var hubUsers = _hubUser.GetConnectedUsersCount("12");
+            Log.Debug($"Hub Users Count: {hubUsers}");
             try
             {
                 await base.OnConnectedAsync();
@@ -132,6 +134,24 @@ namespace WebApp.Hubs
                 }
             }
             await base.OnDisconnectedAsync(exception);
+        }
+
+        public async Task UserDisconnect()
+        {
+            var connectionId = this.Context.ConnectionId;
+            var user = _hubUser.GetUserByConnectionId(connectionId);
+
+            await _hubUser.RemoveUserAsync(user);
+            await Groups.RemoveFromGroupAsync(connectionId, user.GroupName);
+
+            if (!_queueService.CheckRoomSubordination(user.UserId, user.GroupName))
+            {
+                _queueService.SetQueueInactive(user.UserId);
+                InitGroupScreen(user);
+                Log.Information(String.Concat(logPrefix, "Room: [ ", user.GroupName, " ] master disconnected, connectionId: [ ",
+                                                user.ConnectionId, " ] userId: [ ", user.UserId, " ]"));
+            }
+            await base.OnDisconnectedAsync(null);
         }
 
         public async Task QueueNoUp(string userId, string roomNo)

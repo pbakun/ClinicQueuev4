@@ -21,7 +21,6 @@ namespace WebApp.Areas.Patient.Controllers
         private readonly IMapper _mapper;
         private readonly IQueueService _queueService;
 
-        [BindProperty]
         public PatientViewModel PatientVM { get; set; }
 
         public PatientController(IRepositoryWrapper repo, IMapper mapper, IQueueService queueService)
@@ -31,7 +30,8 @@ namespace WebApp.Areas.Patient.Controllers
             _queueService = queueService;
         }
 
-        [Route("patient/{roomNo}")]
+        [HttpGet("patient/{roomNo}")]
+        [ApiExplorerSettings(IgnoreApi = true)]
         public IActionResult Index(string roomNo)
         {
             var queue = _queueService.FindByRoomNo(roomNo);
@@ -53,6 +53,30 @@ namespace WebApp.Areas.Patient.Controllers
 
             return View(PatientVM);
 
+        }
+
+        [HttpGet("api/patient/{roomNo}")]
+        public IActionResult IndexApi(string roomNo)
+        {
+            var queue = _queueService.FindByRoomNo(roomNo);
+            PatientVM = new PatientViewModel();
+
+            if (queue == null)
+            {
+                queue = new Queue();
+                queue.RoomNo = roomNo;
+                PatientVM.DoctorFullName = string.Empty;
+            }
+            else
+            {
+                var user = _repo.User.FindByCondition(u => u.Id == queue.UserId).FirstOrDefault();
+                PatientVM.DoctorFullName = QueueHelper.GetDoctorFullName(user);
+            }
+            PatientVM.QueueNoMessage = queue.QueueNoMessage;
+            PatientVM.RoomNo = roomNo;
+            PatientVM.QueueAdditionalInfo = queue.AdditionalMessage;
+
+            return Ok(PatientVM);
         }
     }
 }
