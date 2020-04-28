@@ -48,7 +48,7 @@ function reconnect() {
 
 function connectionStart() {
     connection.start().then(function () {
-        connection.invoke("RegisterDoctor", id, roomNo).catch(function (err) {
+        connection.invoke("RegisterDoctor", roomNo).catch(function (err) {
             return console.error(err.toString());
         });
     }).catch(function (err) {
@@ -61,7 +61,7 @@ function connectionStart() {
 document.getElementById("PrevNo").addEventListener("click", function (event) {
     if (queueNo > 0) {
         queueNo--;
-        connection.invoke("QueueNoDown", id, roomNo).catch(function (err) {
+        connection.invoke("QueueNoDown", roomNo).catch(function (err) {
             return console.error(err.toString());
         }); 
     }
@@ -70,7 +70,7 @@ document.getElementById("PrevNo").addEventListener("click", function (event) {
 
 document.getElementById("NextNo").addEventListener("click", function (event) {
     queueNo++;
-    connection.invoke("QueueNoUp", id, roomNo).catch(function (err) {
+    connection.invoke("QueueNoUp", roomNo).catch(function (err) {
         return console.error(err.toString());
     });
     event.preventDefault();
@@ -87,7 +87,7 @@ function ForceNewQueueNo(newNo) {
     newNo = parseInt(newNo);
     if (newNo > 0) {
         queueNo = newNo;
-        connection.invoke("NewQueueNo", id, newNo, roomNo).catch(function (err) {
+        connection.invoke("NewQueueNo", newNo, roomNo).catch(function (err) {
             return console.error(err.toString());
         });
     }
@@ -95,14 +95,14 @@ function ForceNewQueueNo(newNo) {
 
 //send -1 (sets break to true) to the server
 document.getElementById("Break").addEventListener("click", function (event) {
-    connection.invoke("NewQueueNo", id, -1, roomNo).catch(function (err) {
+    connection.invoke("NewQueueNo", -1, roomNo).catch(function (err) {
         return console.error(err.toString());
     });
     event.preventDefault();
 });
 
 document.getElementById("Special").addEventListener("click", function (event) {
-    connection.invoke("NewQueueNo", id, -2, roomNo).catch(function (err) {
+    connection.invoke("NewQueueNo", -2, roomNo).catch(function (err) {
         return console.error(err.toString());
     });
     event.preventDefault();
@@ -110,14 +110,14 @@ document.getElementById("Special").addEventListener("click", function (event) {
 
 document.getElementById("SendAdditionalMessage").addEventListener("click", function (event) {
     var message = document.getElementById("additionalInfo").value;
-    connection.invoke("NewAdditionalInfo", id, roomNo, message).catch(function (err) {
+    connection.invoke("NewAdditionalInfo", roomNo, message).catch(function (err) {
         return console.error(err.toString());
     });
     event.preventDefault();
 });
 
 document.getElementById("ClearAdditionalMessage").addEventListener("click", function (event) {
-    connection.invoke("NewAdditionalInfo", id, roomNo, '').catch(function (err) {
+    connection.invoke("NewAdditionalInfo", roomNo, '').catch(function (err) {
         return console.error(err.toString());
     });
     event.preventDefault();

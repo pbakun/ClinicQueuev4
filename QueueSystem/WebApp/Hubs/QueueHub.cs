@@ -32,10 +32,14 @@ namespace WebApp.Hubs
             _queueService = queueService;
             _hubUser = hubUser;
         }
-        public async Task RegisterDoctor(string userId, string roomNo)
+        public async Task RegisterDoctor(string roomNo)
         {
+            var claimsIdentity = (ClaimsIdentity)Context.User.Identity;
+            var claim = claimsIdentity.FindFirst(ClaimTypes.NameIdentifier);
+            var userId = claim.Value;
+
             var newUser = new HubUser {
-                UserId = userId,
+                UserId = claim.Value,
                 ConnectionId = Context.ConnectionId,
                 GroupName = roomNo
             };
@@ -68,7 +72,7 @@ namespace WebApp.Hubs
 
         [AllowAnonymous]
         public async Task RegisterPatientView(string roomNo)
-        {   
+        {
             var newUser = new HubUser
             {
                 ConnectionId = Context.ConnectionId,
@@ -159,8 +163,11 @@ namespace WebApp.Hubs
             await base.OnDisconnectedAsync(null);
         }
 
-        public async Task QueueNoUp(string userId, string roomNo)
+        public async Task QueueNoUp(string roomNo)
         {
+            var claimsIdentity = (ClaimsIdentity)Context.User.Identity;
+            var claim = claimsIdentity.FindFirst(ClaimTypes.NameIdentifier);
+            var userId = claim.Value;
             var hubUser = _hubUser.GetConnectedUsers().Where(u => u.UserId == userId).FirstOrDefault();
             if (hubUser != null)
             {
@@ -170,8 +177,11 @@ namespace WebApp.Hubs
             }
         }
 
-        public async Task QueueNoDown(string userId, string roomNo)
+        public async Task QueueNoDown(string roomNo)
         {
+            var claimsIdentity = (ClaimsIdentity)Context.User.Identity;
+            var claim = claimsIdentity.FindFirst(ClaimTypes.NameIdentifier);
+            var userId = claim.Value;
             var hubUser = _hubUser.GetConnectedUsers().Where(u => u.UserId == userId).FirstOrDefault();
             if (hubUser != null)
             {
@@ -181,8 +191,11 @@ namespace WebApp.Hubs
             }
         }
 
-        public async Task NewQueueNo(string userId, int queueNo, string roomNo)
+        public async Task NewQueueNo(int queueNo, string roomNo)
         {
+            var claimsIdentity = (ClaimsIdentity)Context.User.Identity;
+            var claim = claimsIdentity.FindFirst(ClaimTypes.NameIdentifier);
+            var userId = claim.Value;
             var hubUser = _hubUser.GetConnectedUsers().Where(u => u.UserId == userId).FirstOrDefault();
             if (hubUser != null)
             {
@@ -192,8 +205,11 @@ namespace WebApp.Hubs
             }
         }
 
-        public async Task NewAdditionalInfo(string userId, string roomNo, string message)
+        public async Task NewAdditionalInfo(string roomNo, string message)
         {
+            var claimsIdentity = (ClaimsIdentity)Context.User.Identity;
+            var claim = claimsIdentity.FindFirst(ClaimTypes.NameIdentifier);
+            var userId = claim.Value;
             var hubUser = _hubUser.GetConnectedUsers().Where(u => u.UserId == userId).FirstOrDefault();
             if (hubUser != null)
             {
