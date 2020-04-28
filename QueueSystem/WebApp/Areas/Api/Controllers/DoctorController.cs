@@ -62,7 +62,6 @@ namespace WebApp.Areas.Api.Controllers
 
             DoctorVM = new DoctorResponse()
             {
-                UserId = queue.UserId,
                 QueueNoMessage = queue.QueueNoMessage,
                 AdditionalInfo = queue.AdditionalMessage,
                 RoomNo = queue.RoomNo
@@ -174,7 +173,6 @@ namespace WebApp.Areas.Api.Controllers
 
     public class DoctorResponse
     {
-        public string UserId { get; set; }
         public string QueueNoMessage { get; set; }
         public string AdditionalInfo { get; set; }
         public string RoomNo { get; set; }
