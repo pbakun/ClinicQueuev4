@@ -12,6 +12,8 @@ QueueSystem/WebApp/appsettings.json
 QueueSystem/WebApp/logs/
 bundleconfig.json
 appsettings.json
+QueueSystem/WebApp/logs/
+QueueSystem/WebApp/AppData/AppData.db3
 
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs

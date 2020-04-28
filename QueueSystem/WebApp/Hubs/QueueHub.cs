@@ -1,19 +1,21 @@
 ﻿using Entities.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
 using Repository.Interfaces;
 using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Claims;
 using System.Threading.Tasks;
 using WebApp.BackgroundServices.Tasks;
 using WebApp.Helpers;
-using WebApp.Models;
 using WebApp.ServiceLogic;
 using WebApp.Utility;
 
 namespace WebApp.Hubs
 {
+    [Authorize(Policy = "Combined")]
     public class QueueHub : Hub
     {
         private readonly IRepositoryWrapper _repo;
@@ -30,10 +32,14 @@ namespace WebApp.Hubs
             _queueService = queueService;
             _hubUser = hubUser;
         }
-        public async Task RegisterDoctor(string userId, string roomNo)
+        public async Task RegisterDoctor(string roomNo)
         {
+            var claimsIdentity = (ClaimsIdentity)Context.User.Identity;
+            var claim = claimsIdentity.FindFirst(ClaimTypes.NameIdentifier);
+            var userId = claim.Value;
+
             var newUser = new HubUser {
-                UserId = userId,
+                UserId = claim.Value,
                 ConnectionId = Context.ConnectionId,
                 GroupName = roomNo
             };
@@ -64,8 +70,9 @@ namespace WebApp.Hubs
                                 newUser.ConnectionId, " ] registered as Doctor for room: [ ", roomNo, " ]"));
         }
 
+        [AllowAnonymous]
         public async Task RegisterPatientView(string roomNo)
-        {   
+        {
             var newUser = new HubUser
             {
                 ConnectionId = Context.ConnectionId,
@@ -79,11 +86,14 @@ namespace WebApp.Hubs
             Log.Information(String.Concat(logPrefix, "Client [ ", newUser.ConnectionId, " ] registered as Patient for room: [ ",
                                         roomNo, " ]"));
         }
-
+        [AllowAnonymous]
         public async override Task OnConnectedAsync()
         {
             var connectionId = this.Context.ConnectionId;
             Log.Information(String.Concat(logPrefix, "New hub client [ ", connectionId, " ]"));
+            var hubUsers = _hubUser.GetConnectedUsersCount("12");
+            Log.Debug($"Hub Users Count: {hubUsers}");
+
             try
             {
                 await base.OnConnectedAsync();
@@ -95,6 +105,7 @@ namespace WebApp.Hubs
             
         }
 
+        [AllowAnonymous]
         public async override Task OnDisconnectedAsync(Exception exception)
         {
             string connectionId = Context.ConnectionId;
@@ -134,8 +145,29 @@ namespace WebApp.Hubs
             await base.OnDisconnectedAsync(exception);
         }
 
-        public async Task QueueNoUp(string userId, string roomNo)
+        public async Task UserDisconnect()
         {
+            var connectionId = this.Context.ConnectionId;
+            var user = _hubUser.GetUserByConnectionId(connectionId);
+
+            await _hubUser.RemoveUserAsync(user);
+            await Groups.RemoveFromGroupAsync(connectionId, user.GroupName);
+
+            if (!_queueService.CheckRoomSubordination(user.UserId, user.GroupName))
+            {
+                _queueService.SetQueueInactive(user.UserId);
+                InitGroupScreen(user);
+                Log.Information(String.Concat(logPrefix, "Room: [ ", user.GroupName, " ] master disconnected, connectionId: [ ",
+                                                user.ConnectionId, " ] userId: [ ", user.UserId, " ]"));
+            }
+            await base.OnDisconnectedAsync(null);
+        }
+
+        public async Task QueueNoUp(string roomNo)
+        {
+            var claimsIdentity = (ClaimsIdentity)Context.User.Identity;
+            var claim = claimsIdentity.FindFirst(ClaimTypes.NameIdentifier);
+            var userId = claim.Value;
             var hubUser = _hubUser.GetConnectedUsers().Where(u => u.UserId == userId).FirstOrDefault();
             if (hubUser != null)
             {
@@ -145,8 +177,11 @@ namespace WebApp.Hubs
             }
         }
 
-        public async Task QueueNoDown(string userId, string roomNo)
+        public async Task QueueNoDown(string roomNo)
         {
+            var claimsIdentity = (ClaimsIdentity)Context.User.Identity;
+            var claim = claimsIdentity.FindFirst(ClaimTypes.NameIdentifier);
+            var userId = claim.Value;
             var hubUser = _hubUser.GetConnectedUsers().Where(u => u.UserId == userId).FirstOrDefault();
             if (hubUser != null)
             {
@@ -156,8 +191,11 @@ namespace WebApp.Hubs
             }
         }
 
-        public async Task NewQueueNo(string userId, int queueNo, string roomNo)
+        public async Task NewQueueNo(int queueNo, string roomNo)
         {
+            var claimsIdentity = (ClaimsIdentity)Context.User.Identity;
+            var claim = claimsIdentity.FindFirst(ClaimTypes.NameIdentifier);
+            var userId = claim.Value;
             var hubUser = _hubUser.GetConnectedUsers().Where(u => u.UserId == userId).FirstOrDefault();
             if (hubUser != null)
             {
@@ -167,8 +205,11 @@ namespace WebApp.Hubs
             }
         }
 
-        public async Task NewAdditionalInfo(string userId, string roomNo, string message)
+        public async Task NewAdditionalInfo(string roomNo, string message)
         {
+            var claimsIdentity = (ClaimsIdentity)Context.User.Identity;
+            var claim = claimsIdentity.FindFirst(ClaimTypes.NameIdentifier);
+            var userId = claim.Value;
             var hubUser = _hubUser.GetConnectedUsers().Where(u => u.UserId == userId).FirstOrDefault();
             if (hubUser != null)
             {

@@ -20,7 +20,7 @@ namespace XUnitTests
         protected override void SetUpDatabase(IServiceCollection services)
         {
             services.AddDbContext<RepositoryContext>(options =>
-            {
+            { 
                 options.UseInMemoryDatabase("HubTestDb");
                 options.EnableSensitiveDataLogging();
             });

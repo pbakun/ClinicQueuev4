@@ -1,22 +1,28 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using AutoMapper;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Repository.Interfaces;
 using Serilog;
 using WebApp.Areas.Identity.Pages.Account.Manage;
+using WebApp.BackgroundServices.Tasks;
 using WebApp.Hubs;
-using WebApp.Models;
-using WebApp.Models.ViewModel;
 using WebApp.ServiceLogic;
 using WebApp.Utility;
-namespace WebApp.Areas.Doctor.Controllers
+namespace WebApp.Areas.Api.Controllers
 {
-    [Authorize(Roles = StaticDetails.AdminUser + "," + StaticDetails.DoctorUser)]
-    [Area("Doctor")]
+    [Area("Api")]
+    [Route("api/doctor")]
+    [Authorize(
+            Roles = StaticDetails.AdminUser + "," + StaticDetails.DoctorUser,
+            AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme
+            )
+    ]
     public class DoctorController : Controller
     {
 
@@ -26,8 +32,8 @@ namespace WebApp.Areas.Doctor.Controllers
         private readonly IQueueHubContext _queueHubContext;
         private readonly CustomUserManager _userManager;
 
-        [BindProperty]
-        public DoctorViewModel DoctorVM { get; set; }
+        //[BindProperty]
+        public DoctorResponse DoctorVM { get; set; }
 
         public DoctorController(IRepositoryWrapper repo,
                                 IMapper mapper,
@@ -42,78 +48,54 @@ namespace WebApp.Areas.Doctor.Controllers
             _userManager = userManager;
         }
 
-        public async Task<IActionResult> Index()
+        [HttpGet]
+        public IActionResult Get()
         {
             var claimsIdentity = (ClaimsIdentity)this.User.Identity;
             var claim = claimsIdentity.FindFirst(ClaimTypes.NameIdentifier);
 
-            var user = _repo.User.FindByCondition(u => u.Id == claim.Value).FirstOrDefault();
+            var user = _repo.User.FindByCondition(u => u.Id == claim.Value).SingleOrDefault();
             if (user == null)
                 return NotFound();
 
             var queue = _queueService.FindByUserId(user.Id);
 
-            DoctorVM = new DoctorViewModel()
+            DoctorVM = new DoctorResponse()
             {
-                Queue = queue
+                QueueNoMessage = queue.QueueNoMessage,
+                AdditionalInfo = queue.AdditionalMessage,
+                RoomNo = queue.RoomNo
             };
 
-            return View(DoctorVM);
+            return Ok(DoctorVM);
         }
 
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Next()
-        {
 
-            if (ModelState.IsValid)
-            {
-                var claimsIdentity = (ClaimsIdentity)this.User.Identity;
-                var claim = claimsIdentity.FindFirst(ClaimTypes.NameIdentifier);
-
-                var queue = _repo.Queue.FindByCondition(u => u.UserId == claim.Value).FirstOrDefault();
-                queue.QueueNo++;
-                _repo.Queue.Update(queue);
-                await _repo.SaveAsync();
-
-                var outputQueue = _mapper.Map<Queue>(queue);
-
-                return View("Index", outputQueue);
-            }
-
-            return NotFound();
-
-        }
-
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        //[Route("Doctor/Doctor/NewRoomNo")]
-        public async Task<IActionResult> NewRoomNo(DoctorViewModel VM)
-        {
-            var claimsIdentity = (ClaimsIdentity)this.User.Identity;
-            var claim = claimsIdentity.FindFirst(ClaimTypes.NameIdentifier);
-            var roomNo = VM.Queue.RoomNo;
-            var user = _repo.User.FindByCondition(u => u.Id == claim.Value).FirstOrDefault();
-
-            var queue = await _queueService.ChangeUserRoomNo(user.Id, roomNo);
-            await _userManager.SetRoomNoAsync(user.Id, roomNo);
-            DoctorVM.Queue = queue;
-
-            return View("Index", DoctorVM);
-        }
-
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> AddFavoriteMessage([FromBody]string message)
+        [HttpPut("newRoomNo")]
+        public async Task<IActionResult> NewRoomNo([FromBody]NewRoomNoInput input)
         {
             var claimsIdentity = (ClaimsIdentity)this.User.Identity;
             var claim = claimsIdentity.FindFirst(ClaimTypes.NameIdentifier);
 
-            if (message != null && message.Length > 0)
+            var user = _repo.User.FindByCondition(u => u.Id == claim.Value).SingleOrDefault();
+
+            var queue = await _queueService.ChangeUserRoomNo(user.Id, input.NewRoomNo);
+            await _userManager.SetRoomNoAsync(user.Id, input.NewRoomNo);
+
+            return Ok();
+        }
+
+        [HttpPost("addfavoritemessage")]
+        public async Task<IActionResult> AddFavoriteMessage([FromBody]FavoriteMessageModel favMessage)
+        {
+            var claimsIdentity = (ClaimsIdentity)this.User.Identity;
+            var claim = claimsIdentity.FindFirst(ClaimTypes.NameIdentifier);
+
+            if (favMessage.Message != null && favMessage.Message.Length > 0)
             {
                 var favMsg = new Entities.Models.FavoriteAdditionalMessage
                 {
-                    Message = message,
+                    Message = favMessage.Message,
                     UserId = claim.Value
                 };
 
@@ -125,17 +107,22 @@ namespace WebApp.Areas.Doctor.Controllers
             return BadRequest();
         }
 
-        [HttpGet]
-        public IActionResult PickFavMessage(string userId)
+        [HttpGet("pickfavmessage")]
+        public IActionResult PickFavMessage()
         {
-            var favMessages = _repo.FavoriteAdditionalMessage.FindByCondition(u => u.UserId == userId).ToList();
+            var claimsIdentity = (ClaimsIdentity)this.User.Identity;
+            var claim = claimsIdentity.FindFirst(ClaimTypes.NameIdentifier);
 
-            return PartialView("_ShowFavMessage", favMessages);
+            var favMessages = _repo.FavoriteAdditionalMessage.FindByCondition(u => u.UserId == claim.Value).ToList();
+
+            if (favMessages == null)
+                return NotFound();
+
+            return Ok(favMessages);
         }
 
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> PickFavMessagePost([FromBody]string messageId)
+        [HttpPost("pickfavmessage")]
+        public async Task<IActionResult> PickFavMessagePost([FromBody]FavoriteMessageModel favMessage)
         {
             var claimsIdentity = (ClaimsIdentity)this.User.Identity;
             var claims = claimsIdentity.FindFirst(ClaimTypes.NameIdentifier);
@@ -145,7 +132,7 @@ namespace WebApp.Areas.Doctor.Controllers
 
             var roomNo = _queueService.GetRoomNoByUserId(claims.Value);
 
-            var message = _repo.FavoriteAdditionalMessage.FindByCondition(m => m.Id == messageId).FirstOrDefault();
+            var message = _repo.FavoriteAdditionalMessage.FindByCondition(m => m.Id == favMessage.Id).FirstOrDefault();
             if (message != null)
             {
                 try
@@ -162,9 +149,8 @@ namespace WebApp.Areas.Doctor.Controllers
             return BadRequest();
         }
 
-        [HttpDelete]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteFavMessage([FromBody]string messageId)
+        [HttpDelete("deletefavmessage")]
+        public async Task<IActionResult> DeleteFavMessage([FromBody]FavoriteMessageModel favMessage)
         {
             var claimsIdentity = (ClaimsIdentity)this.User.Identity;
             var claims = claimsIdentity.FindFirst(ClaimTypes.NameIdentifier);
@@ -172,14 +158,39 @@ namespace WebApp.Areas.Doctor.Controllers
             if (claims.Value == null)
                 return StatusCode(500);
 
-            var message = _repo.FavoriteAdditionalMessage.FindByCondition(m => m.Id == messageId).FirstOrDefault();
+            var favMessages = _repo.FavoriteAdditionalMessage.FindByCondition(u => u.UserId == claims.Value && u.Id != favMessage.Id).ToList();
+            var message = _repo.FavoriteAdditionalMessage.FindByCondition(m => m.Id == favMessage.Id).SingleOrDefault();
+
             if (message != null)
             {
                 _repo.FavoriteAdditionalMessage.Delete(message);
                 await _repo.SaveAsync();
-                return Ok();
+                return Ok(favMessages);
             }
             return BadRequest();
         }
+    }
+
+    public class DoctorResponse
+    {
+        public string QueueNoMessage { get; set; }
+        public string AdditionalInfo { get; set; }
+        public string RoomNo { get; set; }
+        public List<string> AvailableRoomNo { get; set; }
+        public DoctorResponse()
+        {
+            AvailableRoomNo = SettingsHandler.ApplicationSettings.AvailableRooms;
+        }
+    }
+
+    public class NewRoomNoInput
+    {
+        public string NewRoomNo { get; set; }
+    }
+
+    public class FavoriteMessageModel
+    {
+        public string Id { get; set; }
+        public string Message { get; set; }
     }
 }

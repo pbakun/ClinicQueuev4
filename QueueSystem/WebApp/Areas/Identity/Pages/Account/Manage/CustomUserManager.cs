@@ -96,6 +96,12 @@ namespace WebApp.Areas.Identity.Pages.Account.Manage
             return _mapper.Map<WebApp.Models.User>(user);
         }
 
+        public async Task<Entities.Models.User> FindByNameAsync(string name)
+        {
+            var user = await base.FindByNameAsync(name);
+            return _mapper.Map<Entities.Models.User>(user);
+        }
+
         public async Task<bool> SetFirstNameAsync(User user, string newFirstName)
         {
             user.FirstName = newFirstName;

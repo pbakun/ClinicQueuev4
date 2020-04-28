@@ -27,6 +27,7 @@ namespace WebApp.Areas.Patient.Controllers
             _repo = repo;
         }
 
+
         public IActionResult Index()
         {
             var availableRooms = SettingsHandler.ApplicationSettings.AvailableRooms;
@@ -41,6 +42,7 @@ namespace WebApp.Areas.Patient.Controllers
         [Route("/Home/Error")]
         [AllowAnonymous]
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
+        [NonAction]
         public IActionResult Error()
         {
             //return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
@@ -49,6 +51,7 @@ namespace WebApp.Areas.Patient.Controllers
 
         [AllowAnonymous]
         [Route("{url}", Order = 999)]
+        [NonAction]
         public IActionResult CatchAll()
         {
             return View("_CustomError");

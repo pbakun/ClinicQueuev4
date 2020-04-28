@@ -128,12 +128,12 @@ namespace WebApp.Hubs
             var users = new List<HubUser>();
             var connectedUsers = GetConnectedUsers(groupName);
             var waitingUsers = GetWaitingUsers(groupName);
-            if(connectedUsers.Count() > 0)
+            if(connectedUsers != null && connectedUsers.Count() > 0)
             {
                 foreach (var user in connectedUsers)
                     users.Add(user);
             }
-            if (waitingUsers.Count() > 0)
+            if (waitingUsers != null && waitingUsers.Count() > 0)
             {
                 foreach (var user in waitingUsers)
                     users.Add(user);
