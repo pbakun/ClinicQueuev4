@@ -1,19 +1,21 @@
 ﻿using Entities.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
 using Repository.Interfaces;
 using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Claims;
 using System.Threading.Tasks;
 using WebApp.BackgroundServices.Tasks;
 using WebApp.Helpers;
-using WebApp.Models;
 using WebApp.ServiceLogic;
 using WebApp.Utility;
 
 namespace WebApp.Hubs
 {
+    [Authorize(Policy = "Combined")]
     public class QueueHub : Hub
     {
         private readonly IRepositoryWrapper _repo;
@@ -64,6 +66,7 @@ namespace WebApp.Hubs
                                 newUser.ConnectionId, " ] registered as Doctor for room: [ ", roomNo, " ]"));
         }
 
+        [AllowAnonymous]
         public async Task RegisterPatientView(string roomNo)
         {   
             var newUser = new HubUser
@@ -79,13 +82,14 @@ namespace WebApp.Hubs
             Log.Information(String.Concat(logPrefix, "Client [ ", newUser.ConnectionId, " ] registered as Patient for room: [ ",
                                         roomNo, " ]"));
         }
-
+        [AllowAnonymous]
         public async override Task OnConnectedAsync()
         {
             var connectionId = this.Context.ConnectionId;
             Log.Information(String.Concat(logPrefix, "New hub client [ ", connectionId, " ]"));
             var hubUsers = _hubUser.GetConnectedUsersCount("12");
             Log.Debug($"Hub Users Count: {hubUsers}");
+
             try
             {
                 await base.OnConnectedAsync();
@@ -97,6 +101,7 @@ namespace WebApp.Hubs
             
         }
 
+        [AllowAnonymous]
         public async override Task OnDisconnectedAsync(Exception exception)
         {
             string connectionId = Context.ConnectionId;

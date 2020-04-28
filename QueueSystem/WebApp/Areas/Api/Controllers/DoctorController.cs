@@ -7,14 +7,11 @@ using AutoMapper;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.SignalR;
 using Repository.Interfaces;
 using Serilog;
 using WebApp.Areas.Identity.Pages.Account.Manage;
 using WebApp.BackgroundServices.Tasks;
 using WebApp.Hubs;
-using WebApp.Models;
-using WebApp.Models.ViewModel;
 using WebApp.ServiceLogic;
 using WebApp.Utility;
 namespace WebApp.Areas.Api.Controllers

@@ -8,6 +8,9 @@ using AutoMapper;
 using DocumentFormat.OpenXml.Bibliography;
 using Entities;
 using Microsoft.AspNetCore.Antiforgery;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
@@ -95,10 +98,35 @@ namespace WebApp
                 .AddDefaultUI(UIFramework.Bootstrap4)
                 .AddEntityFrameworkStores<RepositoryContext>(); //would be best to add this in ServiceExtensions class in Repository library
 
+            services.ConfigureApplicationCookie(options =>
+            {
+                options.AccessDeniedPath = "/Identity/Account/AccessDenied";
+                options.Cookie.HttpOnly = true;
+                options.ExpireTimeSpan = TimeSpan.FromDays(1);
+                options.LoginPath = "/Identity/Account/Login";
+                options.ReturnUrlParameter = CookieAuthenticationDefaults.ReturnUrlParameter;
+                options.SlidingExpiration = true;
+                options.ForwardDefault = CookieAuthenticationDefaults.AuthenticationScheme;
+            });
+
             var authSettings = authSection.Get<AuthSettings>();
             var key = Encoding.ASCII.GetBytes(authSettings.Secret);
-            services.AddAuthentication()
-                .AddCookie(cfg => cfg.SlidingExpiration = true)
+            services.AddAuthorization(options =>
+            {
+                options.AddPolicy("Combined", new AuthorizationPolicyBuilder()
+                     .RequireAuthenticatedUser()
+                     .RequireRole(StaticDetails.AdminUser, StaticDetails.DoctorUser)
+                     .AddAuthenticationSchemes(CookieAuthenticationDefaults.AuthenticationScheme, JwtBearerDefaults.AuthenticationScheme)
+                     .Build());
+            });
+
+            services.AddAuthentication(options =>
+            {
+                options.DefaultAuthenticateScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+                options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+                options.DefaultSignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+            })
+                .AddCookie(CookieAuthenticationDefaults.AuthenticationScheme, cfg => cfg.SlidingExpiration = true)
                 .AddJwtBearer(x =>
                 {
                     x.RequireHttpsMetadata = false;
@@ -109,6 +137,23 @@ namespace WebApp
                         IssuerSigningKey = new SymmetricSecurityKey(key),
                         ValidateIssuer = false,
                         ValidateAudience = false
+                    };
+
+                    x.Events = new JwtBearerEvents
+                    {
+                        OnMessageReceived = context =>
+                        {
+                            var accessToken = context.Request.Query["access_token"];
+
+                            // If the request is for our hub...
+                            var path = context.HttpContext.Request.Path;
+                            if (!string.IsNullOrEmpty(accessToken))
+                            {
+                                // Read the token out of the query string
+                                context.Token = accessToken;
+                            }
+                            return Task.CompletedTask;
+                        }
                     };
                 });
 
@@ -212,8 +257,6 @@ namespace WebApp
             {
                 builder
                     .WithOrigins(corsSettings.AllowedOrigins)
-                    //.AllowAnyOrigin()
-                    //.SetIsOriginAllowed(_ => true)
                     .AllowAnyMethod()
                     .AllowAnyHeader()
                     .AllowCredentials();
