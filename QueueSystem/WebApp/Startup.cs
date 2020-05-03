@@ -126,7 +126,10 @@ namespace WebApp
                 options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
                 options.DefaultSignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
             })
-                .AddCookie(CookieAuthenticationDefaults.AuthenticationScheme, cfg => cfg.SlidingExpiration = true)
+                .AddCookie(CookieAuthenticationDefaults.AuthenticationScheme, cfg => {
+                    cfg.SlidingExpiration = true;
+                    cfg.LoginPath = "/Identity/Account/Login";
+                    })
                 .AddJwtBearer(x =>
                 {
                     x.RequireHttpsMetadata = false;
