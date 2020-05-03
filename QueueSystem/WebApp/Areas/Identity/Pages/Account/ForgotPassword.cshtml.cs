@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Serilog;
 using WebApp.Areas.Identity.Pages.Account.Manage;
 
 namespace WebApp.Areas.Identity.Pages.Account
@@ -38,6 +39,8 @@ namespace WebApp.Areas.Identity.Pages.Account
         {
             if (ModelState.IsValid)
             {
+                Log.Warning("User {0} attempt to reset password", Input.Email);
+
                 var user = await _userManager.FindByEmailAsync(Input.Email);
                 if (user == null || !(await _userManager.IsEmailConfirmedAsync(user)))
                 {
@@ -58,6 +61,8 @@ namespace WebApp.Areas.Identity.Pages.Account
                     Input.Email,
                     "Reset Hasła",
                     $"Please reset your password by <a href='{HtmlEncoder.Default.Encode(callbackUrl)}'>clicking here</a>.");
+
+                Log.Warning("User {0} reset password data sent", Input.Email);
 
                 return RedirectToPage("./ForgotPasswordConfirmation");
             }

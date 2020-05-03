@@ -1,11 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Globalization;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using AutoMapper;
-using DocumentFormat.OpenXml.Bibliography;
+﻿using AutoMapper;
 using Entities;
 using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Authentication.Cookies;
@@ -14,7 +7,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI;
 using Microsoft.AspNetCore.Identity.UI.Services;
@@ -23,11 +15,16 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Repository;
 using Repository.Initialization;
+using Serilog;
 using Swashbuckle.AspNetCore.Swagger;
+using System;
+using System.Collections.Generic;
+using System.Globalization;
+using System.Text;
+using System.Threading.Tasks;
 using WebApp.Areas.Identity.Pages.Account.Manage;
 using WebApp.BackgroundServices.Tasks;
 using WebApp.Extensions;
@@ -35,6 +32,7 @@ using WebApp.Helpers;
 using WebApp.Hubs;
 using WebApp.Mappings;
 using WebApp.Models;
+using WebApp.Models.Settings;
 using WebApp.ServiceLogic;
 using WebApp.ServiceLogic.Interface;
 using WebApp.Utility;
@@ -77,8 +75,11 @@ namespace WebApp
 
             var authSection = Configuration.GetSection("AuthSettings");
             services.Configure<AuthSettings>(authSection);
+
             //add db context
-            SetUpDatabase(services);
+            var dbSection = Configuration.GetSection("ConnectionStrings");
+            var connectionString = dbSection.Get<ConnectionStrings>();
+            SetUpDatabase(services, connectionString.DefaultConnection);
 
             services.AddLocalization();
 
@@ -245,7 +246,9 @@ namespace WebApp
                 options.SwaggerEndpoint("/swagger/v1/swagger.json", swaggerOptions.Description);
             });
             //create DB on startup
-            EnsureDbCreated();
+            var dbSection = Configuration.GetSection("ConnectionStrings");
+            var connectionString = dbSection.Get<ConnectionStrings>();
+            EnsureDbCreated(connectionString.DefaultConnection);
 
             dbInitializer.Initialize();
             SettingsHandler.Settings.ReadSettings();
@@ -279,15 +282,17 @@ namespace WebApp
             });
         }
 
-        protected virtual void SetUpDatabase(IServiceCollection services)
+        protected virtual void SetUpDatabase(IServiceCollection services, string connectionString)
         {
-            services.ConfigureSqliteContext();
+            services.ConfigureSqliteContext(connectionString);
             services.ConfigureRepositoryWrapper();
         }
 
-        protected virtual void EnsureDbCreated()
+        protected virtual void EnsureDbCreated(string connectionString)
         {
-            ServiceExtensions.EnsureDbCreated();
+            var result = ServiceExtensions.EnsureDbCreated(connectionString);
+            if (result)
+                Log.Information("Database has been created");
         }
 
         protected virtual void SetUpHubUserDatabase(IServiceCollection services)
