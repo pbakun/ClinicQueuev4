@@ -179,30 +179,7 @@ namespace WebApp
 
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
 
-            services.AddSwaggerGen(x =>
-            {
-                x.SwaggerDoc("v1", new Swashbuckle.AspNetCore.Swagger.Info
-                {
-                    Title = "Queue System API",
-                    Version = "v1"
-                });
-
-                var security = new Dictionary<string, IEnumerable<string>>
-                {
-                    {"Bearer", new string[] { }},
-                };
-
-
-                x.AddSecurityDefinition("Bearer", new ApiKeyScheme
-                {
-                    Description = "JWT Token Auth",
-                    Name = "Authorization",
-                    In = "header",
-                    Type = "apiKey"
-                });
-
-                x.AddSecurityRequirement(security);
-            });
+            services.AddSwagger();
 
             services.AddSignalR(options =>
             {
@@ -237,13 +214,8 @@ namespace WebApp
 
             var swaggerOptions = new WebApp.Utility.SwaggerOptions();
             Configuration.GetSection(nameof(WebApp.Utility.SwaggerOptions)).Bind(swaggerOptions);
+            app.UseCustomSwagger(swaggerOptions.Description);
 
-            app.UseSwagger();
-
-            app.UseSwaggerUI(options =>
-            {
-                options.SwaggerEndpoint("/swagger/v1/swagger.json", swaggerOptions.Description);
-            });
             //create DB on startup
             var dbSection = Configuration.GetSection("ConnectionStrings");
             var connectionString = dbSection.Get<ConnectionStrings>();
@@ -251,7 +223,7 @@ namespace WebApp
 
             dbInitializer.Initialize();
             SettingsHandler.Settings.ReadSettings();
-            //app.UseHttpsRedirection();
+            app.UseHttpsRedirection();
             app.UseStaticFiles();
             app.UseCookiePolicy();
 
@@ -296,10 +268,7 @@ namespace WebApp
 
         protected virtual void SetUpHubUserDatabase(IServiceCollection services)
         {
-            services.AddDbContext<HubUserContext>(options =>
-            {
-                options.UseInMemoryDatabase("HubUsers");
-            });
+            services.AddDbContext<HubUserContext>(options => options.UseInMemoryDatabase("HubUsers"));
         }
     }
 }
