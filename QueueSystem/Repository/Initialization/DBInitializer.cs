@@ -2,6 +2,8 @@
 using Entities.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,17 +16,19 @@ namespace Repository.Initialization
         private readonly UserManager<IdentityUser> _userManager;
         private readonly RoleManager<IdentityRole> _roleManager;
         private readonly RepositoryContext _repo;
+        private readonly IConfiguration _configuration;
 
         public const string AdminUser = "Admin";
         public const string DoctorUser = "Doctor";
         public const string NurseUser = "Nurse";
         public const string PatientUser = "Patient";
 
-        public DBInitializer(UserManager<IdentityUser> userManager, RoleManager<IdentityRole> roleManager, RepositoryContext repo)
+        public DBInitializer(UserManager<IdentityUser> userManager, RoleManager<IdentityRole> roleManager, RepositoryContext repo, IConfiguration configuration)
         {
             _userManager = userManager;
             _roleManager = roleManager;
             _repo = repo;
+            _configuration = configuration;
         }
 
         public async void Initialize()
@@ -39,18 +43,23 @@ namespace Repository.Initialization
             if (! _roleManager.RoleExistsAsync(PatientUser).GetAwaiter().GetResult())
                  _roleManager.CreateAsync(new IdentityRole(PatientUser)).GetAwaiter().GetResult();
 
-            //Create admin user
-            _userManager.CreateAsync(new User
-            {
-                UserName="admin",
-                Email="admin@gmail.com",
-                EmailConfirmed= true,
-                FirstName="Piotr",
-                LastName="Bakun",
-                RoomNo="12"
-            }, "piotrek").GetAwaiter().GetResult();
+            var initialUser = _configuration.GetSection("InitialUser").Get<InitialUser>();
 
-            IdentityUser user = await _repo.User.FirstOrDefaultAsync(u => u.UserName == "admin");
+            //Create admin user
+            var result = _userManager.CreateAsync(new User
+            {
+                UserName= initialUser.Username,
+                Email=initialUser.Email,
+                EmailConfirmed= true,
+                FirstName=initialUser.FirstName,
+                LastName=initialUser.LastName,
+                RoomNo=initialUser.RoomNo
+            }, initialUser.Password).GetAwaiter().GetResult();
+
+            if(result.Succeeded)
+                Log.Information("Initial user from configuration created");
+
+            IdentityUser user = await _repo.User.FirstOrDefaultAsync(u => u.UserName == initialUser.Username);
 
             await _userManager.AddToRoleAsync(user, AdminUser);
         }

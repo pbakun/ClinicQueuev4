@@ -12,7 +12,6 @@ namespace Repository
 {
     public static class ServiceExtensions
     {
-
         public static void ConfigureSqliteContext(this IServiceCollection services, string connectionString)
         {
             services.AddEntityFrameworkSqlite().AddDbContext<RepositoryContext>(options =>
