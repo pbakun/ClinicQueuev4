@@ -15,7 +15,6 @@ using WebApp.Utility;
 
 namespace WebApp.Hubs
 {
-    [Authorize(Policy = "Combined")]
     public class QueueHub : Hub
     {
         private readonly IRepositoryWrapper _repo;
@@ -32,6 +31,7 @@ namespace WebApp.Hubs
             _queueService = queueService;
             _hubUser = hubUser;
         }
+        [Authorize(Policy = "Combined")]
         public async Task RegisterDoctor(string roomNo)
         {
             var claimsIdentity = (ClaimsIdentity)Context.User.Identity;
@@ -163,6 +163,7 @@ namespace WebApp.Hubs
             await base.OnDisconnectedAsync(null);
         }
 
+        [Authorize(Policy = "Combined")]
         public async Task QueueNoUp(string roomNo)
         {
             var claimsIdentity = (ClaimsIdentity)Context.User.Identity;
@@ -177,6 +178,7 @@ namespace WebApp.Hubs
             }
         }
 
+        [Authorize(Policy = "Combined")]
         public async Task QueueNoDown(string roomNo)
         {
             var claimsIdentity = (ClaimsIdentity)Context.User.Identity;
@@ -191,6 +193,7 @@ namespace WebApp.Hubs
             }
         }
 
+        [Authorize(Policy = "Combined")]
         public async Task NewQueueNo(int queueNo, string roomNo)
         {
             var claimsIdentity = (ClaimsIdentity)Context.User.Identity;
@@ -205,6 +208,7 @@ namespace WebApp.Hubs
             }
         }
 
+        [Authorize(Policy = "Combined")]
         public async Task NewAdditionalInfo(string roomNo, string message)
         {
             var claimsIdentity = (ClaimsIdentity)Context.User.Identity;
