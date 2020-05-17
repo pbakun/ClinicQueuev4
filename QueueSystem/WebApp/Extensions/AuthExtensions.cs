@@ -3,9 +3,9 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Identity.UI;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
+using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -33,7 +33,7 @@ namespace WebApp.Extensions
                .AddUserManager<UserManager<IdentityUser>>()
                .AddUserManager<CustomUserManager>()
                .AddDefaultTokenProviders()
-               .AddDefaultUI(UIFramework.Bootstrap4)
+               .AddDefaultUI()
                .AddEntityFrameworkStores<RepositoryContext>(); //would be best to add this in ServiceExtensions class in Repository library
         }
 
@@ -79,10 +79,9 @@ namespace WebApp.Extensions
                         OnMessageReceived = context =>
                         {
                             var accessToken = context.Request.Query["access_token"];
-
                             // If the request is for our hub...
-                            var path = context.HttpContext.Request.Path;
-                            if (!string.IsNullOrEmpty(accessToken))
+                            var path = context.HttpContext.Request.Path.ToString();
+                            if (!string.IsNullOrEmpty(accessToken) && string.Equals(path, "/queuehub", StringComparison.OrdinalIgnoreCase))
                             {
                                 // Read the token out of the query string
                                 context.Token = accessToken;
@@ -100,8 +99,15 @@ namespace WebApp.Extensions
                 options.AddPolicy("Combined", new AuthorizationPolicyBuilder()
                      .RequireAuthenticatedUser()
                      .RequireRole(StaticDetails.AdminUser, StaticDetails.DoctorUser)
-                     .AddAuthenticationSchemes(CookieAuthenticationDefaults.AuthenticationScheme, JwtBearerDefaults.AuthenticationScheme)
+                     .AddAuthenticationSchemes(JwtBearerDefaults.AuthenticationScheme)
                      .Build());
+
+                options.AddPolicy("HubRestricted", policy =>
+                {
+                    policy.Requirements.Add(new HubPolicyRequirement());
+                    policy.AddAuthenticationSchemes(CookieAuthenticationDefaults.AuthenticationScheme, JwtBearerDefaults.AuthenticationScheme);
+                    policy.Build();
+                });
             });
         }
     }

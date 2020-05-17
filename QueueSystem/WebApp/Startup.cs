@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Repository;
 using Repository.Initialization;
 using Serilog;
@@ -94,7 +95,7 @@ namespace WebApp
 
             services.AddScoped<IManageHubUser, ManageHubUser>();
 
-            services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
+            services.AddRazorPages();
 
             services.AddSwagger();
 
@@ -113,13 +114,13 @@ namespace WebApp
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app,
-                              IHostingEnvironment env,
+                              IWebHostEnvironment env,
                               IDBInitializer dbInitializer
                               )
         {
             if (env.IsDevelopment())
             {
-                app.UseDeveloperExceptionPage();
+                //app.UseDeveloperExceptionPage();
             }
             else
             {
@@ -147,6 +148,7 @@ namespace WebApp
             var corsSettings = new CorsSettings();
             Configuration.GetSection(nameof(CorsSettings)).Bind(corsSettings);
 
+            app.UseRouting();
             app.UseCors(builder =>
             {
                 builder
@@ -155,18 +157,16 @@ namespace WebApp
                     .AllowAnyHeader()
                     .AllowCredentials();
             });
-
             app.UseAuthentication();
-            app.UseSignalR(routes =>
+            app.UseAuthorization();
+            app.UseEndpoints(endpoints =>
             {
-                routes.MapHub<QueueHub>("/queueHub");
-            });
-
-            app.UseMvc(routes =>
-            {
-                routes.MapRoute(
+                endpoints.MapControllerRoute(
                     name: "areas",
-                    template: "{area=Patient}/{controller=Home}/{action=Index}/{id?}");
+                    pattern: "{area=Patient}/{controller=Home}/{action=Index}/{id?}"
+                    );
+                endpoints.MapRazorPages();
+                endpoints.MapHub<QueueHub>("/queueHub");
             });
         }
 

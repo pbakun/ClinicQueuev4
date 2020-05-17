@@ -1,7 +1,6 @@
 ﻿using AutoMapper;
 using Entities;
 using Entities.Models;
-using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;

@@ -1,4 +1,6 @@
 ﻿using Entities.Models;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
 using Repository.Interfaces;
@@ -15,6 +17,7 @@ using WebApp.Utility;
 
 namespace WebApp.Hubs
 {
+    [Authorize("Combined")]
     public class QueueHub : Hub
     {
         private readonly IRepositoryWrapper _repo;
@@ -31,7 +34,7 @@ namespace WebApp.Hubs
             _queueService = queueService;
             _hubUser = hubUser;
         }
-        [Authorize(Policy = "Combined")]
+        //[Authorize("HubRestricted")]
         public async Task RegisterDoctor(string roomNo)
         {
             var claimsIdentity = (ClaimsIdentity)Context.User.Identity;
@@ -91,8 +94,6 @@ namespace WebApp.Hubs
         {
             var connectionId = this.Context.ConnectionId;
             Log.Information(String.Concat(logPrefix, "New hub client [ ", connectionId, " ]"));
-            var hubUsers = _hubUser.GetConnectedUsersCount("12");
-            Log.Debug($"Hub Users Count: {hubUsers}");
 
             try
             {
@@ -118,7 +119,7 @@ namespace WebApp.Hubs
             }
             else
             {
-                Log.Information(String.Concat(logPrefix, "Disconnecting user: [ ", connectionId, " ] from room: [ ",
+                 Log.Information(String.Concat(logPrefix, "Disconnecting user: [ ", connectionId, " ] from room: [ ",
                                             groupMember.GroupName, " ]"));
             }
 

@@ -43,7 +43,6 @@ namespace WebApp
         public static IWebHost CreateWebHostBuilder(string[] args) =>
             WebHost.CreateDefaultBuilder(args)
                 .ConfigureKestrel(options => options.Limits.MaxConcurrentUpgradedConnections = 2048)
-                //.UseUrls("https://*:5001", "http://*:5000")
                 .ConfigureLogging((hostingContext, config) =>
                 {
                     config.ClearProviders();
