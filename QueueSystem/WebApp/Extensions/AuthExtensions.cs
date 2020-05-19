@@ -99,16 +99,17 @@ namespace WebApp.Extensions
                 options.AddPolicy("Combined", new AuthorizationPolicyBuilder()
                      .RequireAuthenticatedUser()
                      .RequireRole(StaticDetails.AdminUser, StaticDetails.DoctorUser)
-                     .AddAuthenticationSchemes(JwtBearerDefaults.AuthenticationScheme)
                      .Build());
 
                 options.AddPolicy("HubRestricted", policy =>
                 {
-                    policy.Requirements.Add(new HubPolicyRequirement());
+                    policy.AddRequirements(new HubRequirement());
                     policy.AddAuthenticationSchemes(CookieAuthenticationDefaults.AuthenticationScheme, JwtBearerDefaults.AuthenticationScheme);
-                    policy.Build();
                 });
+
             });
+
+            services.AddSingleton<IAuthorizationHandler, HubRequirement>();
         }
     }
 }

@@ -17,7 +17,7 @@ using WebApp.Utility;
 
 namespace WebApp.Hubs
 {
-    [Authorize("Combined")]
+    [Authorize(Policy = "HubRestricted")]
     public class QueueHub : Hub
     {
         private readonly IRepositoryWrapper _repo;
@@ -34,11 +34,18 @@ namespace WebApp.Hubs
             _queueService = queueService;
             _hubUser = hubUser;
         }
-        //[Authorize("HubRestricted")]
+        [Authorize("Combined")]
         public async Task RegisterDoctor(string roomNo)
         {
             var claimsIdentity = (ClaimsIdentity)Context.User.Identity;
             var claim = claimsIdentity.FindFirst(ClaimTypes.NameIdentifier);
+
+            if (claim == null)
+                await Task.FromException(new UnauthorizedAccessException());
+
+            if (claim.Value == null)
+                await Task.FromException(new UnauthorizedAccessException());
+
             var userId = claim.Value;
 
             var newUser = new HubUser {
@@ -112,40 +119,52 @@ namespace WebApp.Hubs
             string connectionId = Context.ConnectionId;
             var groupMember = _hubUser.GetUserByConnectionId(connectionId);
 
-            if (exception != null)
+            try
             {
-                Log.Warning(String.Concat(logPrefix, "Disconnecting user: [ ", connectionId, " ] for room: [ ",
-                                        groupMember.GroupName, " ]: \n", exception.Message));
-            }
-            else
-            {
-                 Log.Information(String.Concat(logPrefix, "Disconnecting user: [ ", connectionId, " ] from room: [ ",
-                                            groupMember.GroupName, " ]"));
-            }
+                if (exception != null)
+                {
+                    Log.Warning(String.Concat(logPrefix, "Disconnecting user: [ ", connectionId, " ] for room: [ ",
+                                            groupMember.GroupName, " ]: \n", exception.Message));
+                }
+                else
+                {
+                    Log.Information(String.Concat(logPrefix, "Disconnecting user: [ ", connectionId, " ] from room: [ ",
+                                               groupMember.GroupName, " ]"));
+                }
 
-            await _hubUser.RemoveUserAsync(groupMember);
-            await Groups.RemoveFromGroupAsync(connectionId, groupMember.GroupName);
+                await _hubUser.RemoveUserAsync(groupMember);
+                await Groups.RemoveFromGroupAsync(connectionId, groupMember.GroupName);
 
-            //if group member changed roomNo exit patient view
-            if (groupMember.UserId != null && !_queueService.CheckRoomSubordination(groupMember.UserId, groupMember.GroupName))
-            {
-                _queueService.SetQueueInactive(groupMember.UserId);
-                InitGroupScreen(groupMember);
-            }
-            else if (groupMember.UserId != null)
-            {
-                await Task.Delay(TimeSpan.FromMinutes(SettingsHandler.ApplicationSettings.PatientViewNotificationAfterDoctorDisconnectedDelay));
-                if (_hubUser.GetConnectedUserById(groupMember.UserId) == null)
+                //if group member changed roomNo exit patient view
+                if (groupMember.UserId != null && !_queueService.CheckRoomSubordination(groupMember.UserId, groupMember.GroupName))
                 {
                     _queueService.SetQueueInactive(groupMember.UserId);
-                    Log.Information(String.Concat(logPrefix, "Room: [ ", groupMember.GroupName, " ] master disconnected, connectionId: [ ",
-                                                groupMember.ConnectionId, " ] userId: [ ", groupMember.UserId, " ]"));
                     InitGroupScreen(groupMember);
                 }
+                else if (groupMember.UserId != null)
+                {
+                    await Task.Delay(TimeSpan.FromMinutes(SettingsHandler.ApplicationSettings.PatientViewNotificationAfterDoctorDisconnectedDelay));
+                    if (_hubUser.GetConnectedUserById(groupMember.UserId) == null)
+                    {
+                        _queueService.SetQueueInactive(groupMember.UserId);
+                        Log.Information(String.Concat(logPrefix, "Room: [ ", groupMember.GroupName, " ] master disconnected, connectionId: [ ",
+                                                    groupMember.ConnectionId, " ] userId: [ ", groupMember.UserId, " ]"));
+                        InitGroupScreen(groupMember);
+                    }
+                }
             }
-            await base.OnDisconnectedAsync(exception);
+            catch(Exception ex)
+            {
+                Log.Error(ex.Message);
+                exception = ex;
+            }
+            finally
+            {
+                await base.OnDisconnectedAsync(exception);
+            }
         }
 
+        [Authorize("Combined")]
         public async Task UserDisconnect()
         {
             var connectionId = this.Context.ConnectionId;
@@ -164,7 +183,7 @@ namespace WebApp.Hubs
             await base.OnDisconnectedAsync(null);
         }
 
-        [Authorize(Policy = "Combined")]
+        [Authorize("Combined")]
         public async Task QueueNoUp(string roomNo)
         {
             var claimsIdentity = (ClaimsIdentity)Context.User.Identity;
@@ -179,7 +198,7 @@ namespace WebApp.Hubs
             }
         }
 
-        [Authorize(Policy = "Combined")]
+        [Authorize("Combined")]
         public async Task QueueNoDown(string roomNo)
         {
             var claimsIdentity = (ClaimsIdentity)Context.User.Identity;
@@ -194,7 +213,7 @@ namespace WebApp.Hubs
             }
         }
 
-        [Authorize(Policy = "Combined")]
+        [Authorize("Combined")]
         public async Task NewQueueNo(int queueNo, string roomNo)
         {
             var claimsIdentity = (ClaimsIdentity)Context.User.Identity;
@@ -209,7 +228,7 @@ namespace WebApp.Hubs
             }
         }
 
-        [Authorize(Policy = "Combined")]
+        [Authorize("Combined")]
         public async Task NewAdditionalInfo(string roomNo, string message)
         {
             var claimsIdentity = (ClaimsIdentity)Context.User.Identity;
@@ -224,6 +243,7 @@ namespace WebApp.Hubs
             }
         }
 
+        [Authorize("Combined")]
         public async void InitGroupScreen(HubUser hubUser)
         {
             await Clients.Group(hubUser.GroupName).SendAsync("ReceiveDoctorFullName", hubUser.UserId, string.Empty);

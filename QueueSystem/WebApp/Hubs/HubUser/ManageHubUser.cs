@@ -63,7 +63,7 @@ namespace WebApp.Hubs
                 var waitingUserToSave = _mapper.Map<WaitingHubUser>(user);
                 await _hubUser.WaitingUsers.AddAsync(waitingUserToSave);
             }
-            await _hubUser.SaveChangesAsync();
+            var result = await _hubUser.SaveChangesAsync();
 
         }
 

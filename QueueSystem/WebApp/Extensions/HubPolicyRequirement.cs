@@ -4,21 +4,26 @@ using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Claims;
 using System.Threading.Tasks;
+using WebApp.Hubs;
 
 namespace WebApp.Extensions
 {
-    public class HubPolicyRequirement : AuthorizationHandler<HubPolicyRequirement, HubInvocationContext>, IAuthorizationRequirement
+    public class HubRequirement : AuthorizationHandler<HubRequirement>, IAuthorizationRequirement
     {
-        protected override Task HandleRequirementAsync(AuthorizationHandlerContext context, HubPolicyRequirement requirement, HubInvocationContext resource)
+        protected override Task HandleRequirementAsync(AuthorizationHandlerContext context, HubRequirement requirement)
         {
-            Log.Information(context.User.Identity.Name);
 
-            if (context.User.Identity.Name != null)
+            var user = context.User.HasClaim(c => c.Type == ClaimTypes.NameIdentifier);
+
+            if(user)
                 context.Succeed(requirement);
-            else context.Fail();
+
+            context.Succeed(requirement);
 
             return Task.CompletedTask;
         }
     }
 }
+
