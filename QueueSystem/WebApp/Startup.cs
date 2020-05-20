@@ -141,7 +141,7 @@ namespace WebApp
 
             dbInitializer.Initialize();
             SettingsHandler.Settings.ReadSettings();
-            app.UseHttpsRedirection();
+            //app.UseHttpsRedirection();
             app.UseStaticFiles();
             app.UseCookiePolicy();
 

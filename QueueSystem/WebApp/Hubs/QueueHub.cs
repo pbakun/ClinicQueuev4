@@ -24,8 +24,6 @@ namespace WebApp.Hubs
         private readonly IQueueService _queueService;
         private readonly IManageHubUser _hubUser;
 
-        private string logPrefix = StaticDetails.logPrefixHub;
-
         public QueueHub(IRepositoryWrapper repo,
             IQueueService queueService,
             IManageHubUser hubUser)
@@ -75,9 +73,7 @@ namespace WebApp.Hubs
                 await Clients.Caller.SendAsync("NotifyQueueOccupied", StaticDetails.QueueOccupiedMessage);
             }
             await _hubUser.AddUserAsync(newUser);
-
-            Log.Information(String.Concat(logPrefix, "Client [ ",
-                                newUser.ConnectionId, " ] registered as Doctor for room: [ ", roomNo, " ]"));
+            Log.Information(LogMessage.HubRegisterDoctor(newUser.ConnectionId, roomNo));
         }
 
         [AllowAnonymous]
@@ -92,15 +88,13 @@ namespace WebApp.Hubs
             await Groups.AddToGroupAsync(newUser.ConnectionId, newUser.GroupName);
 
             await _hubUser.AddUserAsync(newUser);
-
-            Log.Information(String.Concat(logPrefix, "Client [ ", newUser.ConnectionId, " ] registered as Patient for room: [ ",
-                                        roomNo, " ]"));
+            Log.Information(LogMessage.HubRegisterPatient(newUser.ConnectionId, roomNo));
         }
         [AllowAnonymous]
         public async override Task OnConnectedAsync()
         {
             var connectionId = this.Context.ConnectionId;
-            Log.Information(String.Concat(logPrefix, "New hub client [ ", connectionId, " ]"));
+            Log.Information(LogMessage.HubNewUser(connectionId));
 
             try
             {
@@ -108,7 +102,7 @@ namespace WebApp.Hubs
             }
             catch(Exception ex)
             {
-                Log.Error(String.Concat("Connecting user [ ", connectionId, " ] :", ex.Message));
+                Log.Error(LogMessage.HubNewUserError(connectionId, ex.Message));
             }
             
         }
@@ -123,13 +117,11 @@ namespace WebApp.Hubs
             {
                 if (exception != null)
                 {
-                    Log.Warning(String.Concat(logPrefix, "Disconnecting user: [ ", connectionId, " ] for room: [ ",
-                                            groupMember.GroupName, " ]: \n", exception.Message));
+                    Log.Warning(LogMessage.HubOnDisconnectedException(connectionId, groupMember.GroupName, exception.Message));
                 }
                 else
                 {
-                    Log.Information(String.Concat(logPrefix, "Disconnecting user: [ ", connectionId, " ] from room: [ ",
-                                               groupMember.GroupName, " ]"));
+                    Log.Information(LogMessage.HubOnDisconnectingUser(connectionId, groupMember.GroupName));
                 }
 
                 await _hubUser.RemoveUserAsync(groupMember);
@@ -147,8 +139,7 @@ namespace WebApp.Hubs
                     if (_hubUser.GetConnectedUserById(groupMember.UserId) == null)
                     {
                         _queueService.SetQueueInactive(groupMember.UserId);
-                        Log.Information(String.Concat(logPrefix, "Room: [ ", groupMember.GroupName, " ] master disconnected, connectionId: [ ",
-                                                    groupMember.ConnectionId, " ] userId: [ ", groupMember.UserId, " ]"));
+                        Log.Information(LogMessage.HubDisconnectingRoomMaster(groupMember.ConnectionId, groupMember.GroupName, groupMember.UserId));
                         InitGroupScreen(groupMember);
                     }
                 }
@@ -162,25 +153,6 @@ namespace WebApp.Hubs
             {
                 await base.OnDisconnectedAsync(exception);
             }
-        }
-
-        [Authorize("Combined")]
-        public async Task UserDisconnect()
-        {
-            var connectionId = this.Context.ConnectionId;
-            var user = _hubUser.GetUserByConnectionId(connectionId);
-
-            await _hubUser.RemoveUserAsync(user);
-            await Groups.RemoveFromGroupAsync(connectionId, user.GroupName);
-
-            if (!_queueService.CheckRoomSubordination(user.UserId, user.GroupName))
-            {
-                _queueService.SetQueueInactive(user.UserId);
-                InitGroupScreen(user);
-                Log.Information(String.Concat(logPrefix, "Room: [ ", user.GroupName, " ] master disconnected, connectionId: [ ",
-                                                user.ConnectionId, " ] userId: [ ", user.UserId, " ]"));
-            }
-            await base.OnDisconnectedAsync(null);
         }
 
         [Authorize("Combined")]
@@ -249,7 +221,7 @@ namespace WebApp.Hubs
             await Clients.Group(hubUser.GroupName).SendAsync("ReceiveDoctorFullName", hubUser.UserId, string.Empty);
             await Clients.Group(hubUser.GroupName).SendAsync("ReceiveQueueNo", hubUser.UserId, SettingsHandler.ApplicationSettings.MessageWhenNoDoctorActiveInQueue);
             await Clients.Group(hubUser.GroupName).SendAsync("ReceiveAdditionalInfo", hubUser.UserId, string.Empty);
-            Log.Information(String.Concat(logPrefix, "Room: [ ", hubUser.GroupName, " ] view initialized with empty data"));
+            Log.Information(LogMessage.HubRoomInitialized(hubUser.GroupName));
         }
 
     }
