@@ -37,6 +37,8 @@ namespace WebApp.Helpers
 
                 using (var client = new SmtpClient(_emailSettings.MailServer, _emailSettings.Port))
                 {
+                    //client.EnableSsl = true;
+                    //client.Timeout = _emailSettings.Timeout;
                     client.Credentials = new NetworkCredential(_emailSettings.SenderMail, _emailSettings.Password);
                     await client.SendMailAsync(mail);
                     Log.Information(LogMessage.EmailSent(email));

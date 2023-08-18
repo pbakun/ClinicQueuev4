@@ -6,6 +6,7 @@
     <ApplicationIcon>tube-queue.ico</ApplicationIcon>
     <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
     <AddRazorSupportForMvc>true</AddRazorSupportForMvc>
+    <DockerComposeProjectPath>..\docker-compose.dcproj</DockerComposeProjectPath>
   </PropertyGroup>
 
   <ItemGroup>
