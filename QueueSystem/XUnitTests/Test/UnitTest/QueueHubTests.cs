@@ -46,7 +46,7 @@ namespace XUnitTests
 
         }
 
-        public async Task<Queue> CallRegisterDoctor(string id, string roomNo,
+        public Task<Queue> CallRegisterDoctor(string id, string roomNo,
             Mock<IHubCallerClients> mockClients,
             Mock<Microsoft.AspNetCore.SignalR.IClientProxy> mockClientProxy,
             Mock<IGroupManager> mockGroupManager,
@@ -86,6 +86,7 @@ namespace XUnitTests
             //await hub.RegisterDoctor(queue.RoomNo);
 
             //return queue;
+            return Task.FromResult(queue);
         }
 
 
@@ -148,7 +149,7 @@ namespace XUnitTests
         public async Task RegisterPatientTest()
         {
             string fakeRoomNo = "12";
-            
+
             var mockClients = new Mock<IHubCallerClients>();
             var mockGroupManager = new Mock<IGroupManager>();
             var mockHubCallerContext = new Mock<Microsoft.AspNetCore.SignalR.HubCallerContext>();

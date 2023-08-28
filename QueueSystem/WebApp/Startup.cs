@@ -1,43 +1,30 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Globalization;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using AutoMapper;
-using DocumentFormat.OpenXml.Bibliography;
+﻿using AutoMapper;
 using Entities;
-using Microsoft.AspNetCore.Antiforgery;
-using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.HttpsPolicy;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Identity.UI;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Options;
-using Microsoft.IdentityModel.Tokens;
+using Microsoft.Extensions.Hosting;
 using Repository;
 using Repository.Initialization;
-using Swashbuckle.AspNetCore.Swagger;
-using WebApp.Areas.Identity.Pages.Account.Manage;
+using Serilog;
+using System;
+using System.Collections.Generic;
+using System.Globalization;
 using WebApp.BackgroundServices.Tasks;
 using WebApp.Extensions;
 using WebApp.Helpers;
 using WebApp.Hubs;
 using WebApp.Mappings;
 using WebApp.Models;
+using WebApp.Models.Settings;
 using WebApp.ServiceLogic;
 using WebApp.ServiceLogic.Interface;
-using WebApp.Utility;
 
 namespace WebApp
 {
@@ -75,87 +62,22 @@ namespace WebApp
 
             services.Configure<EmailSettings>(Configuration.GetSection("EmailSettings"));
 
-            var authSection = Configuration.GetSection("AuthSettings");
-            services.Configure<AuthSettings>(authSection);
             //add db context
-            SetUpDatabase(services);
+            var dbSection = Configuration.GetSection("ConnectionStrings");
+            var connectionString = dbSection.Get<ConnectionStrings>();
+            SetUpDatabase(services, connectionString.DefaultConnection);
 
             services.AddLocalization();
 
-            services.AddIdentity<IdentityUser, IdentityRole>(config =>
-            {
-                config.Password.RequireNonAlphanumeric = false;
-                config.Password.RequireDigit = false;
-                config.Password.RequiredLength = 0;
-                config.Password.RequiredUniqueChars = 0;
-                config.Password.RequireUppercase = false;
-                config.Password.RequireLowercase = false;
-            })
-                .AddRoleManager<RoleManager<IdentityRole>>()
-                .AddUserManager<UserManager<IdentityUser>>()
-                .AddUserManager<CustomUserManager>()
-                .AddDefaultTokenProviders()
-                .AddDefaultUI(UIFramework.Bootstrap4)
-                .AddEntityFrameworkStores<RepositoryContext>(); //would be best to add this in ServiceExtensions class in Repository library
+            services.ConfigureIdentity();
 
-            services.ConfigureApplicationCookie(options =>
-            {
-                options.AccessDeniedPath = "/Identity/Account/AccessDenied";
-                options.Cookie.HttpOnly = true;
-                options.ExpireTimeSpan = TimeSpan.FromDays(1);
-                options.LoginPath = "/Identity/Account/Login";
-                options.ReturnUrlParameter = CookieAuthenticationDefaults.ReturnUrlParameter;
-                options.SlidingExpiration = true;
-                options.ForwardDefault = CookieAuthenticationDefaults.AuthenticationScheme;
-            });
-
+            var authSection = Configuration.GetSection("AuthSettings");
+            services.Configure<AuthSettings>(authSection);
             var authSettings = authSection.Get<AuthSettings>();
-            var key = Encoding.ASCII.GetBytes(authSettings.Secret);
-            services.AddAuthorization(options =>
-            {
-                options.AddPolicy("Combined", new AuthorizationPolicyBuilder()
-                     .RequireAuthenticatedUser()
-                     .RequireRole(StaticDetails.AdminUser, StaticDetails.DoctorUser)
-                     .AddAuthenticationSchemes(CookieAuthenticationDefaults.AuthenticationScheme, JwtBearerDefaults.AuthenticationScheme)
-                     .Build());
-            });
 
-            services.AddAuthentication(options =>
-            {
-                options.DefaultAuthenticateScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-                options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-                options.DefaultSignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-            })
-                .AddCookie(CookieAuthenticationDefaults.AuthenticationScheme, cfg => cfg.SlidingExpiration = true)
-                .AddJwtBearer(x =>
-                {
-                    x.RequireHttpsMetadata = false;
-                    x.SaveToken = true;
-                    x.TokenValidationParameters = new TokenValidationParameters
-                    {
-                        ValidateIssuerSigningKey = true,
-                        IssuerSigningKey = new SymmetricSecurityKey(key),
-                        ValidateIssuer = false,
-                        ValidateAudience = false
-                    };
+            services.ConfigureAuthMethods(authSettings.Secret);
 
-                    x.Events = new JwtBearerEvents
-                    {
-                        OnMessageReceived = context =>
-                        {
-                            var accessToken = context.Request.Query["access_token"];
-
-                            // If the request is for our hub...
-                            var path = context.HttpContext.Request.Path;
-                            if (!string.IsNullOrEmpty(accessToken))
-                            {
-                                // Read the token out of the query string
-                                context.Token = accessToken;
-                            }
-                            return Task.CompletedTask;
-                        }
-                    };
-                });
+            services.ConfigureAuthorization();
 
             services.AddScoped<IUserService, UserService>();
 
@@ -173,32 +95,9 @@ namespace WebApp
 
             services.AddScoped<IManageHubUser, ManageHubUser>();
 
-            services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
+            services.AddRazorPages();
 
-            services.AddSwaggerGen(x =>
-            {
-                x.SwaggerDoc("v1", new Swashbuckle.AspNetCore.Swagger.Info
-                {
-                    Title = "Queue System API",
-                    Version = "v1"
-                });
-
-                var security = new Dictionary<string, IEnumerable<string>>
-                {
-                    {"Bearer", new string[] { }},
-                };
-
-
-                x.AddSecurityDefinition("Bearer", new ApiKeyScheme
-                {
-                    Description = "JWT Token Auth",
-                    Name = "Authorization",
-                    In = "header",
-                    Type = "apiKey"
-                });
-
-                x.AddSecurityRequirement(security);
-            });
+            services.AddSwagger();
 
             services.AddSignalR(options =>
             {
@@ -214,15 +113,14 @@ namespace WebApp
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, 
-                              IHostingEnvironment env,
-                              IDBInitializer dbInitializer,
-                              IAntiforgery antiforgery
-            )
+        public void Configure(IApplicationBuilder app,
+                              IWebHostEnvironment env,
+                              IDBInitializer dbInitializer
+                              )
         {
             if (env.IsDevelopment())
             {
-                app.UseDeveloperExceptionPage();
+                //app.UseDeveloperExceptionPage();
             }
             else
             {
@@ -232,17 +130,14 @@ namespace WebApp
                 app.UseHsts();
             }
 
-            var swaggerOptions = new WebApp.Utility.SwaggerOptions();
-            Configuration.GetSection(nameof(WebApp.Utility.SwaggerOptions)).Bind(swaggerOptions);
+            var swaggerOptions = new Utility.SwaggerOptions();
+            Configuration.GetSection(nameof(Utility.SwaggerOptions)).Bind(swaggerOptions);
+            app.UseCustomSwagger(swaggerOptions.Description);
 
-            app.UseSwagger();
-
-            app.UseSwaggerUI(options =>
-            {
-                options.SwaggerEndpoint("/swagger/v1/swagger.json", swaggerOptions.Description);
-            });
             //create DB on startup
-            EnsureDbCreated();
+            var dbSection = Configuration.GetSection("ConnectionStrings");
+            var connectionString = dbSection.Get<ConnectionStrings>();
+            EnsureDbCreated(connectionString.DefaultConnection);
 
             dbInitializer.Initialize();
             SettingsHandler.Settings.ReadSettings();
@@ -253,6 +148,7 @@ namespace WebApp
             var corsSettings = new CorsSettings();
             Configuration.GetSection(nameof(CorsSettings)).Bind(corsSettings);
 
+            app.UseRouting();
             app.UseCors(builder =>
             {
                 builder
@@ -261,38 +157,35 @@ namespace WebApp
                     .AllowAnyHeader()
                     .AllowCredentials();
             });
-
             app.UseAuthentication();
-            app.UseSignalR(routes =>
+            app.UseAuthorization();
+            app.UseEndpoints(endpoints =>
             {
-                routes.MapHub<QueueHub>("/queueHub");
-            });
-
-            app.UseMvc(routes =>
-            {
-                routes.MapRoute(
+                endpoints.MapControllerRoute(
                     name: "areas",
-                    template: "{area=Patient}/{controller=Home}/{action=Index}/{id?}");
+                    pattern: "{area=Patient}/{controller=Home}/{action=Index}/{id?}"
+                    );
+                endpoints.MapRazorPages();
+                endpoints.MapHub<QueueHub>("/queueHub");
             });
         }
 
-        protected virtual void SetUpDatabase(IServiceCollection services)
+        protected virtual void SetUpDatabase(IServiceCollection services, string connectionString)
         {
-            services.ConfigureSqliteContext();
+            services.ConfigureSqliteContext(connectionString);
             services.ConfigureRepositoryWrapper();
         }
 
-        protected virtual void EnsureDbCreated()
+        protected virtual void EnsureDbCreated(string connectionString)
         {
-            ServiceExtensions.EnsureDbCreated();
+            var result = ServiceExtensions.EnsureDbCreated(connectionString);
+            if (result)
+                Log.Information("Database has been created");
         }
 
         protected virtual void SetUpHubUserDatabase(IServiceCollection services)
         {
-            services.AddDbContext<HubUserContext>(options =>
-            {
-                options.UseInMemoryDatabase("HubUsers");
-            });
+            services.AddDbContext<HubUserContext>(options => options.UseInMemoryDatabase("HubUsers"));
         }
     }
 }

@@ -98,7 +98,7 @@ namespace WebApp.Areas.Api.Controllers
         [AllowAnonymous]
         public async Task<IActionResult> ForgotPassword([FromBody]ForgotPasswordDtin input)
         {
-
+            Log.Warning("User {0} attempt to reset password", input.Email);
             var user = await _userManager.FindByEmailAsync(input.Email);
             if (user == null || !(await _userManager.IsEmailConfirmedAsync(user)))
             {
@@ -121,6 +121,7 @@ namespace WebApp.Areas.Api.Controllers
                 "Reset Hasła",
                 $"Please reset your password by <a href='{HtmlEncoder.Default.Encode(callbackUrl2)}'>clicking here</a>.");
 
+            Log.Warning("User {0} reset password data sent", input.Email);
             return Ok();
         }
     }

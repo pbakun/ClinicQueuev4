@@ -1,0 +1,14 @@
+version: '3.4'
+
+services:
+  webapp:
+    container_name: queue-system-webapp
+    image: queue-system-webapp
+    build:
+      context: QueueSystem
+      dockerfile: WebApp/Dockerfile
+    volumes:
+      - ./dev/app-data:/app/AppData
+    ports:
+      - 3000:80
+    restart: on-failure

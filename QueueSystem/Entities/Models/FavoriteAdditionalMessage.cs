@@ -9,7 +9,8 @@ namespace Entities.Models
 {
     public class FavoriteAdditionalMessage
     {
-        [PrimaryKey]
+        [Key]
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public string Id { get; set; }
         [Required]
         public string Message { get; set; }

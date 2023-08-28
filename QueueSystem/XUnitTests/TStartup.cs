@@ -17,19 +17,19 @@ namespace XUnitTests
 
         }
 
-        protected override void SetUpDatabase(IServiceCollection services)
+        protected override void SetUpDatabase(IServiceCollection services, string connectionString)
         {
             services.AddDbContext<RepositoryContext>(options =>
-            { 
+            {
                 options.UseInMemoryDatabase("HubTestDb");
                 options.EnableSensitiveDataLogging();
             });
             services.ConfigureRepositoryWrapper();
         }
 
-        protected override void EnsureDbCreated()
+        protected override void EnsureDbCreated(string connectionString)
         {
-            
+
         }
 
         protected override void SetUpHubUserDatabase(IServiceCollection services)

@@ -54,7 +54,7 @@ function connectionStart() {
     }).catch(function (err) {
         console.log("Hub Start error");
         console.error(err.toString());
-        setTimeout(reconnect(), 5000);
+        setTimeout(reconnect, 5000);
     });
 }
 

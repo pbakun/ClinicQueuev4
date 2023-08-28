@@ -1,7 +1,6 @@
 ﻿using AutoMapper;
 using Entities;
 using Entities.Models;
-using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -64,7 +63,7 @@ namespace WebApp.Hubs
                 var waitingUserToSave = _mapper.Map<WaitingHubUser>(user);
                 await _hubUser.WaitingUsers.AddAsync(waitingUserToSave);
             }
-            await _hubUser.SaveChangesAsync();
+            var result = await _hubUser.SaveChangesAsync();
 
         }
 
